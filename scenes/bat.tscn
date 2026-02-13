@@ -1,0 +1,116 @@
+[gd_scene format=3 uid="uid://sxivpt7mo14i"]
+
+[ext_resource type="Texture2D" uid="uid://uwy52t04me0u" path="res://sprites/bat/bat1.png" id="1_3tecl"]
+[ext_resource type="Texture2D" uid="uid://uac7esme4x1" path="res://sprites/bat/bat2.png" id="2_jp0fn"]
+[ext_resource type="Texture2D" uid="uid://jkad37khc3rf" path="res://sprites/bat/bat3.png" id="3_ulak1"]
+[ext_resource type="Texture2D" uid="uid://bhvchsv3ldnom" path="res://sprites/bat/bat4.png" id="4_0pjmi"]
+[ext_resource type="Texture2D" uid="uid://dr6crds6ps001" path="res://sprites/bat/bat5.png" id="5_5s65s"]
+[ext_resource type="Script" path="res://scripts/bat.gd" id="6_bat"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_1e43q"]
+radius = 7.5
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_contact"]
+radius = 11.5
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_attack"]
+radius = 14.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_health_bg"]
+bg_color = Color(0, 0, 0, 0.72)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_health_fill"]
+bg_color = Color(0.24, 0.86, 0.44, 0.95)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_c1ris"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("1_3tecl")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_jp0fn")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3_ulak1")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_0pjmi")
+}, {
+"duration": 1.0,
+"texture": ExtResource("5_5s65s")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 5.0
+}]
+
+[node name="Bat" type="CharacterBody2D" unique_id=1958601629]
+z_index = 10
+script = ExtResource("6_bat")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=111741320]
+shape = SubResource("CircleShape2D_1e43q")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1297083968]
+sprite_frames = SubResource("SpriteFrames_c1ris")
+animation = &"idle"
+autoplay = "idle"
+frame_progress = 0.8777719
+
+[node name="ContactArea" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 1
+monitoring = true
+monitorable = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="ContactArea"]
+shape = SubResource("CircleShape2D_contact")
+
+[node name="AttackArea" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 1
+monitoring = true
+monitorable = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="AttackArea"]
+position = Vector2(12, 0)
+shape = SubResource("CircleShape2D_attack")
+
+[node name="HealthBar" type="Node2D" parent="."]
+position = Vector2(-14, -22)
+visible = false
+z_index = 5
+
+[node name="Bg" type="Panel" parent="HealthBar"]
+offset_right = 28.0
+offset_bottom = 4.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_health_bg")
+mouse_filter = 2
+
+[node name="Fill" type="Panel" parent="HealthBar/Bg"]
+offset_right = 28.0
+offset_bottom = 4.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_health_fill")
+mouse_filter = 2
+
+[node name="PercentLabel" type="Label" parent="HealthBar"]
+offset_left = -6.0
+offset_top = -13.0
+offset_right = 34.0
+offset_bottom = -2.0
+theme_override_font_sizes/font_size = 8
+theme_override_constants/outline_size = 1
+theme_override_colors/font_color = Color(1, 0.96, 0.88, 0.95)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.85)
+horizontal_alignment = 1
+vertical_alignment = 1
+text = "100%"

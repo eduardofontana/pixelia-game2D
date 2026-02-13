@@ -1,0 +1,274 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/hud.gd" id="1_hud"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+bg_color = Color(0.05, 0.07, 0.11, 0.52)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.63, 0.52, 0.32, 0.48)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+shadow_color = Color(0, 0, 0, 0.35)
+shadow_size = 3
+shadow_offset = Vector2(0, 2)
+content_margin_left = 8.0
+content_margin_top = 6.0
+content_margin_right = 8.0
+content_margin_bottom = 6.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_stamina_bg"]
+bg_color = Color(0.1, 0.14, 0.2, 0.95)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_stamina_fill"]
+bg_color = Color(0.25, 0.86, 0.55, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_button_normal"]
+bg_color = Color(0.15, 0.17, 0.22, 0.94)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.72, 0.58, 0.37, 0.6)
+corner_radius_top_left = 7
+corner_radius_top_right = 7
+corner_radius_bottom_right = 7
+corner_radius_bottom_left = 7
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_button_hover"]
+bg_color = Color(0.21, 0.23, 0.3, 0.98)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.94, 0.78, 0.48, 0.85)
+corner_radius_top_left = 7
+corner_radius_top_right = 7
+corner_radius_bottom_right = 7
+corner_radius_bottom_left = 7
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_button_pressed"]
+bg_color = Color(0.13, 0.14, 0.19, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.88, 0.72, 0.45, 0.95)
+corner_radius_top_left = 7
+corner_radius_top_right = 7
+corner_radius_bottom_right = 7
+corner_radius_bottom_left = 7
+
+[node name="HUD" type="CanvasLayer"]
+script = ExtResource("1_hud")
+layer = 20
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+anchor_left = 0.5
+anchor_top = 0.0
+anchor_right = 0.5
+anchor_bottom = 0.0
+offset_left = -84.0
+offset_top = 10.0
+offset_right = 84.0
+offset_bottom = 72.0
+
+[node name="PanelContainer" type="PanelContainer" parent="MarginContainer"]
+custom_minimum_size = Vector2(170, 48)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="VBox" type="VBoxContainer" parent="MarginContainer/PanelContainer"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="TopRow" type="HBoxContainer" parent="MarginContainer/PanelContainer/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 4
+alignment = 1
+
+[node name="LivesLabel" type="RichTextLabel" parent="MarginContainer/PanelContainer/VBox/TopRow"]
+custom_minimum_size = Vector2(118, 14)
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+theme_override_constants/outline_size = 1
+theme_override_colors/font_color = Color(1, 0.3, 0.36, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.75)
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+autowrap_mode = 0
+horizontal_alignment = 1
+text = "HP"
+
+[node name="StaminaRow" type="HBoxContainer" parent="MarginContainer/PanelContainer/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 0
+alignment = 1
+
+[node name="StaminaBar" type="Control" parent="MarginContainer/PanelContainer/VBox/StaminaRow"]
+custom_minimum_size = Vector2(84, 5)
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 0
+clip_contents = true
+mouse_filter = 2
+
+[node name="StaminaBg" type="Panel" parent="MarginContainer/PanelContainer/VBox/StaminaRow/StaminaBar"]
+offset_right = 84.0
+offset_bottom = 5.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_stamina_bg")
+
+[node name="StaminaFill" type="Panel" parent="MarginContainer/PanelContainer/VBox/StaminaRow/StaminaBar"]
+offset_right = 84.0
+offset_bottom = 5.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_stamina_fill")
+
+[node name="InfoRow" type="HBoxContainer" parent="MarginContainer/PanelContainer/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 6
+alignment = 1
+
+[node name="LevelLabel" type="Label" parent="MarginContainer/PanelContainer/VBox/InfoRow"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.98, 0.9, 0.58, 1)
+text = "Lv.: 1"
+
+[node name="XpLabel" type="Label" parent="MarginContainer/PanelContainer/VBox/InfoRow"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.58, 0.83, 1, 1)
+text = "XP: 0 / 100"
+
+[node name="CoinsLabel" type="Label" parent="."]
+anchor_left = 0.5
+anchor_top = 0.0
+anchor_right = 0.5
+anchor_bottom = 0.0
+offset_left = -84.0
+offset_top = 76.0
+offset_right = 84.0
+offset_bottom = 94.0
+theme_override_font_sizes/font_size = 14
+theme_override_constants/outline_size = 1
+theme_override_colors/font_color = Color(0.98, 0.9, 0.58, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.75)
+horizontal_alignment = 1
+text = "Coins: 0"
+
+[node name="OptionsOverlay" type="Control" parent="."]
+visible = false
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+
+[node name="OverlayDim" type="ColorRect" parent="OptionsOverlay"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0, 0, 0, 0)
+
+[node name="OptionsCard" type="PanelContainer" parent="OptionsOverlay"]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -165.0
+offset_top = -116.0
+offset_right = 165.0
+offset_bottom = 116.0
+mouse_filter = 1
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="OptionsVBox" type="VBoxContainer" parent="OptionsOverlay/OptionsCard"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="OptionsTitleLabel" type="Label" parent="OptionsOverlay/OptionsCard/OptionsVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 34
+theme_override_constants/outline_size = 2
+theme_override_colors/font_color = Color(0.95, 0.9, 0.84, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.9)
+horizontal_alignment = 1
+text = "Opcoes"
+
+[node name="VolumeLabel" type="Label" parent="OptionsOverlay/OptionsCard/OptionsVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+theme_override_colors/font_color = Color(0.9, 0.84, 0.75, 1)
+horizontal_alignment = 1
+text = "Volume Mestre"
+
+[node name="VolumeControls" type="HBoxContainer" parent="OptionsOverlay/OptionsCard/OptionsVBox"]
+layout_mode = 2
+theme_override_constants/separation = 7
+alignment = 1
+
+[node name="VolumeDownButton" type="Button" parent="OptionsOverlay/OptionsCard/OptionsVBox/VolumeControls"]
+custom_minimum_size = Vector2(40, 30)
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+theme_override_styles/normal = SubResource("StyleBoxFlat_button_normal")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
+text = "-"
+
+[node name="VolumeSlider" type="HSlider" parent="OptionsOverlay/OptionsCard/OptionsVBox/VolumeControls"]
+custom_minimum_size = Vector2(170, 30)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="VolumeUpButton" type="Button" parent="OptionsOverlay/OptionsCard/OptionsVBox/VolumeControls"]
+custom_minimum_size = Vector2(40, 30)
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+theme_override_styles/normal = SubResource("StyleBoxFlat_button_normal")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
+text = "+"
+
+[node name="VolumeValueLabel" type="Label" parent="OptionsOverlay/OptionsCard/OptionsVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+theme_override_colors/font_color = Color(0.87, 0.92, 1, 1)
+horizontal_alignment = 1
+text = "Volume: 100%"
+
+[node name="ActionsRow" type="HBoxContainer" parent="OptionsOverlay/OptionsCard/OptionsVBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="ResumeButton" type="Button" parent="OptionsOverlay/OptionsCard/OptionsVBox/ActionsRow"]
+custom_minimum_size = Vector2(124, 34)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("StyleBoxFlat_button_normal")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
+text = "Retornar"
+
+[node name="ExitButton" type="Button" parent="OptionsOverlay/OptionsCard/OptionsVBox/ActionsRow"]
+custom_minimum_size = Vector2(124, 34)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("StyleBoxFlat_button_normal")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
+text = "Sair"

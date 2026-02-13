@@ -1,0 +1,154 @@
+[gd_scene format=3 uid="uid://d36c8dksb5ap2"]
+
+[ext_resource type="Texture2D" uid="uid://gyq31w2v5aa4" path="res://sprites/slime/Hide/frame1.png" id="1_lrvan"]
+[ext_resource type="Texture2D" uid="uid://bpr4sqpjpnl7v" path="res://sprites/slime/Hide/frame2.png" id="2_0gjuw"]
+[ext_resource type="Texture2D" uid="uid://c8y8gd3y3bfmr" path="res://sprites/slime/Hide/frame3.png" id="3_6ggc5"]
+[ext_resource type="Texture2D" uid="uid://s883buunpg4n" path="res://sprites/slime/Hide/frame4.png" id="4_b48k4"]
+[ext_resource type="Texture2D" uid="uid://c65shguyw6ada" path="res://sprites/slime/Hide/frame5.png" id="5_31ce7"]
+[ext_resource type="Texture2D" uid="uid://c2iop84ydcglk" path="res://sprites/slime/Hide/frame6.png" id="6_nowxr"]
+[ext_resource type="Texture2D" uid="uid://dn5yhqobebs5k" path="res://sprites/slime/Hide/frame7.png" id="7_yfmhs"]
+[ext_resource type="Texture2D" uid="uid://sw6adpdxm10n" path="res://sprites/slime/Hide/frame8.png" id="8_hagqt"]
+[ext_resource type="Texture2D" uid="uid://dgf30vla5f636" path="res://sprites/slime/Hide/frame9.png" id="9_pwq85"]
+[ext_resource type="Texture2D" uid="uid://b07yjj2jc4ys8" path="res://sprites/slime/Hide/frame10.png" id="10_uekmf"]
+[ext_resource type="Texture2D" uid="uid://u5m7rv7ys3y" path="res://sprites/slime/Move/frame1.png" id="11_o2fkb"]
+[ext_resource type="Texture2D" uid="uid://6iqa6kagxk20" path="res://sprites/slime/Move/frame2.png" id="12_itray"]
+[ext_resource type="Texture2D" uid="uid://dv7clqgecansp" path="res://sprites/slime/Move/frame3.png" id="13_0cb1b"]
+[ext_resource type="Script" uid="uid://bl6nxlf8c376l" path="res://scripts/slime.gd" id="14_slime"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_body"]
+radius = 18.0
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_c82uy"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("1_lrvan")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_0gjuw")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3_6ggc5")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_b48k4")
+}, {
+"duration": 1.0,
+"texture": ExtResource("5_31ce7")
+}, {
+"duration": 1.0,
+"texture": ExtResource("6_nowxr")
+}, {
+"duration": 1.0,
+"texture": ExtResource("7_yfmhs")
+}, {
+"duration": 1.0,
+"texture": ExtResource("8_hagqt")
+}, {
+"duration": 1.0,
+"texture": ExtResource("9_pwq85")
+}, {
+"duration": 1.0,
+"texture": ExtResource("10_uekmf")
+}],
+"loop": false,
+"name": &"idle",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("11_o2fkb")
+}, {
+"duration": 1.0,
+"texture": ExtResource("12_itray")
+}, {
+"duration": 1.0,
+"texture": ExtResource("13_0cb1b")
+}],
+"loop": true,
+"name": &"move",
+"speed": 5.0
+}]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_contact"]
+radius = 19.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_attack"]
+radius = 15.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_health_bg"]
+bg_color = Color(0, 0, 0, 0.72)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_health_fill"]
+bg_color = Color(0.24, 0.86, 0.44, 0.95)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[node name="Slime" type="CharacterBody2D" unique_id=994014096]
+scale = Vector2(0.6400001, 0.6400001)
+floor_constant_speed = true
+floor_snap_length = 6.0
+z_index = 10
+script = ExtResource("14_slime")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=2040894237]
+position = Vector2(0, 11)
+shape = SubResource("CircleShape2D_body")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=937473848]
+sprite_frames = SubResource("SpriteFrames_c82uy")
+animation = &"idle"
+autoplay = "move"
+frame_progress = 0.6313811
+
+[node name="ContactArea" type="Area2D" parent="." unique_id=990453789]
+collision_layer = 0
+monitorable = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="ContactArea" unique_id=1272940965]
+shape = SubResource("CircleShape2D_contact")
+
+[node name="AttackArea" type="Area2D" parent="." unique_id=719373079]
+collision_layer = 0
+monitorable = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="AttackArea" unique_id=53257741]
+position = Vector2(12, 2)
+shape = SubResource("CircleShape2D_attack")
+
+[node name="HealthBar" type="Node2D" parent="." unique_id=2081262469]
+visible = false
+z_index = 5
+position = Vector2(-14, -24)
+
+[node name="Bg" type="Panel" parent="HealthBar" unique_id=1634056030]
+offset_right = 28.0
+offset_bottom = 4.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_health_bg")
+
+[node name="Fill" type="Panel" parent="HealthBar/Bg" unique_id=1966133811]
+layout_mode = 0
+offset_right = 28.0
+offset_bottom = 4.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_health_fill")
+
+[node name="PercentLabel" type="Label" parent="HealthBar" unique_id=468463089]
+offset_left = -6.0
+offset_top = -13.0
+offset_right = 34.0
+offset_bottom = -2.0
+theme_override_colors/font_color = Color(1, 0.96, 0.88, 0.95)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.85)
+theme_override_constants/outline_size = 1
+theme_override_font_sizes/font_size = 8
+text = "100%"
+horizontal_alignment = 1
+vertical_alignment = 1
