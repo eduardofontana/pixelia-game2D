@@ -13,8 +13,6 @@ enum BossState {
 const MOVE_ACCELERATION: float = 780.0
 const MOVE_DECELERATION: float = 980.0
 const MOVE_EPSILON: float = 2.0
-const HOVER_WAVE_SPEED: float = 2.1
-const HOVER_WAVE_AMPLITUDE: float = 10.0
 const HIT_KNOCKBACK_X: float = 84.0
 const DAMAGE_KNOCKBACK_MULTIPLIER: float = 1.45
 const ATTACK_DAMAGE_RANGE_BONUS: float = 24.0
@@ -73,7 +71,6 @@ var patrol_target: Vector2 = Vector2.ZERO
 var patrol_retarget_timer: float = 0.0
 var facing_direction: int = 1
 var current_hp: int = 1
-var hover_time: float = 0.0
 var attack_timer: float = 0.0
 var attack_cooldown_timer: float = 0.0
 var attack_commit_timer: float = 0.0
@@ -102,7 +99,8 @@ func _ready() -> void:
 	add_to_group("enemies")
 	add_to_group("boss")
 	_configure_collision_filters()
-	motion_mode = CharacterBody2D.MOTION_MODE_FLOATING
+	motion_mode = CharacterBody2D.MOTION_MODE_GROUNDED
+	floor_snap_length = 6.0
 	spawn_position = global_position
 	current_hp = max_hp
 	_bind_player()
@@ -124,7 +122,6 @@ func _physics_process(delta: float) -> void:
 		velocity = Vector2.ZERO
 		return
 
-	hover_time += delta
 	patrol_retarget_timer = maxf(0.0, patrol_retarget_timer - delta)
 	attack_cooldown_timer = maxf(0.0, attack_cooldown_timer - delta)
 	attack_commit_timer = maxf(0.0, attack_commit_timer - delta)
@@ -132,6 +129,8 @@ func _physics_process(delta: float) -> void:
 	strafe_timer = maxf(0.0, strafe_timer - delta)
 	dash_timer = maxf(0.0, dash_timer - delta)
 	dash_cooldown_timer = maxf(0.0, dash_cooldown_timer - delta)
+	if boss_state != BossState.DEATH and not is_on_floor():
+		velocity += get_gravity() * delta
 
 	match boss_state:
 		BossState.IDLE:
@@ -141,7 +140,7 @@ func _physics_process(delta: float) -> void:
 		BossState.HIT:
 			_process_hit(delta)
 		BossState.DEATH:
-			velocity = velocity.move_toward(Vector2.ZERO, MOVE_DECELERATION * delta)
+			velocity.x = move_toward(velocity.x, 0.0, MOVE_DECELERATION * delta)
 
 	move_and_slide()
 	_try_touch_damage_player()
@@ -237,30 +236,30 @@ func _process_idle(delta: float) -> void:
 				attack_commit_timer = 0.0
 				_start_attack()
 				return
-			var target_velocity: Vector2 = _compute_combat_velocity(to_player, player_distance)
-			velocity = velocity.move_toward(target_velocity, MOVE_ACCELERATION * delta)
+			var target_velocity_x: float = _compute_combat_velocity_x(to_player, player_distance)
+			velocity.x = move_toward(velocity.x, target_velocity_x, MOVE_ACCELERATION * delta)
 			return
 
-		if patrol_retarget_timer <= 0.0 or global_position.distance_to(patrol_target) <= 10.0:
+		if patrol_retarget_timer <= 0.0 or absf(global_position.x - patrol_target.x) <= 10.0:
 			_reset_patrol_target(false)
-		var to_patrol: Vector2 = patrol_target - global_position
-		var patrol_velocity: Vector2 = Vector2.ZERO
-		if to_patrol.length() > MOVE_EPSILON:
-			patrol_velocity = to_patrol.normalized() * patrol_speed
-		velocity = velocity.move_toward(patrol_velocity, MOVE_ACCELERATION * delta)
+		var to_patrol_x: float = patrol_target.x - global_position.x
+		var patrol_velocity_x: float = 0.0
+		if absf(to_patrol_x) > MOVE_EPSILON:
+			patrol_velocity_x = (1.0 if to_patrol_x > 0.0 else -1.0) * patrol_speed
+		velocity.x = move_toward(velocity.x, patrol_velocity_x, MOVE_ACCELERATION * delta)
 		return
 
-	velocity = velocity.move_toward(Vector2.ZERO, MOVE_DECELERATION * delta)
+	velocity.x = move_toward(velocity.x, 0.0, MOVE_DECELERATION * delta)
 
 
 func _process_attack(delta: float) -> void:
 	attack_timer = maxf(0.0, attack_timer - delta)
 
-	var target_velocity: Vector2 = Vector2.ZERO
+	var target_velocity_x: float = 0.0
 	var attack_progress: float = _get_attack_progress()
 	if attack_progress <= 0.24:
-		target_velocity = attack_direction * (_get_current_chase_speed() * 0.18)
-	velocity = velocity.move_toward(target_velocity, MOVE_DECELERATION * delta)
+		target_velocity_x = attack_direction.x * (_get_current_chase_speed() * 0.18)
+	velocity.x = move_toward(velocity.x, target_velocity_x, MOVE_DECELERATION * delta)
 
 	var hit_frame_reached: bool = _is_attack_hit_frame_reached()
 	_set_attack_damage_window(_is_attack_animation_active() and _is_attack_damage_window_open())
@@ -280,7 +279,7 @@ func _process_attack(delta: float) -> void:
 
 func _process_hit(delta: float) -> void:
 	_set_attack_damage_window(false)
-	velocity = velocity.move_toward(Vector2.ZERO, MOVE_DECELERATION * delta)
+	velocity.x = move_toward(velocity.x, 0.0, MOVE_DECELERATION * delta)
 	hit_timer = maxf(0.0, hit_timer - delta)
 	if hit_timer <= 0.0 and not _is_hit_animation_playing():
 		boss_state = BossState.IDLE
@@ -594,9 +593,6 @@ func _update_visuals() -> void:
 	if animated_sprite == null:
 		return
 
-	var hover_offset: float = sin(hover_time * HOVER_WAVE_SPEED) * HOVER_WAVE_AMPLITUDE
-	animated_sprite.position.y = hover_offset
-
 	if boss_state == BossState.ATTACK and absf(attack_direction.x) > 0.05:
 		facing_direction = 1 if attack_direction.x > 0.0 else -1
 	elif player_ref != null and boss_state != BossState.DEATH:
@@ -741,8 +737,7 @@ func _apply_hit_knockback(from_position: Vector2) -> void:
 
 func _reset_patrol_target(force_immediate: bool) -> void:
 	var offset_x: float = randf_range(-maxf(patrol_distance_x, 0.0), maxf(patrol_distance_x, 0.0))
-	var offset_y: float = randf_range(-maxf(patrol_distance_y, 0.0), maxf(patrol_distance_y, 0.0))
-	patrol_target = spawn_position + Vector2(offset_x, offset_y)
+	patrol_target = spawn_position + Vector2(offset_x, 0.0)
 
 	# Avoid picking a patrol point too close to current position to prevent stalling.
 	if global_position.distance_to(patrol_target) < 6.0:
@@ -807,31 +802,30 @@ func _reroll_attack_profile() -> void:
 	strafe_timer = randf_range(min_strafe_time, max_strafe_time)
 
 
-func _compute_combat_velocity(to_player: Vector2, distance_to_player: float) -> Vector2:
-	if to_player.length() <= MOVE_EPSILON:
-		return Vector2.ZERO
+func _compute_combat_velocity_x(to_player: Vector2, distance_to_player: float) -> float:
+	if absf(to_player.x) <= MOVE_EPSILON:
+		return 0.0
 
 	if strafe_timer <= 0.0:
 		_reroll_attack_profile()
 
-	var base_direction: Vector2 = to_player.normalized()
-	var perpendicular: Vector2 = Vector2(-base_direction.y, base_direction.x) * float(strafe_direction)
-	var movement_direction: Vector2
+	var base_direction: float = 1.0 if to_player.x > 0.0 else -1.0
+	var movement_direction: float = 0.0
 	var safe_strafe: float = clampf(strafe_strength, 0.0, 1.2)
 	var preferred_distance: float = attack_range + 16.0
 	if _is_rage_mode():
 		preferred_distance -= 6.0
 
 	if distance_to_player > (preferred_distance + 20.0):
-		movement_direction = base_direction + (perpendicular * safe_strafe)
+		movement_direction = base_direction + (float(strafe_direction) * safe_strafe * 0.25)
 	elif distance_to_player < (preferred_distance - 12.0):
-		movement_direction = (-base_direction * 0.85) + (perpendicular * (safe_strafe + 0.2))
+		movement_direction = (-base_direction * 0.85) + (float(strafe_direction) * (safe_strafe + 0.2) * 0.25)
 	else:
-		movement_direction = (perpendicular * (safe_strafe + 0.28)) + (base_direction * 0.25)
+		movement_direction = (float(strafe_direction) * (safe_strafe + 0.28)) + (base_direction * 0.25)
 
-	if movement_direction.length() <= 0.001:
+	if absf(movement_direction) <= 0.001:
 		movement_direction = base_direction
-	movement_direction = movement_direction.normalized()
+	movement_direction = 1.0 if movement_direction > 0.0 else -1.0
 	_update_dash_state(distance_to_player)
 	return movement_direction * _get_current_chase_speed()
 

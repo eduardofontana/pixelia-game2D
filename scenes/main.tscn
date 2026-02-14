@@ -89,8 +89,7 @@ monitoring = false
 monitorable = false
 
 [node name="Boss" parent="." unique_id=1440023123 instance=ExtResource("14_a8y0u")]
-visible = false
-position = Vector2(1251, 449)
+position = Vector2(1167, 567)
 
 [node name="Enemies" type="Node2D" parent="." unique_id=703039115]
 

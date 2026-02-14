@@ -285,7 +285,7 @@ func _start_attack() -> void:
 	boss_state = BossState.ATTACK
 	attack_state_timer = 0.0
 	attack_hit_applied = false
-	_play_animation(attack_animation)
+	_play_animation(attack_animation, _resolve_attack_animation_speed_scale())
 
 
 func _finish_attack() -> void:
@@ -508,11 +508,12 @@ func _play_one_shot_sfx(stream: AudioStream, volume_db: float) -> void:
 	one_shot_player.play()
 
 
-func _play_animation(animation_name: StringName) -> void:
+func _play_animation(animation_name: StringName, speed_scale: float = 1.0) -> void:
 	if animated_sprite == null or animated_sprite.sprite_frames == null:
 		return
 	if not animated_sprite.sprite_frames.has_animation(animation_name):
 		return
+	animated_sprite.speed_scale = maxf(speed_scale, 0.01)
 	if animated_sprite.animation != animation_name:
 		animated_sprite.play(animation_name)
 	elif not animated_sprite.is_playing():
@@ -736,3 +737,13 @@ func _get_animation_duration(animation_name: StringName) -> float:
 	var frame_count: int = maxi(frames.get_frame_count(animation_name), 1)
 	var animation_speed: float = maxf(frames.get_animation_speed(animation_name), 0.01)
 	return float(frame_count) / animation_speed
+
+
+func _resolve_attack_animation_speed_scale() -> float:
+	var base_duration: float = _get_animation_duration(attack_animation)
+	if base_duration <= 0.01:
+		return 1.0
+	var target_duration: float = maxf(attack_max_time, attack_hit_time + 0.05)
+	if target_duration <= 0.01:
+		return 1.0
+	return maxf(base_duration / target_duration, 0.01)
