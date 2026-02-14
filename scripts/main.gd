@@ -690,7 +690,6 @@ func _bind_player_lifecycle() -> void:
 		return
 
 	_connect_signal_once(player_ref, &"died", Callable(self, "_on_player_died"))
-	_connect_signal_once(player_ref, &"respawned", Callable(self, "_on_player_respawned"))
 
 
 func _spawn_boss_for_battle() -> void:
@@ -734,12 +733,6 @@ func _on_player_died() -> void:
 	_refresh_boss_hud_from_boss()
 	if _was_player_defeated_by_main_boss():
 		_queue_player_dialog_line(DIALOG_BOSS_PLAYER_DIED_TAUNT, PLAYER_DIALOG_DURATION)
-
-
-func _on_player_respawned() -> void:
-	_reset_dialog_runtime_flags()
-	if map_gold_unlocked and not map_gold_collected and map_gold_item != null and map_gold_item.visible:
-		_queue_player_dialog_line(DIALOG_MAP_GOLD_APPEARED, PLAYER_DIALOG_DURATION)
 
 
 func _is_player_in_active_boss_battle() -> bool:
@@ -913,13 +906,6 @@ func _queue_player_dialog_lines(lines: Array[String], duration_per_line: float =
 		return
 	for line_text in lines:
 		player_ref.call("queue_dialog_line", line_text, duration_per_line)
-
-
-func _reset_dialog_runtime_flags() -> void:
-	saw_skeleton_once = false
-	saw_bat_once = false
-	saw_slime_once = false
-	saw_boss_approach_once = false
 
 
 func _rebuild_terrain_spawn_map() -> void:

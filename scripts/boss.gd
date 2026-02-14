@@ -25,9 +25,11 @@ const ENEMY_LAYER_MASK: int = 2
 const INJURED_SFX_VOLUME_DB: float = -1.5
 const ALIVE_LOOP_SFX_VOLUME_DB: float = -6.5
 const DEATH_SFX_VOLUME_DB: float = -2.0
+const VICTORY_SFX_VOLUME_DB: float = -1.2
 const INJURED_SFX_STREAM: AudioStream = preload("res://sounds/Injured.wav")
 const ALIVE_LOOP_SFX_STREAM: AudioStream = preload("res://sounds/boss_music.wav")
 const DEATH_SFX_STREAM: AudioStream = preload("res://sounds/boss_death.wav")
+const VICTORY_SFX_STREAM: AudioStream = preload("res://sounds/Retro Success Melody Win.wav")
 
 @export var player_path: NodePath
 @export var max_hp: int = 320
@@ -326,6 +328,7 @@ func _start_death() -> void:
 		body_collision.set_deferred("disabled", true)
 	_sync_damage_area_state(false)
 	_play_death_sfx()
+	_play_victory_sfx()
 	_stop_alive_loop_sfx()
 	_play_animation(&"boss_death")
 	if not death_signal_emitted:
@@ -482,19 +485,31 @@ func _play_injured_sfx() -> void:
 func _play_death_sfx() -> void:
 	if DEATH_SFX_STREAM == null:
 		return
+	_play_one_shot_sfx(DEATH_SFX_STREAM, DEATH_SFX_VOLUME_DB)
+
+
+func _play_victory_sfx() -> void:
+	if VICTORY_SFX_STREAM == null:
+		return
+	_play_one_shot_sfx(VICTORY_SFX_STREAM, VICTORY_SFX_VOLUME_DB)
+
+
+func _play_one_shot_sfx(stream: AudioStream, volume_db: float) -> void:
+	if stream == null:
+		return
 	var current_scene: Node = get_tree().current_scene
 	if current_scene == null:
 		current_scene = get_tree().root
 	if current_scene == null:
 		return
-	var death_player := AudioStreamPlayer.new()
-	death_player.bus = "Master"
-	death_player.volume_db = DEATH_SFX_VOLUME_DB
-	death_player.process_mode = Node.PROCESS_MODE_ALWAYS
-	death_player.stream = DEATH_SFX_STREAM
-	current_scene.add_child(death_player)
-	death_player.finished.connect(Callable(death_player, "queue_free"))
-	death_player.play()
+	var one_shot_player := AudioStreamPlayer.new()
+	one_shot_player.bus = "Master"
+	one_shot_player.volume_db = volume_db
+	one_shot_player.process_mode = Node.PROCESS_MODE_ALWAYS
+	one_shot_player.stream = stream
+	current_scene.add_child(one_shot_player)
+	one_shot_player.finished.connect(Callable(one_shot_player, "queue_free"))
+	one_shot_player.play()
 
 
 func _update_alive_loop_for_state() -> void:

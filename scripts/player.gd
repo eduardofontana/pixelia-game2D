@@ -92,10 +92,12 @@ const PLAYER_RESPAWN_FADE_IN_TIME: float = 0.28
 const DEATH_INTRO_SFX_PATH: String = "res://sounds/deathplayersound.wav"
 const DEATH_INTRO_SFX_VOLUME_DB: float = -5.0
 const DEATH_MESSAGE_DELAY: float = 0.22
-const DEATH_SFX_PATH: String = "res://sounds/dragon-growl.wav"
-const DEATH_SFX_VOLUME_DB: float = -6.0
+const DEATH_SFX_PATH: String = "res://sounds/Retro Negative Melody.wav"
+const DEATH_SFX_VOLUME_DB: float = -4.0
 const HURT_SFX_PATH: String = "res://sounds/damageplayer.wav"
 const HURT_SFX_VOLUME_DB: float = -4.5
+const JUMP_SFX_PATH: String = "res://sounds/JumpSound.wav"
+const JUMP_SFX_VOLUME_DB: float = -5.0
 const HURT_FLASH_COLOR: Color = Color(1.0, 0.45, 0.45, 1.0)
 const HURT_FLASH_OUT_TIME: float = 0.13
 const HEALTH_PERCENT_FONT_SIZE: int = 10
@@ -129,7 +131,8 @@ const SPAWN_DIALOG_MAX_WIDTH: float = 252.0
 const SPAWN_DIALOG_MIN_HEIGHT: float = 34.0
 const SPAWN_DIALOG_CONTENT_PADDING_X: float = 16.0
 const SPAWN_DIALOG_CONTENT_PADDING_Y: float = 10.0
-const SPAWN_DIALOG_SCREEN_BOTTOM_MARGIN: float = 54.0
+const SPAWN_DIALOG_FONT_SIZE: int = 15
+const SPAWN_DIALOG_SCREEN_CENTER_OFFSET_Y: float = 0.0
 @onready var animated_sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var attack_sfx: AudioStreamPlayer = $AttackSfx
 @onready var player_camera: Camera2D = get_node_or_null("Camera2D") as Camera2D
@@ -191,6 +194,7 @@ var base_camera_zoom: Vector2 = Vector2.ONE
 var death_intro_sfx_player: AudioStreamPlayer = null
 var death_sfx_player: AudioStreamPlayer = null
 var hurt_sfx_player: AudioStreamPlayer = null
+var jump_sfx_player: AudioStreamPlayer = null
 var death_countdown_sfx_player: AudioStreamPlayer = null
 var health_bar_timer: float = 0.0
 var health_fill_style: StyleBoxFlat = null
@@ -219,6 +223,7 @@ func _ready() -> void:
 	_setup_death_intro_sfx()
 	_setup_death_sfx()
 	_setup_hurt_sfx()
+	_setup_jump_sfx()
 	_setup_countdown_sfx()
 	_setup_player_health_fill_style()
 	_apply_vampire_percent_font()
@@ -261,6 +266,7 @@ func _physics_process(delta: float) -> void:
 
 	if Input.is_action_just_pressed("jump") and is_on_floor() and not is_defending:
 		velocity.y = JUMP_VELOCITY
+		_play_jump_sfx()
 
 	if Input.is_action_just_pressed("attack") and not is_attacking and not is_defending and stamina >= ATTACK_STAMINA_COST:
 		_set_stamina(stamina - ATTACK_STAMINA_COST)
@@ -388,7 +394,7 @@ func _setup_spawn_dialog() -> void:
 	spawn_dialog_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	spawn_dialog_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	spawn_dialog_label.text = SPAWN_DIALOG_TEXT
-	spawn_dialog_label.add_theme_font_size_override("font_size", 12)
+	spawn_dialog_label.add_theme_font_size_override("font_size", SPAWN_DIALOG_FONT_SIZE)
 	spawn_dialog_label.add_theme_constant_override("outline_size", 1)
 	spawn_dialog_label.add_theme_color_override("font_color", Color(0.98, 0.96, 0.91, 1.0))
 	spawn_dialog_label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.9))
@@ -505,7 +511,7 @@ func _update_spawn_dialog_position() -> void:
 	var bubble_width: float = maxf(spawn_dialog_panel.custom_minimum_size.x, SPAWN_DIALOG_MIN_WIDTH)
 	var bubble_height: float = maxf(spawn_dialog_panel.custom_minimum_size.y, SPAWN_DIALOG_MIN_HEIGHT)
 	var target_x: float = (viewport_size.x - bubble_width) * 0.5
-	var target_y: float = viewport_size.y - bubble_height - SPAWN_DIALOG_SCREEN_BOTTOM_MARGIN
+	var target_y: float = ((viewport_size.y - bubble_height) * 0.5) + SPAWN_DIALOG_SCREEN_CENTER_OFFSET_Y
 	spawn_dialog_panel.position = Vector2(target_x, target_y)
 
 
@@ -1792,7 +1798,6 @@ func _finish_respawn_after_fade_in() -> void:
 	_reset_countdown_tremor()
 	_emit_stats_changed()
 	respawned.emit()
-	queue_dialog_line(SPAWN_DIALOG_TEXT, SPAWN_DIALOG_DURATION)
 
 
 func _start_death_camera_zoom_fx() -> void:
@@ -1903,6 +1908,29 @@ func _setup_hurt_sfx() -> void:
 		var loaded_stream: Resource = load(HURT_SFX_PATH)
 		if loaded_stream is AudioStream:
 			hurt_sfx_player.stream = loaded_stream
+
+
+func _setup_jump_sfx() -> void:
+	if jump_sfx_player != null:
+		return
+
+	jump_sfx_player = AudioStreamPlayer.new()
+	jump_sfx_player.name = "JumpSfx"
+	jump_sfx_player.bus = "Master"
+	jump_sfx_player.volume_db = JUMP_SFX_VOLUME_DB
+	add_child(jump_sfx_player)
+
+	if ResourceLoader.exists(JUMP_SFX_PATH):
+		var loaded_stream: Resource = load(JUMP_SFX_PATH)
+		if loaded_stream is AudioStream:
+			jump_sfx_player.stream = loaded_stream
+
+
+func _play_jump_sfx() -> void:
+	if jump_sfx_player == null or jump_sfx_player.stream == null:
+		return
+	jump_sfx_player.stop()
+	jump_sfx_player.play()
 
 
 func _play_hurt_sfx() -> void:

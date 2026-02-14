@@ -9,7 +9,9 @@
 [ext_resource type="Texture2D" uid="uid://b1tgn8duq0qp1" path="res://new_sprites/pipes.png" id="8_4h6kj"]
 [ext_resource type="Texture2D" uid="uid://baytdbhiol126" path="res://new_sprites/crate.png" id="10_4h6kj"]
 [ext_resource type="Texture2D" uid="uid://dowrwr13jx2vs" path="res://new_sprites/plants/palm.png" id="10_t5u1y"]
+[ext_resource type="Texture2D" uid="uid://dhkaqukmowedg" path="res://new_sprites/vent-pipes.png" id="11_4h6kj"]
 [ext_resource type="Texture2D" uid="uid://b2f86f0fqws4u" path="res://new_sprites/big-crate.png" id="11_e80jd"]
+[ext_resource type="Texture2D" uid="uid://cvy7v16gbs0b2" path="res://new_sprites/floating-platform.png" id="12_e80jd"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_oqplg"]
 texture = ExtResource("1_b0j75")
@@ -545,6 +547,14 @@ texture = ExtResource("3_tw12r")
 position = Vector2(894, 16)
 texture = ExtResource("4_xqm8g")
 
+[node name="Plant22" type="Sprite2D" parent="Decoration" unique_id=512961349]
+position = Vector2(1011, 21)
+texture = ExtResource("4_xqm8g")
+
+[node name="Plant23" type="Sprite2D" parent="Decoration" unique_id=1266035609]
+position = Vector2(984, 22)
+texture = ExtResource("4_xqm8g")
+
 [node name="Palm" type="Sprite2D" parent="Decoration" unique_id=2131194604]
 position = Vector2(365, -9)
 texture = ExtResource("10_t5u1y")
@@ -568,3 +578,27 @@ texture = ExtResource("4_xqm8g")
 [node name="Plant21" type="Sprite2D" parent="Decoration" unique_id=1678184085]
 position = Vector2(61, -40)
 texture = ExtResource("4_xqm8g")
+
+[node name="BigCrate5" type="Sprite2D" parent="Decoration" unique_id=1735630838]
+position = Vector2(989, 0)
+texture = ExtResource("11_e80jd")
+
+[node name="BigCrate6" type="Sprite2D" parent="Decoration" unique_id=1656439207]
+position = Vector2(1024, 0)
+texture = ExtResource("11_e80jd")
+
+[node name="VentPipes" type="Sprite2D" parent="Decoration" unique_id=1521161101]
+position = Vector2(1007, -28)
+texture = ExtResource("11_4h6kj")
+
+[node name="Pipes7" type="Sprite2D" parent="Decoration" unique_id=506938522]
+position = Vector2(1005, 31)
+texture = ExtResource("8_4h6kj")
+
+[node name="FloatingPlatform" type="Sprite2D" parent="Decoration" unique_id=1165778873]
+position = Vector2(962, 4)
+texture = ExtResource("12_e80jd")
+
+[node name="FloatingPlatform2" type="Sprite2D" parent="Decoration" unique_id=1824550319]
+position = Vector2(1052, 4)
+texture = ExtResource("12_e80jd")

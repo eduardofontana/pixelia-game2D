@@ -5,6 +5,8 @@ const HUD_FONT_PATH: String = "res://fonts/Pixelia2D.ttf"
 const MIN_VOLUME_DB: float = -40.0
 const MAX_VOLUME_DB: float = 3.0
 const VOLUME_STEP_DB: float = 2.0
+const MENU_CLICK_SFX_VOLUME_DB: float = -5.0
+const MENU_CLICK_SFX_STREAM: AudioStream = preload("res://sounds/click_double_off.wav")
 
 @onready var background_parallax: ParallaxBackground = $Background/ParallaxBackground
 @onready var menu_card: PanelContainer = $UILayer/MenuCard
@@ -159,26 +161,32 @@ func _show_options_menu() -> void:
 
 
 func _on_play_pressed() -> void:
+	_play_menu_click_sfx()
 	get_tree().change_scene_to_file(GAME_SCENE_PATH)
 
 
 func _on_options_pressed() -> void:
+	_play_menu_click_sfx()
 	_show_options_menu()
 
 
 func _on_quit_pressed() -> void:
+	_play_menu_click_sfx()
 	get_tree().quit()
 
 
 func _on_back_pressed() -> void:
+	_play_menu_click_sfx()
 	_show_main_menu()
 
 
 func _on_volume_down_pressed() -> void:
+	_play_menu_click_sfx()
 	_apply_volume_db(volume_slider.value - VOLUME_STEP_DB)
 
 
 func _on_volume_up_pressed() -> void:
+	_play_menu_click_sfx()
 	_apply_volume_db(volume_slider.value + VOLUME_STEP_DB)
 
 
@@ -204,3 +212,19 @@ func _update_volume_label(volume_db: float) -> void:
 func _on_bgm_finished() -> void:
 	if menu_bgm != null:
 		menu_bgm.play()
+
+
+func _play_menu_click_sfx() -> void:
+	if MENU_CLICK_SFX_STREAM == null:
+		return
+	var root_node: Node = get_tree().root
+	if root_node == null:
+		return
+	var click_player: AudioStreamPlayer = AudioStreamPlayer.new()
+	click_player.bus = "Master"
+	click_player.volume_db = MENU_CLICK_SFX_VOLUME_DB
+	click_player.process_mode = Node.PROCESS_MODE_ALWAYS
+	click_player.stream = MENU_CLICK_SFX_STREAM
+	root_node.add_child(click_player)
+	click_player.finished.connect(Callable(click_player, "queue_free"))
+	click_player.play()

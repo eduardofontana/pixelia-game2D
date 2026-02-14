@@ -27,6 +27,13 @@ const ENEMY_LAYER_MASK: int = 2
 const FLOOR_CHECK_FORWARD_DISTANCE: float = 14.0
 const FLOOR_CHECK_DOWN_START_Y: float = 4.0
 const FLOOR_CHECK_DOWN_DISTANCE: float = 56.0
+const DEATH_PARTICLE_COLOR: Color = Color(0.9, 0.9, 0.94, 1.0)
+const DEATH_FADE_DURATION: float = 0.2
+const VICTORY_SFX_PATH: String = "res://sounds/Retro Success Melody Win.wav"
+const VICTORY_SFX_VOLUME_DB: float = -1.2
+const HURT_SFX_STREAM: AudioStream = preload("res://sounds/Injured.wav")
+const HURT_SFX_VOLUME_DB: float = -6.0
+const DEATH_VFX = preload("res://scripts/death_vfx.gd")
 
 @export var player_path: NodePath
 @export var max_hp: int = 240
@@ -82,6 +89,8 @@ var hurt_timer: float = 0.0
 var health_bar_timer: float = 0.0
 var health_fill_style: StyleBoxFlat = null
 var death_fallback_timer: float = -1.0
+var death_cleanup_started: bool = false
+var hurt_sfx_player: AudioStreamPlayer = null
 
 
 func _ready() -> void:
@@ -95,6 +104,7 @@ func _ready() -> void:
 	_update_attack_area_transform()
 	_setup_health_fill_style()
 	_apply_health_percent_font()
+	_setup_hurt_sfx()
 	_update_health_bar()
 	if health_bar != null:
 		health_bar.visible = false
@@ -136,7 +146,7 @@ func _physics_process(delta: float) -> void:
 	if boss_state == BossState.DEAD and death_fallback_timer >= 0.0:
 		death_fallback_timer = maxf(0.0, death_fallback_timer - delta)
 		if death_fallback_timer <= 0.0:
-			queue_free()
+			_finish_death_and_queue_free()
 
 
 func set_boss_active(enabled: bool) -> void:
@@ -153,8 +163,11 @@ func set_boss_active(enabled: bool) -> void:
 		contact_damage_timer = 0.0
 		hurt_timer = 0.0
 		death_fallback_timer = -1.0
+		death_cleanup_started = false
 		if health_bar != null:
 			health_bar.visible = false
+		if animated_sprite != null:
+			animated_sprite.modulate = Color(1, 1, 1, 1)
 		_play_animation(idle_animation)
 		return
 	if boss_state != BossState.DEAD:
@@ -175,9 +188,12 @@ func reset_for_battle() -> void:
 	hurt_timer = 0.0
 	health_bar_timer = 0.0
 	death_fallback_timer = -1.0
+	death_cleanup_started = false
 	_update_health_bar()
 	if health_bar != null:
 		health_bar.visible = false
+	if animated_sprite != null:
+		animated_sprite.modulate = Color(1, 1, 1, 1)
 	set_boss_active(true)
 	_emit_health_changed()
 
@@ -189,6 +205,7 @@ func take_damage(amount: int, from_position: Vector2 = Vector2.INF) -> void:
 		return
 
 	current_hp = maxi(0, current_hp - amount)
+	_play_hurt_sfx()
 	_apply_hit_knockback(from_position)
 	_show_health_bar()
 	_update_health_bar()
@@ -293,15 +310,18 @@ func _start_death() -> void:
 	contact_damage_timer = 0.0
 	hurt_timer = 0.0
 	death_fallback_timer = _get_animation_duration(death_animation) + DEATH_FALLBACK_EXTRA_TIME
+	death_cleanup_started = false
 	_set_collision_enabled(false, true, false)
 	if health_bar != null:
 		health_bar.visible = false
+	DEATH_VFX.spawn_burst(self, global_position, DEATH_PARTICLE_COLOR, 18)
+	_play_victory_sfx()
 	if animated_sprite != null and animated_sprite.sprite_frames != null and animated_sprite.sprite_frames.has_animation(death_animation):
 		animated_sprite.sprite_frames.set_animation_loop(death_animation, false)
 	if _has_animation(death_animation):
 		_play_animation(death_animation)
 	else:
-		queue_free()
+		_finish_death_and_queue_free()
 	if not death_signal_emitted:
 		death_signal_emitted = true
 		defeated.emit()
@@ -419,8 +439,73 @@ func _on_animation_finished() -> void:
 		_recover_from_hurt()
 		return
 	if boss_state == BossState.DEAD and animated_sprite.animation == death_animation:
-		death_fallback_timer = -1.0
+		_finish_death_and_queue_free()
+
+
+func _finish_death_and_queue_free() -> void:
+	if death_cleanup_started:
+		return
+	death_cleanup_started = true
+	death_fallback_timer = -1.0
+	set_physics_process(false)
+
+	var fade_target: CanvasItem = animated_sprite
+	if fade_target == null:
+		fade_target = self
+	var fade_tween: Tween = DEATH_VFX.fade_out(self, fade_target, DEATH_FADE_DURATION)
+	if fade_tween != null:
+		fade_tween.finished.connect(Callable(self, "queue_free"))
+	else:
 		queue_free()
+
+
+func _play_victory_sfx() -> void:
+	if not ResourceLoader.exists(VICTORY_SFX_PATH):
+		return
+
+	var loaded_stream: Resource = load(VICTORY_SFX_PATH)
+	if not (loaded_stream is AudioStream):
+		return
+	_play_one_shot_sfx(loaded_stream as AudioStream, VICTORY_SFX_VOLUME_DB)
+
+
+func _setup_hurt_sfx() -> void:
+	if hurt_sfx_player != null:
+		return
+
+	hurt_sfx_player = AudioStreamPlayer.new()
+	hurt_sfx_player.name = "HurtSfx"
+	hurt_sfx_player.bus = "Master"
+	hurt_sfx_player.volume_db = HURT_SFX_VOLUME_DB
+	hurt_sfx_player.process_mode = Node.PROCESS_MODE_ALWAYS
+	hurt_sfx_player.stream = HURT_SFX_STREAM
+	add_child(hurt_sfx_player)
+
+
+func _play_hurt_sfx() -> void:
+	if hurt_sfx_player == null or hurt_sfx_player.stream == null:
+		return
+	hurt_sfx_player.stop()
+	hurt_sfx_player.play()
+
+
+func _play_one_shot_sfx(stream: AudioStream, volume_db: float) -> void:
+	if stream == null:
+		return
+	var current_scene: Node = get_tree().current_scene
+	if current_scene == null:
+		current_scene = get_tree().root
+	if current_scene == null:
+		return
+
+	var one_shot_player: AudioStreamPlayer = AudioStreamPlayer.new()
+	one_shot_player.bus = "Master"
+	one_shot_player.volume_db = volume_db
+	one_shot_player.process_mode = Node.PROCESS_MODE_ALWAYS
+	one_shot_player.stream = stream
+	current_scene.add_child(one_shot_player)
+	one_shot_player.finished.connect(Callable(one_shot_player, "queue_free"))
+	one_shot_player.play()
 
 
 func _play_animation(animation_name: StringName) -> void:

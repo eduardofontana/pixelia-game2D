@@ -26,6 +26,9 @@ const HURT_SFX_VOLUME_DB: float = -8.0
 const PLAYER_STRUCTURE_LAYER_MASK: int = 1
 const ENEMY_LAYER_MASK: int = 2
 const NON_PLAYER_COLLISION_REVERSE_COOLDOWN: float = 0.18
+const DEATH_PARTICLE_COLOR: Color = Color(0.7, 0.85, 1.0, 1.0)
+const DEATH_FADE_DURATION: float = 0.22
+const DEATH_VFX = preload("res://scripts/death_vfx.gd")
 
 @export var player_path: NodePath
 @export var max_hp: int = 85
@@ -72,6 +75,7 @@ var patrol_target: Vector2 = Vector2.ZERO
 var patrol_retarget_timer: float = 0.0
 var hurt_sfx_player: AudioStreamPlayer = null
 var non_player_reverse_timer: float = 0.0
+var is_dying: bool = false
 
 
 func _ready() -> void:
@@ -131,6 +135,8 @@ func _set_enemy_state(next_state: int) -> void:
 
 
 func take_damage(amount: int, from_position: Vector2 = Vector2.INF) -> void:
+	if is_dying:
+		return
 	if amount <= 0:
 		return
 
@@ -145,7 +151,23 @@ func take_damage(amount: int, from_position: Vector2 = Vector2.INF) -> void:
 
 
 func _handle_death() -> void:
-	queue_free()
+	if is_dying:
+		return
+	is_dying = true
+	velocity = Vector2.ZERO
+	_set_collision_enabled(false)
+	if health_bar != null:
+		health_bar.visible = false
+	set_physics_process(false)
+
+	var fade_target: CanvasItem = animated_sprite
+	if fade_target == null:
+		fade_target = self
+	var death_tween: Tween = DEATH_VFX.play_fade_and_burst(self, fade_target, global_position, DEATH_PARTICLE_COLOR, 12, DEATH_FADE_DURATION)
+	if death_tween != null:
+		death_tween.finished.connect(Callable(self, "queue_free"))
+	else:
+		queue_free()
 
 
 func _process_patrol(delta: float) -> void:

@@ -6,9 +6,13 @@ const STAMINA_BAR_WIDTH: float = 88.0
 const STAMINA_BAR_INSET: float = 1.0
 const STAMINA_SMOOTH_SPEED: float = 9.0
 const HUD_FONT_PATH: String = "res://fonts/Pixelia2D.ttf"
+const CONTROLS_HINT_VISIBLE_SECONDS: float = 10.0
+const CONTROLS_HINT_FADE_SECONDS: float = 0.35
 const MIN_VOLUME_DB: float = -40.0
 const MAX_VOLUME_DB: float = 3.0
 const VOLUME_STEP_DB: float = 2.0
+const MENU_CLICK_SFX_VOLUME_DB: float = -5.0
+const MENU_CLICK_SFX_STREAM: AudioStream = preload("res://sounds/click_double_off.wav")
 
 @onready var life_label: Label = get_node_or_null("MarginContainer/PanelContainer/VBox/LifeRow/LifeLabel")
 @onready var hp_label: Label = get_node_or_null("MarginContainer/PanelContainer/VBox/TopRow/HpLabel")
@@ -20,6 +24,7 @@ const VOLUME_STEP_DB: float = 2.0
 @onready var level_label: Label = get_node_or_null("MarginContainer/PanelContainer/VBox/InfoRow/LevelLabel")
 @onready var xp_label: Label = get_node_or_null("MarginContainer/PanelContainer/VBox/InfoRow/XpLabel")
 @onready var coins_label: Label = get_node_or_null("MarginContainer/PanelContainer/VBox/InfoRow/CoinsLabel")
+@onready var controls_hint_card: Control = get_node_or_null("ControlsHintCard")
 @onready var options_overlay: Control = get_node_or_null("OptionsOverlay")
 @onready var pause_volume_down_button: Button = get_node_or_null("OptionsOverlay/OptionsCard/OptionsVBox/VolumeControls/VolumeDownButton")
 @onready var pause_volume_up_button: Button = get_node_or_null("OptionsOverlay/OptionsCard/OptionsVBox/VolumeControls/VolumeUpButton")
@@ -54,6 +59,7 @@ func _ready() -> void:
 	hud_nodes_ready = true
 
 	_apply_hud_font()
+	_setup_controls_hint_card()
 	_setup_sprint_fill_style()
 	_setup_pause_options_menu()
 
@@ -289,6 +295,12 @@ func _apply_hud_font() -> void:
 	var pause_volume_label: Label = get_node_or_null("OptionsOverlay/OptionsCard/OptionsVBox/VolumeLabel")
 	if pause_volume_label != null:
 		pause_volume_label.add_theme_font_override("font", hud_font)
+	var controls_hint_root: Node = get_node_or_null("ControlsHintCard")
+	if controls_hint_root != null:
+		for label_node in controls_hint_root.find_children("*", "Label", true, false):
+			var hint_label: Label = label_node as Label
+			if hint_label != null:
+				hint_label.add_theme_font_override("font", hud_font)
 
 
 func _setup_sprint_fill_style() -> void:
@@ -301,6 +313,21 @@ func _setup_sprint_fill_style() -> void:
 
 	stamina_fill_style = (panel_style as StyleBoxFlat).duplicate() as StyleBoxFlat
 	stamina_bar_fill.add_theme_stylebox_override("panel", stamina_fill_style)
+
+
+func _setup_controls_hint_card() -> void:
+	if controls_hint_card == null:
+		return
+	controls_hint_card.visible = true
+	controls_hint_card.modulate = Color(1, 1, 1, 1)
+
+	var hint_tween: Tween = create_tween()
+	hint_tween.tween_interval(maxf(0.1, CONTROLS_HINT_VISIBLE_SECONDS))
+	hint_tween.tween_property(controls_hint_card, "modulate", Color(1, 1, 1, 0), maxf(0.05, CONTROLS_HINT_FADE_SECONDS))
+	hint_tween.tween_callback(func() -> void:
+		if controls_hint_card != null:
+			controls_hint_card.visible = false
+	)
 
 
 func _setup_pause_options_menu() -> void:
@@ -360,20 +387,24 @@ func _close_options_overlay() -> void:
 
 
 func _on_pause_resume_pressed() -> void:
+	_play_menu_click_sfx()
 	_close_options_overlay()
 
 
 func _on_pause_exit_pressed() -> void:
+	_play_menu_click_sfx()
 	get_tree().quit()
 
 
 func _on_pause_volume_down_pressed() -> void:
+	_play_menu_click_sfx()
 	if pause_volume_slider == null:
 		return
 	_apply_pause_volume_db(pause_volume_slider.value - VOLUME_STEP_DB)
 
 
 func _on_pause_volume_up_pressed() -> void:
+	_play_menu_click_sfx()
 	if pause_volume_slider == null:
 		return
 	_apply_pause_volume_db(pause_volume_slider.value + VOLUME_STEP_DB)
@@ -412,3 +443,19 @@ func _update_coin_label() -> void:
 	if coins_label == null:
 		return
 	coins_label.text = "Coins: %d" % coin_count
+
+
+func _play_menu_click_sfx() -> void:
+	if MENU_CLICK_SFX_STREAM == null:
+		return
+	var root_node: Node = get_tree().root
+	if root_node == null:
+		return
+	var click_player: AudioStreamPlayer = AudioStreamPlayer.new()
+	click_player.bus = "Master"
+	click_player.volume_db = MENU_CLICK_SFX_VOLUME_DB
+	click_player.process_mode = Node.PROCESS_MODE_ALWAYS
+	click_player.stream = MENU_CLICK_SFX_STREAM
+	root_node.add_child(click_player)
+	click_player.finished.connect(Callable(click_player, "queue_free"))
+	click_player.play()
