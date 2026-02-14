@@ -452,7 +452,7 @@ func _play_menu_click_sfx() -> void:
 	if root_node == null:
 		return
 	var click_player: AudioStreamPlayer = AudioStreamPlayer.new()
-	click_player.bus = "Master"
+	click_player.bus = "SFX"
 	click_player.volume_db = MENU_CLICK_SFX_VOLUME_DB
 	click_player.process_mode = Node.PROCESS_MODE_ALWAYS
 	click_player.stream = MENU_CLICK_SFX_STREAM

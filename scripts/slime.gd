@@ -530,7 +530,7 @@ func _setup_hurt_sfx() -> void:
 
 	hurt_sfx_player = AudioStreamPlayer.new()
 	hurt_sfx_player.name = "HurtSfx"
-	hurt_sfx_player.bus = "Master"
+	hurt_sfx_player.bus = "SFX"
 	hurt_sfx_player.volume_db = HURT_SFX_VOLUME_DB
 	add_child(hurt_sfx_player)
 

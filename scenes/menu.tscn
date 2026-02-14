@@ -1,10 +1,14 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://ch51ctf01esd0"]
 
-[ext_resource type="PackedScene" path="res://scenes/background.tscn" id="1_bg"]
-[ext_resource type="Script" path="res://scripts/menu.gd" id="2_menu"]
-[ext_resource type="AudioStream" path="res://sounds/Misery_Loves.wav" id="3_bgm"]
+[ext_resource type="PackedScene" uid="uid://dcs8a1xffle86" path="res://scenes/background.tscn" id="1_bg"]
+[ext_resource type="Script" uid="uid://58wu8votqaa" path="res://scripts/menu.gd" id="2_menu"]
+[ext_resource type="AudioStream" uid="uid://d05d7eh5krfcw" path="res://sounds/Misery_Loves.wav" id="3_bgm"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_card"]
+content_margin_left = 20.0
+content_margin_top = 18.0
+content_margin_right = 20.0
+content_margin_bottom = 18.0
 bg_color = Color(0.04, 0.06, 0.1, 0.76)
 border_width_left = 2
 border_width_top = 2
@@ -18,10 +22,6 @@ corner_radius_bottom_left = 14
 shadow_color = Color(0, 0, 0, 0.54)
 shadow_size = 9
 shadow_offset = Vector2(0, 5)
-content_margin_left = 20.0
-content_margin_top = 18.0
-content_margin_right = 20.0
-content_margin_bottom = 18.0
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_button_normal"]
 bg_color = Color(0.15, 0.17, 0.22, 0.92)
@@ -30,18 +30,6 @@ border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
 border_color = Color(0.7, 0.56, 0.36, 0.5)
-corner_radius_top_left = 8
-corner_radius_top_right = 8
-corner_radius_bottom_right = 8
-corner_radius_bottom_left = 8
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_button_hover"]
-bg_color = Color(0.2, 0.22, 0.28, 0.95)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.94, 0.78, 0.48, 0.8)
 corner_radius_top_left = 8
 corner_radius_top_right = 8
 corner_radius_bottom_right = 8
@@ -59,20 +47,32 @@ corner_radius_top_right = 8
 corner_radius_bottom_right = 8
 corner_radius_bottom_left = 8
 
-[node name="Menu" type="Node2D"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_button_hover"]
+bg_color = Color(0.2, 0.22, 0.28, 0.95)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.94, 0.78, 0.48, 0.8)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[node name="Menu" type="Node2D" unique_id=247416156]
 script = ExtResource("2_menu")
 
-[node name="Background" parent="." instance=ExtResource("1_bg")]
+[node name="Background" parent="." unique_id=1864645295 instance=ExtResource("1_bg")]
 
-[node name="BGM" type="AudioStreamPlayer" parent="."]
+[node name="BGM" type="AudioStreamPlayer" parent="." unique_id=1107130432]
 stream = ExtResource("3_bgm")
 volume_db = -8.0
-autoplay = true
+autoplay = false
 
-[node name="UILayer" type="CanvasLayer" parent="."]
-layer = 40
+[node name="UILayer" type="CanvasLayer" parent="." unique_id=790312403]
 
-[node name="MenuCard" type="PanelContainer" parent="UILayer"]
+[node name="MenuCard" type="PanelContainer" parent="UILayer" unique_id=2084298377]
+anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
@@ -83,138 +83,230 @@ offset_right = 188.0
 offset_bottom = 52.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_card")
 
-[node name="MenuVBox" type="VBoxContainer" parent="UILayer/MenuCard"]
+[node name="MenuVBox" type="VBoxContainer" parent="UILayer/MenuCard" unique_id=242277735]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="TitleLabel" type="Label" parent="UILayer/MenuCard/MenuVBox"]
+[node name="TitleLabel" type="Label" parent="UILayer/MenuCard/MenuVBox" unique_id=2146438358]
 layout_mode = 2
-theme_override_font_sizes/font_size = 58
-theme_override_constants/outline_size = 4
 theme_override_colors/font_color = Color(0.97, 0.92, 0.86, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 0.9)
-horizontal_alignment = 1
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 58
 text = "PIXELIA"
+horizontal_alignment = 1
 
-[node name="SkullLabel" type="Label" parent="UILayer/MenuCard/MenuVBox"]
+[node name="SkullLabel" type="Label" parent="UILayer/MenuCard/MenuVBox" unique_id=1875476362]
 layout_mode = 2
-theme_override_font_sizes/font_size = 30
 theme_override_colors/font_color = Color(0.93, 0.88, 0.88, 1)
-horizontal_alignment = 1
+theme_override_font_sizes/font_size = 30
 text = "*"
-
-[node name="SubtitleLabel" type="Label" parent="UILayer/MenuCard/MenuVBox"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 20
-theme_override_colors/font_color = Color(0.9, 0.82, 0.72, 0.97)
 horizontal_alignment = 1
-text = "Noite Eterna"
 
-[node name="PlayButton" type="Button" parent="UILayer/MenuCard/MenuVBox"]
+[node name="SubtitleLabel" type="Label" parent="UILayer/MenuCard/MenuVBox" unique_id=1961205291]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.82, 0.72, 0.97)
+theme_override_font_sizes/font_size = 20
+text = "Noite Eterna"
+horizontal_alignment = 1
+
+[node name="SubtitleBottomSpacer" type="Control" parent="UILayer/MenuCard/MenuVBox" unique_id=1130686290]
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+
+[node name="PlayButton" type="Button" parent="UILayer/MenuCard/MenuVBox" unique_id=1305809533]
 custom_minimum_size = Vector2(0, 40)
 layout_mode = 2
-theme_override_font_sizes/font_size = 24
 theme_override_colors/font_color = Color(0.98, 0.94, 0.87, 1)
+theme_override_font_sizes/font_size = 24
 theme_override_styles/normal = SubResource("StyleBoxFlat_button_normal")
-theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
 text = "Jogar"
 
-[node name="OptionsButton" type="Button" parent="UILayer/MenuCard/MenuVBox"]
+[node name="OptionsButton" type="Button" parent="UILayer/MenuCard/MenuVBox" unique_id=1424158106]
 custom_minimum_size = Vector2(0, 40)
 layout_mode = 2
-theme_override_font_sizes/font_size = 24
 theme_override_colors/font_color = Color(0.98, 0.94, 0.87, 1)
+theme_override_font_sizes/font_size = 24
 theme_override_styles/normal = SubResource("StyleBoxFlat_button_normal")
-theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
 text = "Opcoes"
 
-[node name="QuitButton" type="Button" parent="UILayer/MenuCard/MenuVBox"]
+[node name="QuitButton" type="Button" parent="UILayer/MenuCard/MenuVBox" unique_id=2130959465]
 custom_minimum_size = Vector2(0, 40)
 layout_mode = 2
-theme_override_font_sizes/font_size = 24
 theme_override_colors/font_color = Color(0.98, 0.94, 0.87, 1)
+theme_override_font_sizes/font_size = 24
 theme_override_styles/normal = SubResource("StyleBoxFlat_button_normal")
-theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
 text = "Sair"
 
-[node name="OptionsCard" type="PanelContainer" parent="UILayer"]
+[node name="OptionsCard" type="PanelContainer" parent="UILayer" unique_id=1187332463]
 visible = false
+anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -210.0
-offset_top = -142.0
+offset_top = -230.0
 offset_right = 210.0
-offset_bottom = 142.0
+offset_bottom = 230.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_card")
 
-[node name="OptionsVBox" type="VBoxContainer" parent="UILayer/OptionsCard"]
+[node name="OptionsVBox" type="VBoxContainer" parent="UILayer/OptionsCard" unique_id=1623504046]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="OptionsTitleLabel" type="Label" parent="UILayer/OptionsCard/OptionsVBox"]
+[node name="OptionsTitleLabel" type="Label" parent="UILayer/OptionsCard/OptionsVBox" unique_id=1140112639]
 layout_mode = 2
-theme_override_font_sizes/font_size = 46
-theme_override_constants/outline_size = 4
 theme_override_colors/font_color = Color(0.95, 0.9, 0.84, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 0.9)
-horizontal_alignment = 1
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 46
 text = "Opcoes"
+horizontal_alignment = 1
 
-[node name="VolumeRow" type="HBoxContainer" parent="UILayer/OptionsCard/OptionsVBox"]
+[node name="MusicRow" type="HBoxContainer" parent="UILayer/OptionsCard/OptionsVBox" unique_id=780240193]
 layout_mode = 2
 alignment = 1
 
-[node name="VolumeLabel" type="Label" parent="UILayer/OptionsCard/OptionsVBox/VolumeRow"]
+[node name="MusicLabel" type="Label" parent="UILayer/OptionsCard/OptionsVBox/MusicRow" unique_id=1104121551]
 layout_mode = 2
-theme_override_font_sizes/font_size = 22
 theme_override_colors/font_color = Color(0.9, 0.84, 0.75, 1)
-text = "Volume Mestre"
+theme_override_font_sizes/font_size = 22
+text = "Volume Musica"
 
-[node name="VolumeControls" type="HBoxContainer" parent="UILayer/OptionsCard/OptionsVBox"]
+[node name="MusicControls" type="HBoxContainer" parent="UILayer/OptionsCard/OptionsVBox" unique_id=174655626]
 layout_mode = 2
 theme_override_constants/separation = 8
 alignment = 1
 
-[node name="VolumeDownButton" type="Button" parent="UILayer/OptionsCard/OptionsVBox/VolumeControls"]
+[node name="MusicDownButton" type="Button" parent="UILayer/OptionsCard/OptionsVBox/MusicControls" unique_id=2172984]
 custom_minimum_size = Vector2(46, 34)
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 theme_override_styles/normal = SubResource("StyleBoxFlat_button_normal")
-theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
 text = "-"
 
-[node name="VolumeSlider" type="HSlider" parent="UILayer/OptionsCard/OptionsVBox/VolumeControls"]
+[node name="MusicSlider" type="HSlider" parent="UILayer/OptionsCard/OptionsVBox/MusicControls" unique_id=1399112604]
 custom_minimum_size = Vector2(210, 34)
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="VolumeUpButton" type="Button" parent="UILayer/OptionsCard/OptionsVBox/VolumeControls"]
+[node name="MusicUpButton" type="Button" parent="UILayer/OptionsCard/OptionsVBox/MusicControls" unique_id=1151781943]
 custom_minimum_size = Vector2(46, 34)
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 theme_override_styles/normal = SubResource("StyleBoxFlat_button_normal")
-theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
 text = "+"
 
-[node name="VolumeValueLabel" type="Label" parent="UILayer/OptionsCard/OptionsVBox"]
+[node name="MusicValueLabel" type="Label" parent="UILayer/OptionsCard/OptionsVBox" unique_id=583262585]
 layout_mode = 2
-theme_override_font_sizes/font_size = 22
 theme_override_colors/font_color = Color(0.87, 0.92, 1, 1)
+theme_override_font_sizes/font_size = 22
+text = "Musica: 100%"
 horizontal_alignment = 1
-text = "Volume: 100%"
 
-[node name="BackButton" type="Button" parent="UILayer/OptionsCard/OptionsVBox"]
+[node name="SfxRow" type="HBoxContainer" parent="UILayer/OptionsCard/OptionsVBox"]
+layout_mode = 2
+alignment = 1
+
+[node name="SfxLabel" type="Label" parent="UILayer/OptionsCard/OptionsVBox/SfxRow"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.84, 0.75, 1)
+theme_override_font_sizes/font_size = 22
+text = "Volume Efeitos"
+
+[node name="SfxControls" type="HBoxContainer" parent="UILayer/OptionsCard/OptionsVBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="SfxDownButton" type="Button" parent="UILayer/OptionsCard/OptionsVBox/SfxControls"]
+custom_minimum_size = Vector2(46, 34)
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+theme_override_styles/normal = SubResource("StyleBoxFlat_button_normal")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
+text = "-"
+
+[node name="SfxSlider" type="HSlider" parent="UILayer/OptionsCard/OptionsVBox/SfxControls"]
+custom_minimum_size = Vector2(210, 34)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="SfxUpButton" type="Button" parent="UILayer/OptionsCard/OptionsVBox/SfxControls"]
+custom_minimum_size = Vector2(46, 34)
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+theme_override_styles/normal = SubResource("StyleBoxFlat_button_normal")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
+text = "+"
+
+[node name="SfxValueLabel" type="Label" parent="UILayer/OptionsCard/OptionsVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.87, 0.92, 1, 1)
+theme_override_font_sizes/font_size = 22
+text = "Efeitos: 100%"
+horizontal_alignment = 1
+
+[node name="FullscreenRow" type="HBoxContainer" parent="UILayer/OptionsCard/OptionsVBox"]
+layout_mode = 2
+alignment = 1
+
+[node name="FullscreenLabel" type="Label" parent="UILayer/OptionsCard/OptionsVBox/FullscreenRow"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.84, 0.75, 1)
+theme_override_font_sizes/font_size = 22
+text = "Tela Cheia"
+
+[node name="FullscreenButton" type="Button" parent="UILayer/OptionsCard/OptionsVBox/FullscreenRow"]
+custom_minimum_size = Vector2(124, 34)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("StyleBoxFlat_button_normal")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
+text = "Desligado"
+
+[node name="VSyncRow" type="HBoxContainer" parent="UILayer/OptionsCard/OptionsVBox"]
+layout_mode = 2
+alignment = 1
+
+[node name="VSyncLabel" type="Label" parent="UILayer/OptionsCard/OptionsVBox/VSyncRow"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.84, 0.75, 1)
+theme_override_font_sizes/font_size = 22
+text = "V-Sync"
+
+[node name="VSyncButton" type="Button" parent="UILayer/OptionsCard/OptionsVBox/VSyncRow"]
+custom_minimum_size = Vector2(124, 34)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("StyleBoxFlat_button_normal")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
+text = "Ligado"
+
+[node name="BottomSpacer" type="Control" parent="UILayer/OptionsCard/OptionsVBox"]
+custom_minimum_size = Vector2(0, 4)
+layout_mode = 2
+
+[node name="BackButton" type="Button" parent="UILayer/OptionsCard/OptionsVBox" unique_id=264850680]
 custom_minimum_size = Vector2(0, 42)
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 theme_override_styles/normal = SubResource("StyleBoxFlat_button_normal")
-theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
 text = "Retornar"

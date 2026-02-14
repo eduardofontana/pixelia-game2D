@@ -456,7 +456,7 @@ func _setup_audio_players() -> void:
 	if injured_sfx_player == null:
 		injured_sfx_player = AudioStreamPlayer.new()
 		injured_sfx_player.name = "InjuredSfx"
-		injured_sfx_player.bus = "Master"
+		injured_sfx_player.bus = "SFX"
 		injured_sfx_player.volume_db = INJURED_SFX_VOLUME_DB
 		injured_sfx_player.process_mode = Node.PROCESS_MODE_ALWAYS
 		add_child(injured_sfx_player)
@@ -465,7 +465,7 @@ func _setup_audio_players() -> void:
 	if alive_loop_sfx_player == null:
 		alive_loop_sfx_player = AudioStreamPlayer.new()
 		alive_loop_sfx_player.name = "AliveLoopSfx"
-		alive_loop_sfx_player.bus = "Master"
+		alive_loop_sfx_player.bus = "Music"
 		alive_loop_sfx_player.volume_db = ALIVE_LOOP_SFX_VOLUME_DB
 		alive_loop_sfx_player.process_mode = Node.PROCESS_MODE_ALWAYS
 		add_child(alive_loop_sfx_player)
@@ -503,7 +503,7 @@ func _play_one_shot_sfx(stream: AudioStream, volume_db: float) -> void:
 	if current_scene == null:
 		return
 	var one_shot_player := AudioStreamPlayer.new()
-	one_shot_player.bus = "Master"
+	one_shot_player.bus = "SFX"
 	one_shot_player.volume_db = volume_db
 	one_shot_player.process_mode = Node.PROCESS_MODE_ALWAYS
 	one_shot_player.stream = stream

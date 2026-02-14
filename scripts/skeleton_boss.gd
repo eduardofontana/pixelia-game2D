@@ -475,7 +475,7 @@ func _setup_hurt_sfx() -> void:
 
 	hurt_sfx_player = AudioStreamPlayer.new()
 	hurt_sfx_player.name = "HurtSfx"
-	hurt_sfx_player.bus = "Master"
+	hurt_sfx_player.bus = "SFX"
 	hurt_sfx_player.volume_db = HURT_SFX_VOLUME_DB
 	hurt_sfx_player.process_mode = Node.PROCESS_MODE_ALWAYS
 	hurt_sfx_player.stream = HURT_SFX_STREAM
@@ -499,7 +499,7 @@ func _play_one_shot_sfx(stream: AudioStream, volume_db: float) -> void:
 		return
 
 	var one_shot_player: AudioStreamPlayer = AudioStreamPlayer.new()
-	one_shot_player.bus = "Master"
+	one_shot_player.bus = "SFX"
 	one_shot_player.volume_db = volume_db
 	one_shot_player.process_mode = Node.PROCESS_MODE_ALWAYS
 	one_shot_player.stream = stream

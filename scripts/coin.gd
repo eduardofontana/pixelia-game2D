@@ -74,7 +74,7 @@ func _play_collect_sfx() -> void:
 		return
 
 	var sfx_player: AudioStreamPlayer = AudioStreamPlayer.new()
-	sfx_player.bus = "Master"
+	sfx_player.bus = "SFX"
 	sfx_player.volume_db = COLLECT_SFX_VOLUME_DB
 	sfx_player.stream = loaded_stream as AudioStream
 	current_scene.add_child(sfx_player)

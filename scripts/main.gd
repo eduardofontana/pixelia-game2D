@@ -49,6 +49,9 @@ const DIALOG_BOSS_FIRST_APPROACH: String = "Mais que coisa assustadora ! Deve se
 const DIALOG_BOSS_PLAYER_WON: String = "F\u00e1cil Demais ! N\u00e3o compensa !"
 const DIALOG_BOSS_PLAYER_DIED_TAUNT: String = "Voc\u00ea n\u00e3o foi forte o suficiente !"
 const BOSS_DIALOG_TRIGGER_DISTANCE: float = 210.0
+const BUS_MASTER: StringName = &"Master"
+const BUS_MUSIC: StringName = &"Music"
+const BUS_SFX: StringName = &"SFX"
 
 @onready var bgm_player: AudioStreamPlayer = get_node_or_null("BGM") as AudioStreamPlayer
 @onready var hud_layer: CanvasLayer = get_node_or_null("HUD") as CanvasLayer
@@ -87,6 +90,7 @@ var saw_boss_approach_once: bool = false
 func _ready() -> void:
 	Engine.time_scale = 1.0
 	randomize()
+	_ensure_audio_buses()
 	_ensure_hud_layer()
 	_validate_main_root_nodes()
 	_setup_victory_overlay()
@@ -99,6 +103,7 @@ func _ready() -> void:
 	_configure_player_void_fov()
 
 	if is_instance_valid(bgm_player):
+		bgm_player.bus = BUS_MUSIC
 		bgm_player.process_mode = Node.PROCESS_MODE_ALWAYS
 		_connect_signal_once(bgm_player, &"finished", Callable(self, "_on_bgm_finished"))
 		if not bgm_player.playing:
@@ -158,6 +163,24 @@ func _connect_signal_once(emitter: Object, signal_name: StringName, callback: Ca
 	if emitter.is_connected(signal_name, callback):
 		return
 	emitter.connect(signal_name, callback)
+
+
+func _ensure_audio_buses() -> void:
+	var master_index: int = AudioServer.get_bus_index(BUS_MASTER)
+	if master_index < 0:
+		return
+	_ensure_audio_bus_exists(BUS_MUSIC, master_index)
+	_ensure_audio_bus_exists(BUS_SFX, master_index)
+
+
+func _ensure_audio_bus_exists(bus_name: StringName, send_bus_index: int) -> void:
+	if AudioServer.get_bus_index(bus_name) >= 0:
+		return
+	var new_bus_index: int = AudioServer.get_bus_count()
+	AudioServer.add_bus(new_bus_index)
+	AudioServer.set_bus_name(new_bus_index, bus_name)
+	var send_bus_name: StringName = AudioServer.get_bus_name(send_bus_index)
+	AudioServer.set_bus_send(new_bus_index, send_bus_name)
 
 
 func _physics_process(_delta: float) -> void:

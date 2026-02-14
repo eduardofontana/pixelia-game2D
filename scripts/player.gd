@@ -1828,7 +1828,7 @@ func _setup_death_sfx() -> void:
 
 	death_sfx_player = AudioStreamPlayer.new()
 	death_sfx_player.name = "DeathSfx"
-	death_sfx_player.bus = "Master"
+	death_sfx_player.bus = "SFX"
 	death_sfx_player.volume_db = DEATH_SFX_VOLUME_DB
 	add_child(death_sfx_player)
 
@@ -1844,7 +1844,7 @@ func _setup_death_intro_sfx() -> void:
 
 	death_intro_sfx_player = AudioStreamPlayer.new()
 	death_intro_sfx_player.name = "DeathIntroSfx"
-	death_intro_sfx_player.bus = "Master"
+	death_intro_sfx_player.bus = "SFX"
 	death_intro_sfx_player.volume_db = DEATH_INTRO_SFX_VOLUME_DB
 	add_child(death_intro_sfx_player)
 
@@ -1874,7 +1874,7 @@ func _setup_countdown_sfx() -> void:
 
 	death_countdown_sfx_player = AudioStreamPlayer.new()
 	death_countdown_sfx_player.name = "DeathCountdownSfx"
-	death_countdown_sfx_player.bus = "Master"
+	death_countdown_sfx_player.bus = "SFX"
 	death_countdown_sfx_player.volume_db = DEATH_COUNTDOWN_SFX_VOLUME_DB
 	add_child(death_countdown_sfx_player)
 
@@ -1900,7 +1900,7 @@ func _setup_hurt_sfx() -> void:
 
 	hurt_sfx_player = AudioStreamPlayer.new()
 	hurt_sfx_player.name = "HurtSfx"
-	hurt_sfx_player.bus = "Master"
+	hurt_sfx_player.bus = "SFX"
 	hurt_sfx_player.volume_db = HURT_SFX_VOLUME_DB
 	add_child(hurt_sfx_player)
 
@@ -1916,7 +1916,7 @@ func _setup_jump_sfx() -> void:
 
 	jump_sfx_player = AudioStreamPlayer.new()
 	jump_sfx_player.name = "JumpSfx"
-	jump_sfx_player.bus = "Master"
+	jump_sfx_player.bus = "SFX"
 	jump_sfx_player.volume_db = JUMP_SFX_VOLUME_DB
 	add_child(jump_sfx_player)
 
