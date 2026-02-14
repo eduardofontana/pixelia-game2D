@@ -87,8 +87,7 @@ var saw_boss_approach_once: bool = false
 func _ready() -> void:
 	Engine.time_scale = 1.0
 	randomize()
-	if hud_layer == null:
-		hud_layer = _resolve_hud_layer()
+	_ensure_hud_layer()
 	_validate_main_root_nodes()
 	_setup_victory_overlay()
 	_setup_boss_hud()
@@ -101,8 +100,7 @@ func _ready() -> void:
 
 	if is_instance_valid(bgm_player):
 		bgm_player.process_mode = Node.PROCESS_MODE_ALWAYS
-		if not bgm_player.is_connected("finished", Callable(self, "_on_bgm_finished")):
-			bgm_player.finished.connect(_on_bgm_finished)
+		_connect_signal_once(bgm_player, &"finished", Callable(self, "_on_bgm_finished"))
 		if not bgm_player.playing:
 			bgm_player.play()
 
@@ -117,8 +115,7 @@ func _ready() -> void:
 func _validate_main_root_nodes() -> void:
 	if player_ref == null:
 		push_warning("Main: node 'Player' nao encontrado no no raiz.")
-	if hud_layer == null:
-		hud_layer = _resolve_hud_layer()
+	_ensure_hud_layer()
 	if hud_layer == null:
 		push_warning("Main: node 'HUD' nao encontrado no no raiz.")
 	if bgm_player == null:
@@ -148,6 +145,21 @@ func _resolve_hud_layer() -> CanvasLayer:
 	return null
 
 
+func _ensure_hud_layer() -> void:
+	if hud_layer == null:
+		hud_layer = _resolve_hud_layer()
+
+
+func _connect_signal_once(emitter: Object, signal_name: StringName, callback: Callable) -> void:
+	if emitter == null:
+		return
+	if not emitter.has_signal(signal_name):
+		return
+	if emitter.is_connected(signal_name, callback):
+		return
+	emitter.connect(signal_name, callback)
+
+
 func _physics_process(_delta: float) -> void:
 	_process_enemy_first_seen_dialogs()
 	_process_boss_proximity_dialog()
@@ -162,9 +174,7 @@ func _bind_level_portal() -> void:
 	if level_portal == null:
 		return
 
-	var callback: Callable = Callable(self, "_on_level_portal_body_entered")
-	if not level_portal.is_connected("body_entered", callback):
-		level_portal.body_entered.connect(_on_level_portal_body_entered)
+	_connect_signal_once(level_portal, &"body_entered", Callable(self, "_on_level_portal_body_entered"))
 
 
 func _on_level_portal_body_entered(body: Node2D) -> void:
@@ -549,12 +559,9 @@ func _apply_pickup_ordering(pickup: Area2D) -> void:
 
 func _bind_collectible_coins() -> void:
 	var coin_nodes: Array[Node] = get_tree().get_nodes_in_group("collectible_coin")
+	var callback: Callable = Callable(self, "_on_coin_collected")
 	for coin_node in coin_nodes:
-		if not coin_node.has_signal("collected"):
-			continue
-		var callback: Callable = Callable(self, "_on_coin_collected")
-		if not coin_node.is_connected("collected", callback):
-			coin_node.connect("collected", callback)
+		_connect_signal_once(coin_node, &"collected", callback)
 
 
 func _cache_coin_spawn_snapshots() -> void:
@@ -633,6 +640,7 @@ func _on_coin_collected(amount: int) -> void:
 
 
 func _update_hud_coin_count() -> void:
+	_ensure_hud_layer()
 	if hud_layer == null:
 		return
 	if hud_layer.has_method("set_coin_count"):
@@ -642,9 +650,7 @@ func _update_hud_coin_count() -> void:
 func _bind_map_gold_item() -> void:
 	if map_gold_item == null:
 		return
-	var callback: Callable = Callable(self, "_on_map_gold_body_entered")
-	if not map_gold_item.is_connected("body_entered", callback):
-		map_gold_item.body_entered.connect(_on_map_gold_body_entered)
+	_connect_signal_once(map_gold_item, &"body_entered", Callable(self, "_on_map_gold_body_entered"))
 
 
 func _on_map_gold_body_entered(body: Node2D) -> void:
@@ -668,14 +674,8 @@ func _bind_boss() -> void:
 	if boss_ref == null:
 		_set_boss_hud_visible(false)
 		return
-	if boss_ref.has_signal("defeated"):
-		var callback: Callable = Callable(self, "_on_boss_defeated")
-		if not boss_ref.is_connected("defeated", callback):
-			boss_ref.connect("defeated", callback)
-	if boss_ref.has_signal("health_changed"):
-		var hp_callback: Callable = Callable(self, "_on_boss_health_changed")
-		if not boss_ref.is_connected("health_changed", hp_callback):
-			boss_ref.connect("health_changed", hp_callback)
+	_connect_signal_once(boss_ref, &"defeated", Callable(self, "_on_boss_defeated"))
+	_connect_signal_once(boss_ref, &"health_changed", Callable(self, "_on_boss_health_changed"))
 	if boss_ref.has_method("set_boss_active"):
 		boss_ref.call("set_boss_active", false)
 	else:
@@ -689,15 +689,8 @@ func _bind_player_lifecycle() -> void:
 	if player_ref == null:
 		return
 
-	if player_ref.has_signal("died"):
-		var died_callback: Callable = Callable(self, "_on_player_died")
-		if not player_ref.is_connected("died", died_callback):
-			player_ref.connect("died", died_callback)
-
-	if player_ref.has_signal("respawned"):
-		var respawn_callback: Callable = Callable(self, "_on_player_respawned")
-		if not player_ref.is_connected("respawned", respawn_callback):
-			player_ref.connect("respawned", respawn_callback)
+	_connect_signal_once(player_ref, &"died", Callable(self, "_on_player_died"))
+	_connect_signal_once(player_ref, &"respawned", Callable(self, "_on_player_respawned"))
 
 
 func _spawn_boss_for_battle() -> void:

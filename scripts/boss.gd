@@ -602,9 +602,6 @@ func _resolve_damage_area() -> Area2D:
 	var preferred_area: Area2D = get_node_or_null("DamageArea") as Area2D
 	if preferred_area != null:
 		return preferred_area
-	var legacy_area: Area2D = get_node_or_null("DamagedArea") as Area2D
-	if legacy_area != null:
-		return legacy_area
 	for child in get_children():
 		var area_child: Area2D = child as Area2D
 		if area_child == null:

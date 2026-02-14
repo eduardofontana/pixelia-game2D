@@ -41,6 +41,7 @@ var master_bus_index: int = -1
 var coin_count: int = 0
 var hp_hearts: Array[CanvasItem] = []
 var life_hearts: Array[CanvasItem] = []
+var hud_nodes_ready: bool = false
 
 
 func _ready() -> void:
@@ -50,6 +51,7 @@ func _ready() -> void:
 
 	if not _has_required_nodes():
 		return
+	hud_nodes_ready = true
 
 	_apply_hud_font()
 	_setup_sprint_fill_style()
@@ -81,7 +83,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _process(delta: float) -> void:
-	if not _has_required_nodes():
+	if not hud_nodes_ready:
 		return
 
 	# Suaviza a leitura visual da stamina para evitar "saltos" bruscos no HUD.
