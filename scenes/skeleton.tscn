@@ -2,30 +2,10 @@
 
 [ext_resource type="Texture2D" uid="uid://c4bxucbukatcq" path="res://sprites/skeleton/skeleton-idle.png" id="1_pbvs3"]
 [ext_resource type="Texture2D" uid="uid://d2dvaacf8bxap" path="res://sprites/skeleton/skeleton-walk.png" id="2_txkty"]
-[ext_resource type="Script" path="res://scripts/skeleton.gd" id="3_enemy"]
+[ext_resource type="Script" uid="uid://db7xacnq1opsa" path="res://scripts/skeleton.gd" id="3_enemy"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_txkty"]
 size = Vector2(19, 30)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_attack"]
-size = Vector2(24, 22)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_contact"]
-size = Vector2(18, 28)
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_health_bg"]
-bg_color = Color(0, 0, 0, 0.72)
-corner_radius_top_left = 2
-corner_radius_top_right = 2
-corner_radius_bottom_right = 2
-corner_radius_bottom_left = 2
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_health_fill"]
-bg_color = Color(0.24, 0.86, 0.44, 0.95)
-corner_radius_top_left = 2
-corner_radius_top_right = 2
-corner_radius_bottom_right = 2
-corner_radius_bottom_left = 2
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_ivqcw"]
 atlas = ExtResource("1_pbvs3")
@@ -124,11 +104,28 @@ animations = [{
 "speed": 5.0
 }]
 
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_contact"]
+size = Vector2(22, 31)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_health_bg"]
+bg_color = Color(0, 0, 0, 0.72)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_health_fill"]
+bg_color = Color(0.24, 0.86, 0.44, 0.95)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
 [node name="CharacterBody2D" type="CharacterBody2D" unique_id=384193401]
-script = ExtResource("3_enemy")
+z_index = 10
 floor_constant_speed = true
 floor_snap_length = 6.0
-z_index = 10
+script = ExtResource("3_enemy")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=795360315]
 position = Vector2(-0.5, 3)
@@ -140,52 +137,41 @@ sprite_frames = SubResource("SpriteFrames_w4hcs")
 animation = &"idle"
 autoplay = "idle"
 
-[node name="ContactArea" type="Area2D" parent="."]
+[node name="ContactArea" type="Area2D" parent="." unique_id=1234655652]
 collision_layer = 0
-collision_mask = 1
-monitoring = true
 monitorable = false
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="ContactArea"]
-position = Vector2(-0.5, 3)
+[node name="CollisionShape2D" type="CollisionShape2D" parent="ContactArea" unique_id=1036723555]
+position = Vector2(0, 2.5)
 shape = SubResource("RectangleShape2D_contact")
 
-[node name="AttackArea" type="Area2D" parent="."]
-collision_layer = 0
-collision_mask = 1
-monitoring = true
-monitorable = false
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="AttackArea"]
-position = Vector2(14, 1)
-shape = SubResource("RectangleShape2D_attack")
-
-[node name="HealthBar" type="Node2D" parent="."]
-position = Vector2(-14, -24)
+[node name="HealthBar" type="Node2D" parent="." unique_id=215433924]
 visible = false
 z_index = 5
+position = Vector2(-14, -24)
 
-[node name="Bg" type="Panel" parent="HealthBar"]
+[node name="Bg" type="Panel" parent="HealthBar" unique_id=1036993149]
 offset_right = 28.0
 offset_bottom = 4.0
+mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_health_bg")
-mouse_filter = 2
 
-[node name="Fill" type="Panel" parent="HealthBar/Bg"]
+[node name="Fill" type="Panel" parent="HealthBar/Bg" unique_id=212650501]
+layout_mode = 0
 offset_right = 28.0
 offset_bottom = 4.0
-theme_override_styles/panel = SubResource("StyleBoxFlat_health_fill")
 mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_health_fill")
 
-[node name="PercentLabel" type="Label" parent="HealthBar"]
+[node name="PercentLabel" type="Label" parent="HealthBar" unique_id=744356179]
 offset_left = -6.0
 offset_top = -13.0
 offset_right = 34.0
 offset_bottom = -2.0
-theme_override_font_sizes/font_size = 8
-theme_override_constants/outline_size = 1
 theme_override_colors/font_color = Color(1, 0.96, 0.88, 0.95)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 0.85)
+theme_override_constants/outline_size = 1
+theme_override_font_sizes/font_size = 8
+text = "100%"
 horizontal_alignment = 1
 vertical_alignment = 1
-text = "100%"

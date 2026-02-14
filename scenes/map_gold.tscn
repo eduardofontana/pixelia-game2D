@@ -1,11 +1,13 @@
 [gd_scene format=3 uid="uid://bedfggthexvw4"]
 
 [ext_resource type="Texture2D" uid="uid://bw7u8wvmee1q6" path="res://props/Map.png" id="1_wfk2l"]
+[ext_resource type="Script" path="res://scripts/map_gold.gd" id="2_map_gold"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_tbxqw"]
 size = Vector2(16, 20)
 
 [node name="MapGold" type="Area2D" unique_id=613840396]
+script = ExtResource("2_map_gold")
 
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=10433131]
 position = Vector2(-1.9073486e-06, -1.9073486e-06)

@@ -18,7 +18,7 @@ const DAMAGE_KNOCKBACK_MULTIPLIER: float = 1.45
 const HOVER_WAVE_SPEED: float = 2.3
 const HOVER_WAVE_AMPLITUDE: float = 8.0
 const PATROL_REACHED_DISTANCE: float = 10.0
-const VAMPIRE_FONT_PATH: String = "res://fonts/Buffied-GlqZ.ttf"
+const VAMPIRE_FONT_PATH: String = "res://fonts/Pixelia2D.ttf"
 const HEALTH_PERCENT_FONT_SIZE: int = 11
 const HEALTH_PERCENT_OUTLINE_SIZE: int = 2
 const HURT_SFX_PATH: String = "res://sounds/Injured.wav"
@@ -490,3 +490,4 @@ func _is_player_target(node: Node) -> bool:
 	if player_ref != null and node == player_ref:
 		return true
 	return node.is_in_group("player")
+

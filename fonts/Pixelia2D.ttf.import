@@ -2,13 +2,13 @@
 
 importer="font_data_dynamic"
 type="FontFile"
-uid="uid://b18oh6fd32ii"
-path="res://.godot/imported/Buffied-GlqZ.ttf-cc60beb775ddba5db1dc05eb963203db.fontdata"
+uid="uid://boagi6h0dwfk1"
+path="res://.godot/imported/Pixelia2D.ttf-d038da38ca280ccc1db77da810da5726.fontdata"
 
 [deps]
 
-source_file="res://fonts/Buffied-GlqZ.ttf"
-dest_files=["res://.godot/imported/Buffied-GlqZ.ttf-cc60beb775ddba5db1dc05eb963203db.fontdata"]
+source_file="res://fonts/Pixelia2D.ttf"
+dest_files=["res://.godot/imported/Pixelia2D.ttf-d038da38ca280ccc1db77da810da5726.fontdata"]
 
 [params]
 

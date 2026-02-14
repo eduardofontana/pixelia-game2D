@@ -1,7 +1,7 @@
 extends Node2D
 
 const GAME_SCENE_PATH: String = "res://scenes/main.tscn"
-const HUD_FONT_PATH: String = "res://fonts/Buffied-GlqZ.ttf"
+const HUD_FONT_PATH: String = "res://fonts/Pixelia2D.ttf"
 const MIN_VOLUME_DB: float = -40.0
 const MAX_VOLUME_DB: float = 3.0
 const VOLUME_STEP_DB: float = 2.0

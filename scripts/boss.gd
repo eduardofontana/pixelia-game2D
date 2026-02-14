@@ -271,7 +271,7 @@ func _process_attack(delta: float) -> void:
 
 	if attack_timer <= 0.0 and not attack_animation_playing:
 		if not attack_did_hit and not _has_attack_damage_area_hitbox() and _can_force_attack_damage():
-			player_ref.take_damage(_get_current_attack_damage(), global_position)
+			player_ref.take_damage(_get_current_attack_damage(), global_position, &"boss")
 			attack_did_hit = true
 		_end_attack_state()
 
@@ -342,7 +342,7 @@ func _try_attack_damage() -> bool:
 	if damage_area != null and not damage_area_collisions.is_empty():
 		if not _is_player_overlapping_damage_area():
 			return false
-		player_ref.take_damage(_get_current_attack_damage(), global_position)
+		player_ref.take_damage(_get_current_attack_damage(), global_position, &"boss")
 		return true
 
 	# Fallback para manter compatibilidade caso a cena esteja sem DamageArea.
@@ -350,7 +350,7 @@ func _try_attack_damage() -> bool:
 	if global_position.distance_to(player_ref.global_position) > max_attack_distance:
 		return false
 
-	player_ref.take_damage(_get_current_attack_damage(), global_position)
+	player_ref.take_damage(_get_current_attack_damage(), global_position, &"boss")
 	return true
 
 
@@ -550,7 +550,7 @@ func _configure_animations() -> void:
 func _on_animation_finished() -> void:
 	if animated_sprite != null and boss_state == BossState.ATTACK and animated_sprite.animation == &"boss_attack":
 		if not attack_did_hit and not _has_attack_damage_area_hitbox() and _can_force_attack_damage():
-			player_ref.take_damage(_get_current_attack_damage(), global_position)
+			player_ref.take_damage(_get_current_attack_damage(), global_position, &"boss")
 			attack_did_hit = true
 		_end_attack_state()
 		return
@@ -652,8 +652,10 @@ func _update_damage_area_state() -> void:
 		and boss_state == BossState.ATTACK \
 		and _is_attack_animation_active()
 	if damage_area != null:
-		damage_area.monitoring = should_enable
-		damage_area.monitorable = false
+		if damage_area.monitoring != should_enable:
+			damage_area.set_deferred("monitoring", should_enable)
+		if damage_area.monitorable:
+			damage_area.set_deferred("monitorable", false)
 	for collision_shape in damage_area_collisions:
 		if collision_shape == null:
 			continue
@@ -867,6 +869,6 @@ func _try_touch_damage_player() -> void:
 		var collider: Object = collision.get_collider()
 		if collider != player_ref:
 			continue
-		player_ref.take_damage(_get_current_touch_damage(), global_position)
+		player_ref.take_damage(_get_current_touch_damage(), global_position, &"boss")
 		touch_damage_timer = touch_damage_interval
 		return

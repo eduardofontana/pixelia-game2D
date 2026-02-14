@@ -1,6 +1,6 @@
 extends Node2D
 
-const HUD_FONT_PATH: String = "res://fonts/Buffied-GlqZ.ttf"
+const HUD_FONT_PATH: String = "res://fonts/Pixelia2D.ttf"
 
 const FALLBACK_SPAWN_MIN_X: float = 144.0
 const FALLBACK_SPAWN_MAX_X: float = 1320.0
@@ -47,7 +47,7 @@ const DIALOG_MAP_GOLD_PICKUP_LINE_1: String = "Sangue de Jesus tem poder !"
 const DIALOG_MAP_GOLD_PICKUP_LINE_2: String = "Preciso derrotar essa coisa seja l\u00e1 o que for isso !"
 const DIALOG_BOSS_FIRST_APPROACH: String = "Mais que coisa assustadora ! Deve ser Puro-Osso ! rsrsrs"
 const DIALOG_BOSS_PLAYER_WON: String = "F\u00e1cil Demais ! N\u00e3o compensa !"
-const DIALOG_BOSS_PLAYER_DIED_TAUNT: String = "Acabou J\u00e9ssica ? "
+const DIALOG_BOSS_PLAYER_DIED_TAUNT: String = "Voc\u00ea n\u00e3o foi forte o suficiente !"
 const BOSS_DIALOG_TRIGGER_DISTANCE: float = 210.0
 
 @onready var bgm_player: AudioStreamPlayer = get_node_or_null("BGM") as AudioStreamPlayer
@@ -712,7 +712,8 @@ func _on_player_died() -> void:
 			boss_ref.set_physics_process(true)
 	_set_boss_hud_visible(true)
 	_refresh_boss_hud_from_boss()
-	_queue_player_dialog_line(DIALOG_BOSS_PLAYER_DIED_TAUNT, PLAYER_DIALOG_DURATION)
+	if _was_player_defeated_by_main_boss():
+		_queue_player_dialog_line(DIALOG_BOSS_PLAYER_DIED_TAUNT, PLAYER_DIALOG_DURATION)
 
 
 func _on_player_respawned() -> void:
@@ -731,6 +732,20 @@ func _is_player_in_active_boss_battle() -> bool:
 	if not boss_ref.visible:
 		return false
 	return true
+
+
+func _was_player_defeated_by_main_boss() -> bool:
+	if player_ref == null:
+		return false
+	if not player_ref.has_method("get_last_death_source_tag"):
+		return false
+
+	var source_tag_value: Variant = player_ref.call("get_last_death_source_tag")
+	if source_tag_value is StringName:
+		return source_tag_value == &"boss"
+	if source_tag_value is String:
+		return String(source_tag_value).to_lower() == "boss"
+	return false
 
 
 func _set_map_gold_active(active: bool) -> void:

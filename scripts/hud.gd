@@ -9,12 +9,13 @@ const LIFE_ICON_FULL: String = "❤️"
 const STAMINA_DOTS_TOTAL: int = 5
 const STAMINA_ICON_FULL: String = "🐇"
 const STAMINA_SMOOTH_SPEED: float = 9.0
-const HUD_FONT_NAME: String = "Arial"
+const HUD_FONT_PATH: String = "res://fonts/Pixelia2D.ttf"
 const MIN_VOLUME_DB: float = -40.0
 const MAX_VOLUME_DB: float = 3.0
 const VOLUME_STEP_DB: float = 2.0
 
 @onready var life_label: Label = get_node_or_null("MarginContainer/PanelContainer/VBox/LifeRow/LifeLabel")
+@onready var hp_label: Label = get_node_or_null("MarginContainer/PanelContainer/VBox/TopRow/HpLabel")
 @onready var life_icons_label: RichTextLabel = get_node_or_null("MarginContainer/PanelContainer/VBox/LifeRow/LifeIconsLabel")
 @onready var lives_label: RichTextLabel = get_node_or_null("MarginContainer/PanelContainer/VBox/TopRow/LivesLabel")
 @onready var stamina_label: Label = get_node_or_null("MarginContainer/PanelContainer/VBox/StaminaRow/StaminaLabel")
@@ -209,6 +210,7 @@ func _animate_hearts_damage(damage_ratio: float) -> void:
 
 func _has_required_nodes() -> bool:
 	return life_label != null \
+		and hp_label != null \
 		and life_icons_label != null \
 		and lives_label != null \
 		and stamina_label != null \
@@ -218,8 +220,13 @@ func _has_required_nodes() -> bool:
 
 
 func _apply_hud_font() -> void:
-	var hud_font := SystemFont.new()
-	hud_font.font_names = PackedStringArray([HUD_FONT_NAME])
+	if not ResourceLoader.exists(HUD_FONT_PATH):
+		return
+	var loaded_font: Resource = load(HUD_FONT_PATH)
+	if not (loaded_font is Font):
+		return
+	var hud_font: Font = loaded_font as Font
+	hp_label.add_theme_font_override("font", hud_font)
 	life_label.add_theme_font_override("font", hud_font)
 	life_icons_label.add_theme_font_override("font", hud_font)
 	lives_label.add_theme_font_override("font", hud_font)
@@ -235,6 +242,10 @@ func _apply_hud_font() -> void:
 		pause_resume_button.add_theme_font_override("font", hud_font)
 	if pause_exit_button != null:
 		pause_exit_button.add_theme_font_override("font", hud_font)
+	if pause_volume_down_button != null:
+		pause_volume_down_button.add_theme_font_override("font", hud_font)
+	if pause_volume_up_button != null:
+		pause_volume_up_button.add_theme_font_override("font", hud_font)
 	var pause_title: Label = get_node_or_null("OptionsOverlay/OptionsCard/OptionsVBox/OptionsTitleLabel")
 	if pause_title != null:
 		pause_title.add_theme_font_override("font", hud_font)

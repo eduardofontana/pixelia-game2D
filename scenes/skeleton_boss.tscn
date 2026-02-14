@@ -5,9 +5,30 @@
 [ext_resource type="Texture2D" uid="uid://ml0dr7w855c7" path="res://sprites/SkeletonBoss/skeletonDie-Sheet118x64_all.png" id="3_2ev3t"]
 [ext_resource type="Texture2D" uid="uid://chffvxnog1pph" path="res://sprites/SkeletonBoss/skeletonHurt-Sheet64x64.png" id="4_5gmxn"]
 [ext_resource type="Texture2D" uid="uid://bhv4cygcrq8p3" path="res://sprites/SkeletonBoss/skeletonMove-Sheet64x64.png" id="5_asand"]
+[ext_resource type="Script" path="res://scripts/skeleton_boss.gd" id="6_xd81c"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_qojtu"]
 size = Vector2(31, 37)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_contact_sboss"]
+size = Vector2(32, 36)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_attack_sboss"]
+size = Vector2(52, 28)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_health_bg_sboss"]
+bg_color = Color(0, 0, 0, 0.72)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_health_fill_sboss"]
+bg_color = Color(0.24, 0.86, 0.44, 0.95)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_chyyr"]
 atlas = ExtResource("1_6mgr0")
@@ -535,11 +556,72 @@ animations = [{
 }]
 
 [node name="SkeletonBoss" type="CharacterBody2D" unique_id=556872807]
+script = ExtResource("6_xd81c")
+max_hp = 280
+patrol_distance = 176.0
+patrol_speed = 36.0
+chase_speed = 60.0
+attack_range = 56.0
+attack_damage = 18
+contact_damage = 11
+attack_area_offset_x = 34.0
+attack_area_offset_y = -2.0
+floor_snap_length = 6.0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=67395652]
 position = Vector2(2.5, 9.5)
 shape = SubResource("RectangleShape2D_qojtu")
 
+[node name="ContactArea" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 1
+monitoring = true
+monitorable = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="ContactArea"]
+position = Vector2(2.5, 9.5)
+shape = SubResource("RectangleShape2D_contact_sboss")
+
+[node name="AttackArea" type="Area2D" parent="."]
+position = Vector2(34, -2)
+collision_layer = 0
+collision_mask = 1
+monitoring = true
+monitorable = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="AttackArea"]
+shape = SubResource("RectangleShape2D_attack_sboss")
+
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=101828782]
 sprite_frames = SubResource("SpriteFrames_fcfmr")
 animation = &"idle"
+
+[node name="HealthBar" type="Node2D" parent="."]
+position = Vector2(-23, -41)
+visible = false
+z_index = 5
+
+[node name="Bg" type="Panel" parent="HealthBar"]
+offset_right = 46.0
+offset_bottom = 6.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_health_bg_sboss")
+mouse_filter = 2
+
+[node name="Fill" type="Panel" parent="HealthBar/Bg"]
+offset_right = 46.0
+offset_bottom = 6.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_health_fill_sboss")
+mouse_filter = 2
+
+[node name="PercentLabel" type="Label" parent="HealthBar"]
+offset_left = -8.0
+offset_top = -14.0
+offset_right = 54.0
+offset_bottom = -2.0
+theme_override_font_sizes/font_size = 9
+theme_override_constants/outline_size = 1
+theme_override_colors/font_color = Color(1, 0.96, 0.88, 0.95)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.85)
+horizontal_alignment = 1
+vertical_alignment = 1
+text = "100%"

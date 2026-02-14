@@ -37,6 +37,11 @@ const DEATH_OVERLAY_COLOR: Color = Color(0.08, 0.0, 0.0, 0.0)
 const DEATH_OVERLAY_PEAK_ALPHA: float = 0.0
 const DEATH_OVERLAY_HOLD_ALPHA: float = 0.0
 const DEATH_OVERLAY_FADE_OUT_TIME: float = 0.26
+const DEATH_HEARTBEAT_OVERLAY_COLOR: Color = Color(0.78, 0.0, 0.0, 0.0)
+const DEATH_HEARTBEAT_BASE_ALPHA: float = 0.08
+const DEATH_HEARTBEAT_PEAK_ALPHA: float = 0.26
+const DEATH_HEARTBEAT_IN_TIME: float = 0.12
+const DEATH_HEARTBEAT_OUT_TIME: float = 0.24
 const DEATH_CAMERA_ZOOM_PUNCH: float = 1.08
 const DEATH_CAMERA_ZOOM_HOLD: float = 1.03
 const DEATH_TEXT: String = "Voc\u00ea Morreu !"
@@ -48,7 +53,7 @@ const DEATH_TEXT_END_SCALE: Vector2 = Vector2.ONE
 const DEATH_TEXT_COLOR: Color = Color(0.72, 0.05, 0.08, 0.0)
 const DEATH_TEXT_OUTLINE_COLOR: Color = Color(0.02, 0, 0, 0.98)
 const DEATH_TEXT_SHADOW_COLOR: Color = Color(0, 0, 0, 0.92)
-const DEATH_TEXT_FONT_PATH: String = "res://fonts/Buffied-GlqZ.ttf"
+const DEATH_TEXT_FONT_PATH: String = "res://fonts/Pixelia2D.ttf"
 const DEATH_TEXT_Y_OFFSET: float = -48.0
 const DEATH_EMOJI_TEXT: String = "\u2620"
 const GAME_OVER_TEXT: String = "Fim de Jogo"
@@ -174,6 +179,7 @@ var death_actions_row: HBoxContainer = null
 var death_continue_button: Button = null
 var death_quit_button: Button = null
 var death_overlay_tween: Tween = null
+var death_heartbeat_tween: Tween = null
 var death_text_tween: Tween = null
 var death_emoji_tween: Tween = null
 var death_countdown_tween: Tween = null
@@ -193,6 +199,8 @@ var hp_regen_delay_timer: float = 0.0
 var hp_regen_accumulator: float = 0.0
 var defend_block_cooldown_timer: float = 0.0
 var defend_triggered_this_frame: bool = false
+var last_damage_source_tag: StringName = &""
+var last_death_source_tag: StringName = &""
 var spawn_dialog_layer: CanvasLayer = null
 var spawn_dialog_root: Control = null
 var spawn_dialog_panel: PanelContainer = null
@@ -502,6 +510,10 @@ func _update_spawn_dialog_position() -> void:
 
 
 func _create_dialog_font() -> Font:
+	if ResourceLoader.exists(DEATH_TEXT_FONT_PATH):
+		var loaded_font: Resource = load(DEATH_TEXT_FONT_PATH)
+		if loaded_font is Font:
+			return loaded_font as Font
 	var system_font := SystemFont.new()
 	system_font.font_names = PackedStringArray([
 		"Arial",
@@ -758,6 +770,7 @@ func _trigger_void_death() -> void:
 	if is_dead:
 		return
 
+	last_damage_source_tag = &"void"
 	hp = 0
 	hp_regen_delay_timer = 0.0
 	hp_regen_accumulator = 0.0
@@ -766,13 +779,14 @@ func _trigger_void_death() -> void:
 	_start_death()
 
 
-func take_damage(amount: int, from_position: Vector2 = Vector2.INF) -> void:
+func take_damage(amount: int, from_position: Vector2 = Vector2.INF, damage_source_tag: StringName = &"") -> void:
 	if amount <= 0 or hp <= 0 or is_dead:
 		return
 
-	if _try_block_damage(amount, from_position):
+	if _try_block_damage(amount, from_position, damage_source_tag):
 		return
 
+	last_damage_source_tag = damage_source_tag
 	hp = maxi(0, hp - amount)
 	hp_regen_delay_timer = HP_REGEN_DELAY_AFTER_HIT
 	hp_regen_accumulator = 0.0
@@ -787,7 +801,7 @@ func take_damage(amount: int, from_position: Vector2 = Vector2.INF) -> void:
 	_emit_stats_changed()
 
 
-func _try_block_damage(amount: int, from_position: Vector2) -> bool:
+func _try_block_damage(amount: int, from_position: Vector2, damage_source_tag: StringName = &"") -> bool:
 	if not _is_defending_active():
 		return false
 
@@ -801,6 +815,7 @@ func _try_block_damage(amount: int, from_position: Vector2) -> bool:
 	if blocked_damage <= 0:
 		return true
 
+	last_damage_source_tag = damage_source_tag
 	hp = maxi(0, hp - blocked_damage)
 	hp_regen_delay_timer = HP_REGEN_DELAY_AFTER_HIT
 	hp_regen_accumulator = 0.0
@@ -835,6 +850,10 @@ func _apply_defend_knockback(from_position: Vector2) -> void:
 
 func _emit_stats_changed() -> void:
 	stats_changed.emit(hp, max_hp, stamina, max_stamina, lives)
+
+
+func get_last_death_source_tag() -> StringName:
+	return last_death_source_tag
 
 
 func _update_light_visuals(_delta: float, _direction: float) -> void:
@@ -1021,6 +1040,9 @@ func _start_death() -> void:
 	if death_countdown_tween != null:
 		death_countdown_tween.kill()
 		death_countdown_tween = null
+	if death_heartbeat_tween != null:
+		death_heartbeat_tween.kill()
+		death_heartbeat_tween = null
 	if death_countdown_sfx_player != null:
 		death_countdown_sfx_player.stop()
 	if hurt_sfx_player != null:
@@ -1050,6 +1072,7 @@ func _start_death() -> void:
 	hp_regen_accumulator = 0.0
 	defend_block_cooldown_timer = 0.0
 	velocity = Vector2.ZERO
+	last_death_source_tag = last_damage_source_tag
 	_emit_stats_changed()
 	died.emit()
 
@@ -1113,6 +1136,9 @@ func _respawn_to_spawn() -> void:
 	if death_countdown_tween != null:
 		death_countdown_tween.kill()
 		death_countdown_tween = null
+	if death_heartbeat_tween != null:
+		death_heartbeat_tween.kill()
+		death_heartbeat_tween = null
 	if death_message_delay_tween != null:
 		death_message_delay_tween.kill()
 		death_message_delay_tween = null
@@ -1363,6 +1389,7 @@ func _start_cinematic_overlay_fx() -> void:
 	if death_overlay == null:
 		return
 
+	_stop_death_heartbeat_overlay()
 	if death_overlay_tween != null:
 		death_overlay_tween.kill()
 
@@ -1378,6 +1405,7 @@ func _fade_out_cinematic_overlay() -> void:
 	if death_overlay == null:
 		return
 
+	_stop_death_heartbeat_overlay(false)
 	if death_overlay_tween != null:
 		death_overlay_tween.kill()
 
@@ -1385,6 +1413,40 @@ func _fade_out_cinematic_overlay() -> void:
 	death_overlay_tween.set_trans(Tween.TRANS_QUAD)
 	death_overlay_tween.set_ease(Tween.EASE_OUT)
 	death_overlay_tween.tween_property(death_overlay, "color:a", 0.0, DEATH_OVERLAY_FADE_OUT_TIME)
+
+
+func _pulse_death_heartbeat_overlay() -> void:
+	if death_overlay == null:
+		return
+
+	if death_heartbeat_tween != null:
+		death_heartbeat_tween.kill()
+		death_heartbeat_tween = null
+
+	var pulse_color: Color = DEATH_HEARTBEAT_OVERLAY_COLOR
+	pulse_color.a = DEATH_HEARTBEAT_BASE_ALPHA
+	death_overlay.color = pulse_color
+
+	death_heartbeat_tween = create_tween()
+	death_heartbeat_tween.set_trans(Tween.TRANS_QUAD)
+	death_heartbeat_tween.set_ease(Tween.EASE_OUT)
+	death_heartbeat_tween.tween_property(death_overlay, "color:a", DEATH_HEARTBEAT_PEAK_ALPHA, DEATH_HEARTBEAT_IN_TIME)
+	death_heartbeat_tween.tween_property(death_overlay, "color:a", DEATH_HEARTBEAT_BASE_ALPHA, DEATH_HEARTBEAT_OUT_TIME)
+
+
+func _stop_death_heartbeat_overlay(reset_overlay: bool = true) -> void:
+	if death_heartbeat_tween != null:
+		death_heartbeat_tween.kill()
+		death_heartbeat_tween = null
+
+	if not reset_overlay:
+		return
+	if death_overlay == null:
+		return
+
+	var clear_color: Color = DEATH_OVERLAY_COLOR
+	clear_color.a = 0.0
+	death_overlay.color = clear_color
 
 
 func _start_death_text_fx() -> void:
@@ -1461,6 +1523,7 @@ func _start_death_countdown() -> void:
 	death_countdown_value = DEATH_COUNTDOWN_START
 	death_countdown_timer = DEATH_COUNTDOWN_STEP_TIME
 	death_countdown_tremor_time = 0.0
+	_stop_death_heartbeat_overlay()
 	_show_countdown_value()
 	_hide_death_action_buttons()
 
@@ -1479,6 +1542,7 @@ func _process_death_countdown(delta: float) -> void:
 	death_countdown_value -= 1
 	if death_countdown_value <= 0:
 		death_countdown_active = false
+		_stop_death_heartbeat_overlay()
 		_reset_countdown_tremor()
 		_fade_out_death_countdown()
 		if lives > 0:
@@ -1508,6 +1572,7 @@ func _show_countdown_value() -> void:
 	death_countdown_tween.set_ease(Tween.EASE_OUT)
 	death_countdown_tween.tween_property(death_countdown_label, "scale", DEATH_COUNTDOWN_END_SCALE, DEATH_COUNTDOWN_IN_TIME)
 	death_countdown_tween.parallel().tween_property(death_countdown_label, "modulate:a", 0.98, DEATH_COUNTDOWN_IN_TIME)
+	_pulse_death_heartbeat_overlay()
 	_play_countdown_sfx()
 
 
@@ -1691,6 +1756,7 @@ func _start_player_fade_out_for_respawn() -> void:
 		return
 
 	death_countdown_active = false
+	_stop_death_heartbeat_overlay()
 	_hide_death_action_buttons()
 	is_respawn_transition = true
 	if player_respawn_fade_tween != null:
@@ -1721,6 +1787,8 @@ func _finish_respawn_after_fade_in() -> void:
 	death_countdown_value = 0
 	death_countdown_timer = 0.0
 	death_countdown_tremor_time = 0.0
+	last_damage_source_tag = &""
+	last_death_source_tag = &""
 	_reset_countdown_tremor()
 	_emit_stats_changed()
 	respawned.emit()

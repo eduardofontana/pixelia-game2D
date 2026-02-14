@@ -10,8 +10,6 @@ const GROUND_ACCELERATION: float = 700.0
 const GROUND_DECELERATION: float = 1200.0
 const MOVE_EPSILON: float = 4.0
 const HEALTH_BAR_WIDTH: float = 28.0
-const ATTACK_AREA_OFFSET_X: float = 14.0
-const ATTACK_AREA_OFFSET_Y: float = 1.0
 const HIT_KNOCKBACK_X: float = 82.0
 const HIT_KNOCKBACK_Y: float = -56.0
 const DAMAGE_KNOCKBACK_MULTIPLIER: float = 1.45
@@ -28,7 +26,7 @@ const HEAD_BLOCK_COOLDOWN: float = 0.16
 const HEAD_BLOCK_IGNORE_ASCENT_SPEED: float = -24.0
 const FACING_FLIP_DEADZONE_X: float = 6.0
 const FACING_FLIP_COOLDOWN: float = 0.12
-const VAMPIRE_FONT_PATH: String = "res://fonts/Buffied-GlqZ.ttf"
+const VAMPIRE_FONT_PATH: String = "res://fonts/Pixelia2D.ttf"
 const HEALTH_PERCENT_FONT_SIZE: int = 11
 const HEALTH_PERCENT_OUTLINE_SIZE: int = 2
 const PLAYER_STRUCTURE_LAYER_MASK: int = 1
@@ -50,7 +48,6 @@ const HOLE_FALL_KILL_MARGIN_Y: float = 210.0
 @export var lose_interest_radius: float = 164.0
 @export var max_chase_distance: float = 210.0
 @export var attack_range: float = 24.0
-@export var attack_damage: int = 10
 @export var attack_windup_time: float = 0.22
 @export var attack_cooldown: float = 0.9
 @export var jump_velocity: float = -225.0
@@ -66,8 +63,6 @@ const HOLE_FALL_KILL_MARGIN_Y: float = 210.0
 @onready var animated_sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var contact_area: Area2D = $ContactArea
 @onready var contact_collision: CollisionShape2D = $ContactArea/CollisionShape2D
-@onready var attack_area: Area2D = $AttackArea
-@onready var attack_collision: CollisionShape2D = $AttackArea/CollisionShape2D
 @onready var health_bar: Node2D = $HealthBar
 @onready var health_fill: Control = $HealthBar/Bg/Fill
 @onready var health_percent_label: Label = $HealthBar/PercentLabel
@@ -81,7 +76,6 @@ var current_hp: int = 1
 var attack_cooldown_timer: float = 0.0
 var attack_windup_timer: float = 0.0
 var health_bar_timer: float = 0.0
-var attack_did_hit: bool = false
 var contact_damage_timer: float = 0.0
 var base_modulate_color: Color = Color(1, 1, 1, 1)
 var hurt_sfx_player: AudioStreamPlayer = null
@@ -102,7 +96,6 @@ func _ready() -> void:
 	_setup_hurt_sfx()
 	_setup_death_sfx()
 	_bind_player()
-	_update_attack_area_transform()
 	_setup_health_fill_style()
 	_apply_vampire_percent_font()
 	_update_health_bar()
@@ -155,7 +148,6 @@ func _set_enemy_state(next_state: int) -> void:
 	if enemy_state == EnemyState.ATTACK_WINDUP:
 		# Ao entrar no windup, reinicia o ataque de forma consistente.
 		attack_windup_timer = attack_windup_time
-		attack_did_hit = false
 
 
 func take_damage(amount: int, from_position: Vector2 = Vector2.INF) -> void:
@@ -211,17 +203,20 @@ func _process_chase(delta: float) -> void:
 		return
 
 	var horizontal_delta: float = to_player.x
-	if absf(horizontal_delta) > attack_range:
-		_update_facing_from_delta(horizontal_delta)
-		if is_on_floor() and not _has_floor_ahead(facing_direction):
-			velocity.x = move_toward(velocity.x, 0.0, GROUND_DECELERATION * delta)
-			return
-		var target_speed: float = float(facing_direction) * chase_speed
-		velocity.x = move_toward(velocity.x, target_speed, GROUND_ACCELERATION * delta)
-	else:
+	if _is_player_in_contact_range():
 		velocity.x = move_toward(velocity.x, 0.0, GROUND_DECELERATION * delta)
-		if attack_cooldown_timer <= 0.0:
-			_set_enemy_state(EnemyState.ATTACK_WINDUP)
+		return
+
+	if absf(horizontal_delta) <= MOVE_EPSILON:
+		velocity.x = move_toward(velocity.x, 0.0, GROUND_DECELERATION * delta)
+		return
+
+	_update_facing_from_delta(horizontal_delta)
+	if is_on_floor() and not _has_floor_ahead(facing_direction):
+		velocity.x = move_toward(velocity.x, 0.0, GROUND_DECELERATION * delta)
+		return
+	var target_speed: float = float(facing_direction) * chase_speed
+	velocity.x = move_toward(velocity.x, target_speed, GROUND_ACCELERATION * delta)
 
 
 func _process_attack_windup(delta: float) -> void:
@@ -235,26 +230,8 @@ func _process_attack_windup(delta: float) -> void:
 	if attack_windup_timer > 0.0:
 		return
 
-	if not attack_did_hit:
-		_apply_attack_damage()
-		attack_did_hit = true
-
 	attack_cooldown_timer = attack_cooldown
 	_set_enemy_state(EnemyState.CHASE)
-
-
-func _apply_attack_damage() -> void:
-	if attack_area == null:
-		return
-
-	for body in attack_area.get_overlapping_bodies():
-		if _is_player_target(body) and body.has_method("take_damage"):
-			body.take_damage(attack_damage, global_position)
-			return
-
-	if player_ref != null and player_ref.has_method("take_damage"):
-		if global_position.distance_to(player_ref.global_position) <= (attack_range + 10.0):
-			player_ref.take_damage(attack_damage, global_position)
 
 
 func _process_contact_damage() -> void:
@@ -269,10 +246,13 @@ func _process_contact_damage() -> void:
 			contact_damage_timer = contact_damage_cooldown
 			return
 
-	if player_ref != null and player_ref.has_method("take_damage"):
-		if global_position.distance_to(player_ref.global_position) <= (attack_range + 8.0):
+	# Fallback curto: garante dano quando os corpos encostam, mesmo se o Area2D
+	# falhar em reportar overlap em um frame.
+	if player_ref != null and _is_player_target(player_ref):
+		if _is_player_within_contact_fallback(player_ref) and player_ref.has_method("take_damage"):
 			player_ref.take_damage(contact_damage, global_position)
 			contact_damage_timer = contact_damage_cooldown
+			return
 
 
 func _process_jump_behavior(delta: float) -> void:
@@ -355,7 +335,6 @@ func _update_visuals() -> void:
 		return
 
 	animated_sprite.flip_h = facing_direction < 0
-	_update_attack_area_transform()
 
 	if absf(velocity.x) > MOVE_EPSILON:
 		_play_animation(&"walk")
@@ -370,12 +349,6 @@ func _play_animation(animation_name: StringName) -> void:
 		return
 	if animated_sprite.animation != animation_name:
 		animated_sprite.play(animation_name)
-
-
-func _update_attack_area_transform() -> void:
-	if attack_collision == null:
-		return
-	attack_collision.position = Vector2(ATTACK_AREA_OFFSET_X * float(facing_direction), ATTACK_AREA_OFFSET_Y)
 
 
 func _update_health_bar() -> void:
@@ -474,10 +447,6 @@ func _set_collision_enabled(enabled: bool) -> void:
 		body_collision.disabled = not enabled
 	if contact_collision != null:
 		contact_collision.disabled = not enabled
-	if attack_collision != null:
-		attack_collision.disabled = not enabled
-	if attack_area != null:
-		attack_area.monitoring = enabled
 	if contact_area != null:
 		contact_area.monitoring = enabled
 
@@ -488,9 +457,6 @@ func _configure_collision_filters() -> void:
 	if contact_area != null:
 		contact_area.collision_layer = 0
 		contact_area.collision_mask = PLAYER_STRUCTURE_LAYER_MASK
-	if attack_area != null:
-		attack_area.collision_layer = 0
-		attack_area.collision_mask = PLAYER_STRUCTURE_LAYER_MASK
 
 
 func _setup_hurt_sfx() -> void:
@@ -572,6 +538,29 @@ func _is_player_target(node: Node) -> bool:
 	if player_ref != null and node == player_ref:
 		return true
 	return node.is_in_group("player")
+
+
+func _is_player_within_contact_fallback(player_body: CharacterBody2D) -> bool:
+	if player_body == null:
+		return false
+
+	var half_size: Vector2 = Vector2(10.0, 14.0)
+	if contact_collision != null and contact_collision.shape is RectangleShape2D:
+		var rect_shape: RectangleShape2D = contact_collision.shape as RectangleShape2D
+		half_size = (rect_shape.size * 0.5) + Vector2(2.5, 4.0)
+
+	var delta: Vector2 = player_body.global_position - global_position
+	return absf(delta.x) <= half_size.x and absf(delta.y) <= half_size.y
+
+
+func _is_player_in_contact_range() -> bool:
+	if player_ref == null:
+		return false
+	if contact_area != null:
+		for body in contact_area.get_overlapping_bodies():
+			if body == player_ref:
+				return true
+	return _is_player_within_contact_fallback(player_ref)
 
 
 func _update_facing_from_delta(horizontal_delta: float) -> void:

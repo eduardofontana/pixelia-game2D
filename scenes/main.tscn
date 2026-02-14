@@ -26,7 +26,7 @@ autoplay = true
 [node name="Terrain" parent="." unique_id=82065912 instance=ExtResource("1_0wfyh")]
 
 [node name="Player" parent="." unique_id=1980650489 instance=ExtResource("2_sugp2")]
-position = Vector2(61, 566)
+position = Vector2(37, 565)
 
 [node name="Background" parent="." unique_id=306216750 instance=ExtResource("3_sugp2")]
 z_index = -100
@@ -34,7 +34,8 @@ z_index = -100
 [node name="HUD" parent="." unique_id=1172209584 instance=ExtResource("4_hud")]
 
 [node name="Level01Portal" parent="." unique_id=443042498 instance=ExtResource("12_trceg")]
-position = Vector2(2618, 536)
+z_index = -1
+position = Vector2(2645, 536)
 
 [node name="Coins" type="Node2D" parent="." unique_id=1980810729]
 
@@ -72,7 +73,7 @@ position = Vector2(1406, 585)
 position = Vector2(1816, 576)
 
 [node name="Coin12" parent="Coins" unique_id=1767159065 instance=ExtResource("10_choun")]
-position = Vector2(1861.0001, 543)
+position = Vector2(1867, 523)
 
 [node name="Coin13" parent="Coins" unique_id=1716039356 instance=ExtResource("10_choun")]
 position = Vector2(2183, 495)
@@ -84,8 +85,7 @@ position = Vector2(2292, 591)
 position = Vector2(2442, 592)
 
 [node name="MapGold" parent="." unique_id=613840396 instance=ExtResource("12_a8y0u")]
-visible = false
-position = Vector2(2365, 591)
+position = Vector2(2373, 589)
 monitoring = false
 monitorable = false
 
