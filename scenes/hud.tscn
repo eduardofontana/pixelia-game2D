@@ -1,27 +1,21 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://voer846bwjhl"]
 
-[ext_resource type="Script" path="res://scripts/hud.gd" id="1_hud"]
+[ext_resource type="Script" uid="uid://cwcs67qxir8pp" path="res://scripts/hud.gd" id="1_hud"]
+[ext_resource type="Texture2D" uid="uid://b7gj103kwgwoj" path="res://new_sprites/AllTheHearts(16x16).png" id="2_oo0fn"]
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
-bg_color = Color(0.05, 0.07, 0.11, 0.52)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.63, 0.52, 0.32, 0.48)
-corner_radius_top_left = 8
-corner_radius_top_right = 8
-corner_radius_bottom_right = 8
-corner_radius_bottom_left = 8
-shadow_color = Color(0, 0, 0, 0.35)
-shadow_size = 3
-shadow_offset = Vector2(0, 2)
+[sub_resource type="AtlasTexture" id="AtlasTexture_hp_heart"]
+atlas = ExtResource("2_oo0fn")
+region = Rect2(82.46006, 0.6121607, 11.837883, 12.061237)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_life_heart"]
+atlas = ExtResource("2_oo0fn")
+region = Rect2(115.29499, 36.28397, 10.051033, 8.152504)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hud_panel"]
 content_margin_left = 10.0
 content_margin_top = 7.0
 content_margin_right = 10.0
 content_margin_bottom = 7.0
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hud_panel"]
 bg_color = Color(0.05, 0.07, 0.11, 0.34)
 border_width_left = 1
 border_width_top = 1
@@ -35,10 +29,47 @@ corner_radius_bottom_left = 8
 shadow_color = Color(0, 0, 0, 0.35)
 shadow_size = 3
 shadow_offset = Vector2(0, 2)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_sprint_bg"]
+bg_color = Color(0, 0, 0, 0.72)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.86, 0.82, 0.68, 0.55)
+corner_radius_top_left = 1
+corner_radius_top_right = 1
+corner_radius_bottom_right = 1
+corner_radius_bottom_left = 1
+shadow_color = Color(0, 0, 0, 0.45)
+shadow_size = 2
+shadow_offset = Vector2(0, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_sprint_fill"]
+bg_color = Color(0.24, 0.86, 0.44, 0.95)
+corner_radius_top_left = 1
+corner_radius_top_right = 1
+corner_radius_bottom_right = 1
+corner_radius_bottom_left = 1
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
 content_margin_left = 10.0
 content_margin_top = 7.0
 content_margin_right = 10.0
 content_margin_bottom = 7.0
+bg_color = Color(0.05, 0.07, 0.11, 0.52)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.63, 0.52, 0.32, 0.48)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+shadow_color = Color(0, 0, 0, 0.35)
+shadow_size = 3
+shadow_offset = Vector2(0, 2)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_button_normal"]
 bg_color = Color(0.15, 0.17, 0.22, 0.94)
@@ -47,18 +78,6 @@ border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
 border_color = Color(0.72, 0.58, 0.37, 0.6)
-corner_radius_top_left = 7
-corner_radius_top_right = 7
-corner_radius_bottom_right = 7
-corner_radius_bottom_left = 7
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_button_hover"]
-bg_color = Color(0.21, 0.23, 0.3, 0.98)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.94, 0.78, 0.48, 0.85)
 corner_radius_top_left = 7
 corner_radius_top_right = 7
 corner_radius_bottom_right = 7
@@ -76,188 +95,275 @@ corner_radius_top_right = 7
 corner_radius_bottom_right = 7
 corner_radius_bottom_left = 7
 
-[node name="HUD" type="CanvasLayer"]
-script = ExtResource("1_hud")
-layer = 20
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_button_hover"]
+bg_color = Color(0.21, 0.23, 0.3, 0.98)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.94, 0.78, 0.48, 0.85)
+corner_radius_top_left = 7
+corner_radius_top_right = 7
+corner_radius_bottom_right = 7
+corner_radius_bottom_left = 7
 
-[node name="MarginContainer" type="MarginContainer" parent="."]
-anchor_left = 0.0
-anchor_top = 0.0
-anchor_right = 0.0
-anchor_bottom = 0.0
+[node name="HUD" type="CanvasLayer" unique_id=1138148585]
+layer = 20
+script = ExtResource("1_hud")
+
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=812510030]
 offset_left = 10.0
 offset_top = 10.0
 offset_right = 210.0
 offset_bottom = 154.0
 
-[node name="PanelContainer" type="PanelContainer" parent="MarginContainer"]
+[node name="PanelContainer" type="PanelContainer" parent="MarginContainer" unique_id=1587409791]
 custom_minimum_size = Vector2(200, 116)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_hud_panel")
 
-[node name="VBox" type="VBoxContainer" parent="MarginContainer/PanelContainer"]
+[node name="VBox" type="VBoxContainer" parent="MarginContainer/PanelContainer" unique_id=519717003]
 layout_mode = 2
 theme_override_constants/separation = 1
 alignment = 1
 
-[node name="TopRow" type="HBoxContainer" parent="MarginContainer/PanelContainer/VBox"]
+[node name="TopRow" type="HBoxContainer" parent="MarginContainer/PanelContainer/VBox" unique_id=2063952677]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 5
+theme_override_constants/separation = 6
 alignment = 1
 
-[node name="HpLabel" type="Label" parent="MarginContainer/PanelContainer/VBox/TopRow"]
-custom_minimum_size = Vector2(50, 14)
+[node name="HpLabel" type="Label" parent="MarginContainer/PanelContainer/VBox/TopRow" unique_id=753421729]
+custom_minimum_size = Vector2(52, 18)
 layout_mode = 2
-theme_override_font_sizes/font_size = 13
-theme_override_constants/outline_size = 2
+theme_override_colors/font_color = Color(0.96, 0.95, 0.9, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.8)
+theme_override_colors/font_outline_color = Color(0.06, 0.09, 0.14, 0.92)
 theme_override_constants/shadow_offset_x = 1
 theme_override_constants/shadow_offset_y = 1
-theme_override_colors/font_color = Color(0.96, 0.95, 0.9, 1)
-theme_override_colors/font_outline_color = Color(0.06, 0.09, 0.14, 0.92)
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.8)
+theme_override_constants/outline_size = 2
+theme_override_font_sizes/font_size = 13
 text = "HP"
+horizontal_alignment = 0
 
-[node name="LivesLabel" type="RichTextLabel" parent="MarginContainer/PanelContainer/VBox/TopRow"]
-custom_minimum_size = Vector2(100, 14)
+[node name="HpHearts" type="HBoxContainer" parent="MarginContainer/PanelContainer/VBox/TopRow" unique_id=787216143]
+custom_minimum_size = Vector2(88, 16)
 layout_mode = 2
-theme_override_font_sizes/font_size = 13
-theme_override_constants/outline_size = 1
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 0.75)
-bbcode_enabled = true
-fit_content = true
-scroll_active = false
-autowrap_mode = 0
-horizontal_alignment = 1
-text = "[color=#ffffff]💓💓💓💓💓[/color]"
-
-[node name="LifeRow" type="HBoxContainer" parent="MarginContainer/PanelContainer/VBox"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 5
+theme_override_constants/separation = 2
 alignment = 1
 
-[node name="LifeLabel" type="Label" parent="MarginContainer/PanelContainer/VBox/LifeRow"]
-custom_minimum_size = Vector2(50, 14)
+[node name="HpHeart1" type="TextureRect" parent="MarginContainer/PanelContainer/VBox/TopRow/HpHearts" unique_id=1437111737]
+custom_minimum_size = Vector2(16, 16)
 layout_mode = 2
-theme_override_font_sizes/font_size = 13
-theme_override_constants/outline_size = 2
+size_flags_vertical = 4
+texture = SubResource("AtlasTexture_hp_heart")
+stretch_mode = 5
+
+[node name="HpHeart2" type="TextureRect" parent="MarginContainer/PanelContainer/VBox/TopRow/HpHearts" unique_id=1639053329]
+custom_minimum_size = Vector2(16, 16)
+layout_mode = 2
+size_flags_vertical = 4
+texture = SubResource("AtlasTexture_hp_heart")
+stretch_mode = 5
+
+[node name="HpHeart3" type="TextureRect" parent="MarginContainer/PanelContainer/VBox/TopRow/HpHearts" unique_id=819365573]
+custom_minimum_size = Vector2(16, 16)
+layout_mode = 2
+size_flags_vertical = 4
+texture = SubResource("AtlasTexture_hp_heart")
+stretch_mode = 5
+
+[node name="HpHeart4" type="TextureRect" parent="MarginContainer/PanelContainer/VBox/TopRow/HpHearts" unique_id=1646114435]
+custom_minimum_size = Vector2(16, 16)
+layout_mode = 2
+size_flags_vertical = 4
+texture = SubResource("AtlasTexture_hp_heart")
+stretch_mode = 5
+
+[node name="HpHeart5" type="TextureRect" parent="MarginContainer/PanelContainer/VBox/TopRow/HpHearts" unique_id=2113251222]
+custom_minimum_size = Vector2(16, 16)
+layout_mode = 2
+size_flags_vertical = 4
+texture = SubResource("AtlasTexture_hp_heart")
+stretch_mode = 5
+
+[node name="LifeTopPadding" type="Control" parent="MarginContainer/PanelContainer/VBox" unique_id=925476593]
+custom_minimum_size = Vector2(0, 2)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="LifeRow" type="HBoxContainer" parent="MarginContainer/PanelContainer/VBox" unique_id=1730646821]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+alignment = 1
+
+[node name="LifeLabel" type="Label" parent="MarginContainer/PanelContainer/VBox/LifeRow" unique_id=925225040]
+custom_minimum_size = Vector2(52, 18)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.96, 0.95, 0.9, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.8)
+theme_override_colors/font_outline_color = Color(0.06, 0.09, 0.14, 0.92)
 theme_override_constants/shadow_offset_x = 1
 theme_override_constants/shadow_offset_y = 1
-theme_override_colors/font_color = Color(0.96, 0.95, 0.9, 1)
-theme_override_colors/font_outline_color = Color(0.06, 0.09, 0.14, 0.92)
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.8)
+theme_override_constants/outline_size = 2
+theme_override_font_sizes/font_size = 13
 text = "Life:"
+horizontal_alignment = 0
 
-[node name="LifeIconsLabel" type="RichTextLabel" parent="MarginContainer/PanelContainer/VBox/LifeRow"]
-custom_minimum_size = Vector2(100, 14)
+[node name="LifeHearts" type="HBoxContainer" parent="MarginContainer/PanelContainer/VBox/LifeRow" unique_id=1749052525]
+custom_minimum_size = Vector2(88, 16)
 layout_mode = 2
-theme_override_font_sizes/font_size = 13
-theme_override_constants/outline_size = 1
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 0.75)
-bbcode_enabled = true
-fit_content = true
-scroll_active = false
-autowrap_mode = 0
-horizontal_alignment = 1
-text = "[color=#ffffff]❤️❤️❤️❤️❤️[/color]"
-
-[node name="StaminaRow" type="HBoxContainer" parent="MarginContainer/PanelContainer/VBox"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 5
+theme_override_constants/separation = 2
 alignment = 1
 
-[node name="StaminaLabel" type="Label" parent="MarginContainer/PanelContainer/VBox/StaminaRow"]
-custom_minimum_size = Vector2(50, 14)
+[node name="LifeHeart1" type="TextureRect" parent="MarginContainer/PanelContainer/VBox/LifeRow/LifeHearts" unique_id=1972862328]
+custom_minimum_size = Vector2(16, 16)
 layout_mode = 2
-theme_override_font_sizes/font_size = 13
-theme_override_constants/outline_size = 2
+size_flags_vertical = 4
+texture = SubResource("AtlasTexture_life_heart")
+stretch_mode = 5
+
+[node name="LifeHeart2" type="TextureRect" parent="MarginContainer/PanelContainer/VBox/LifeRow/LifeHearts" unique_id=1230635988]
+custom_minimum_size = Vector2(16, 16)
+layout_mode = 2
+size_flags_vertical = 4
+texture = SubResource("AtlasTexture_life_heart")
+stretch_mode = 5
+
+[node name="LifeHeart3" type="TextureRect" parent="MarginContainer/PanelContainer/VBox/LifeRow/LifeHearts" unique_id=1188356602]
+custom_minimum_size = Vector2(16, 16)
+layout_mode = 2
+size_flags_vertical = 4
+texture = SubResource("AtlasTexture_life_heart")
+stretch_mode = 5
+
+[node name="LifeHeart4" type="TextureRect" parent="MarginContainer/PanelContainer/VBox/LifeRow/LifeHearts" unique_id=1558836440]
+custom_minimum_size = Vector2(16, 16)
+layout_mode = 2
+size_flags_vertical = 4
+texture = SubResource("AtlasTexture_life_heart")
+stretch_mode = 5
+
+[node name="LifeHeart5" type="TextureRect" parent="MarginContainer/PanelContainer/VBox/LifeRow/LifeHearts" unique_id=618594680]
+custom_minimum_size = Vector2(16, 16)
+layout_mode = 2
+size_flags_vertical = 4
+texture = SubResource("AtlasTexture_life_heart")
+stretch_mode = 5
+
+[node name="LifeBottomPadding" type="Control" parent="MarginContainer/PanelContainer/VBox" unique_id=900560138]
+custom_minimum_size = Vector2(0, 2)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="StaminaRow" type="HBoxContainer" parent="MarginContainer/PanelContainer/VBox" unique_id=651330456]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+alignment = 1
+
+[node name="StaminaLabel" type="Label" parent="MarginContainer/PanelContainer/VBox/StaminaRow" unique_id=981748462]
+custom_minimum_size = Vector2(52, 18)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.96, 0.95, 0.9, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.8)
+theme_override_colors/font_outline_color = Color(0.06, 0.09, 0.14, 0.92)
 theme_override_constants/shadow_offset_x = 1
 theme_override_constants/shadow_offset_y = 1
-theme_override_colors/font_color = Color(0.96, 0.95, 0.9, 1)
-theme_override_colors/font_outline_color = Color(0.06, 0.09, 0.14, 0.92)
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.8)
-text = "Stamina:"
-
-[node name="StaminaDotsLabel" type="RichTextLabel" parent="MarginContainer/PanelContainer/VBox/StaminaRow"]
-custom_minimum_size = Vector2(100, 14)
-layout_mode = 2
+theme_override_constants/outline_size = 2
 theme_override_font_sizes/font_size = 13
-theme_override_constants/outline_size = 1
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 0.75)
-bbcode_enabled = true
-fit_content = true
-scroll_active = false
-autowrap_mode = 0
-horizontal_alignment = 1
-text = "[color=#ffffff]🐇🐇🐇🐇🐇[/color]"
+text = "Sprint:"
+horizontal_alignment = 0
 
-[node name="InfoRow" type="VBoxContainer" parent="MarginContainer/PanelContainer/VBox"]
+[node name="StaminaBar" type="Control" parent="MarginContainer/PanelContainer/VBox/StaminaRow" unique_id=739049834]
+custom_minimum_size = Vector2(88, 6)
+layout_mode = 2
+size_flags_horizontal = 0
+mouse_filter = 2
+
+[node name="Bg" type="Panel" parent="MarginContainer/PanelContainer/VBox/StaminaRow/StaminaBar" unique_id=532144451]
+layout_mode = 0
+offset_right = 88.0
+offset_bottom = 6.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_sprint_bg")
+
+[node name="Fill" type="Panel" parent="MarginContainer/PanelContainer/VBox/StaminaRow/StaminaBar/Bg" unique_id=1573896111]
+layout_mode = 0
+offset_left = 1.0
+offset_top = 1.0
+offset_right = 87.0
+offset_bottom = 5.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_sprint_fill")
+
+[node name="InfoRow" type="VBoxContainer" parent="MarginContainer/PanelContainer/VBox" unique_id=1779932990]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 2
 
-[node name="XpTopPadding" type="Control" parent="MarginContainer/PanelContainer/VBox/InfoRow"]
+[node name="XpTopPadding" type="Control" parent="MarginContainer/PanelContainer/VBox/InfoRow" unique_id=358401203]
 custom_minimum_size = Vector2(0, 5)
 layout_mode = 2
 mouse_filter = 2
 
-[node name="XpLabel" type="Label" parent="MarginContainer/PanelContainer/VBox/InfoRow"]
+[node name="XpLabel" type="Label" parent="MarginContainer/PanelContainer/VBox/InfoRow" unique_id=649635245]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 14
-theme_override_constants/outline_size = 2
-theme_override_constants/shadow_offset_x = 1
-theme_override_constants/shadow_offset_y = 1
 theme_override_colors/font_color = Color(0.62, 0.9, 1, 1)
-theme_override_colors/font_outline_color = Color(0.06, 0.09, 0.14, 0.92)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.82)
-horizontal_alignment = 1
-text = "XP: 0 / 100"
-
-[node name="CoinsLabel" type="Label" parent="MarginContainer/PanelContainer/VBox/InfoRow"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 13
-theme_override_constants/outline_size = 2
+theme_override_colors/font_outline_color = Color(0.06, 0.09, 0.14, 0.92)
 theme_override_constants/shadow_offset_x = 1
 theme_override_constants/shadow_offset_y = 1
-theme_override_colors/font_color = Color(0.98, 0.88, 0.58, 1)
-theme_override_colors/font_outline_color = Color(0.06, 0.09, 0.14, 0.92)
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.82)
-horizontal_alignment = 1
-text = "Coins: 0"
-
-[node name="LevelLabel" type="Label" parent="MarginContainer/PanelContainer/VBox/InfoRow"]
-layout_mode = 2
-size_flags_horizontal = 3
+theme_override_constants/outline_size = 2
 theme_override_font_sizes/font_size = 14
-theme_override_constants/outline_size = 2
+text = "XP: 0 / 100"
+horizontal_alignment = 1
+
+[node name="CoinsLabel" type="Label" parent="MarginContainer/PanelContainer/VBox/InfoRow" unique_id=1606252466]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.98, 0.88, 0.58, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.82)
+theme_override_colors/font_outline_color = Color(0.06, 0.09, 0.14, 0.92)
 theme_override_constants/shadow_offset_x = 1
 theme_override_constants/shadow_offset_y = 1
-theme_override_colors/font_color = Color(1, 0.86, 0.54, 1)
-theme_override_colors/font_outline_color = Color(0.06, 0.09, 0.14, 0.92)
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.82)
+theme_override_constants/outline_size = 2
+theme_override_font_sizes/font_size = 13
+text = "Coins: 0"
 horizontal_alignment = 1
-text = "Level: 1"
 
-[node name="OptionsOverlay" type="Control" parent="."]
+[node name="LevelLabel" type="Label" parent="MarginContainer/PanelContainer/VBox/InfoRow" unique_id=1024048679]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 0.86, 0.54, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.82)
+theme_override_colors/font_outline_color = Color(0.06, 0.09, 0.14, 0.92)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_constants/outline_size = 2
+theme_override_font_sizes/font_size = 14
+text = "Level: 1"
+horizontal_alignment = 1
+
+[node name="OptionsOverlay" type="Control" parent="." unique_id=1010923900]
 visible = false
+layout_mode = 3
+anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 2
 
-[node name="OverlayDim" type="ColorRect" parent="OptionsOverlay"]
+[node name="OverlayDim" type="ColorRect" parent="OptionsOverlay" unique_id=719339617]
+layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 2
 color = Color(0, 0, 0, 0)
 
-[node name="OptionsCard" type="PanelContainer" parent="OptionsOverlay"]
+[node name="OptionsCard" type="PanelContainer" parent="OptionsOverlay" unique_id=149032039]
+layout_mode = 0
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
@@ -269,80 +375,80 @@ offset_bottom = 116.0
 mouse_filter = 1
 theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
 
-[node name="OptionsVBox" type="VBoxContainer" parent="OptionsOverlay/OptionsCard"]
+[node name="OptionsVBox" type="VBoxContainer" parent="OptionsOverlay/OptionsCard" unique_id=101699443]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="OptionsTitleLabel" type="Label" parent="OptionsOverlay/OptionsCard/OptionsVBox"]
+[node name="OptionsTitleLabel" type="Label" parent="OptionsOverlay/OptionsCard/OptionsVBox" unique_id=1228380695]
 layout_mode = 2
-theme_override_font_sizes/font_size = 34
-theme_override_constants/outline_size = 2
 theme_override_colors/font_color = Color(0.95, 0.9, 0.84, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 0.9)
-horizontal_alignment = 1
+theme_override_constants/outline_size = 2
+theme_override_font_sizes/font_size = 34
 text = "Opcoes"
-
-[node name="VolumeLabel" type="Label" parent="OptionsOverlay/OptionsCard/OptionsVBox"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 16
-theme_override_colors/font_color = Color(0.9, 0.84, 0.75, 1)
 horizontal_alignment = 1
-text = "Volume Mestre"
 
-[node name="VolumeControls" type="HBoxContainer" parent="OptionsOverlay/OptionsCard/OptionsVBox"]
+[node name="VolumeLabel" type="Label" parent="OptionsOverlay/OptionsCard/OptionsVBox" unique_id=1975370628]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.84, 0.75, 1)
+theme_override_font_sizes/font_size = 16
+text = "Volume Mestre"
+horizontal_alignment = 1
+
+[node name="VolumeControls" type="HBoxContainer" parent="OptionsOverlay/OptionsCard/OptionsVBox" unique_id=113030669]
 layout_mode = 2
 theme_override_constants/separation = 7
 alignment = 1
 
-[node name="VolumeDownButton" type="Button" parent="OptionsOverlay/OptionsCard/OptionsVBox/VolumeControls"]
+[node name="VolumeDownButton" type="Button" parent="OptionsOverlay/OptionsCard/OptionsVBox/VolumeControls" unique_id=1288758754]
 custom_minimum_size = Vector2(40, 30)
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
 theme_override_styles/normal = SubResource("StyleBoxFlat_button_normal")
-theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
 text = "-"
 
-[node name="VolumeSlider" type="HSlider" parent="OptionsOverlay/OptionsCard/OptionsVBox/VolumeControls"]
+[node name="VolumeSlider" type="HSlider" parent="OptionsOverlay/OptionsCard/OptionsVBox/VolumeControls" unique_id=2007271349]
 custom_minimum_size = Vector2(170, 30)
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="VolumeUpButton" type="Button" parent="OptionsOverlay/OptionsCard/OptionsVBox/VolumeControls"]
+[node name="VolumeUpButton" type="Button" parent="OptionsOverlay/OptionsCard/OptionsVBox/VolumeControls" unique_id=152940064]
 custom_minimum_size = Vector2(40, 30)
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
 theme_override_styles/normal = SubResource("StyleBoxFlat_button_normal")
-theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
 text = "+"
 
-[node name="VolumeValueLabel" type="Label" parent="OptionsOverlay/OptionsCard/OptionsVBox"]
+[node name="VolumeValueLabel" type="Label" parent="OptionsOverlay/OptionsCard/OptionsVBox" unique_id=1467278028]
 layout_mode = 2
-theme_override_font_sizes/font_size = 16
 theme_override_colors/font_color = Color(0.87, 0.92, 1, 1)
-horizontal_alignment = 1
+theme_override_font_sizes/font_size = 16
 text = "Volume: 100%"
+horizontal_alignment = 1
 
-[node name="ActionsRow" type="HBoxContainer" parent="OptionsOverlay/OptionsCard/OptionsVBox"]
+[node name="ActionsRow" type="HBoxContainer" parent="OptionsOverlay/OptionsCard/OptionsVBox" unique_id=1275434653]
 layout_mode = 2
 theme_override_constants/separation = 8
 alignment = 1
 
-[node name="ResumeButton" type="Button" parent="OptionsOverlay/OptionsCard/OptionsVBox/ActionsRow"]
+[node name="ResumeButton" type="Button" parent="OptionsOverlay/OptionsCard/OptionsVBox/ActionsRow" unique_id=2124076294]
 custom_minimum_size = Vector2(124, 34)
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 theme_override_styles/normal = SubResource("StyleBoxFlat_button_normal")
-theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
 text = "Retornar"
 
-[node name="ExitButton" type="Button" parent="OptionsOverlay/OptionsCard/OptionsVBox/ActionsRow"]
+[node name="ExitButton" type="Button" parent="OptionsOverlay/OptionsCard/OptionsVBox/ActionsRow" unique_id=1094317058]
 custom_minimum_size = Vector2(124, 34)
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 theme_override_styles/normal = SubResource("StyleBoxFlat_button_normal")
-theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
 text = "Sair"

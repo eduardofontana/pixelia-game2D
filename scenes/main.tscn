@@ -3,7 +3,7 @@
 [ext_resource type="PackedScene" uid="uid://bh873pfrer06e" path="res://scenes/terrain.tscn" id="1_0wfyh"]
 [ext_resource type="PackedScene" uid="uid://cclktgyx4fddx" path="res://scenes/player.tscn" id="2_sugp2"]
 [ext_resource type="PackedScene" uid="uid://dcs8a1xffle86" path="res://scenes/background.tscn" id="3_sugp2"]
-[ext_resource type="PackedScene" path="res://scenes/hud.tscn" id="4_hud"]
+[ext_resource type="PackedScene" uid="uid://voer846bwjhl" path="res://scenes/hud.tscn" id="4_hud"]
 [ext_resource type="Script" uid="uid://gbofqewgh3ll" path="res://scripts/main.gd" id="5_main"]
 [ext_resource type="AudioStream" uid="uid://djl6cler1lm" path="res://sounds/Forest Night.wav" id="6_bgm"]
 [ext_resource type="PackedScene" uid="uid://ffoyfdqwje05" path="res://scenes/skeleton.tscn" id="7_o6xl0"]

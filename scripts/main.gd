@@ -87,6 +87,8 @@ var saw_boss_approach_once: bool = false
 func _ready() -> void:
 	Engine.time_scale = 1.0
 	randomize()
+	if hud_layer == null:
+		hud_layer = _resolve_hud_layer()
 	_validate_main_root_nodes()
 	_setup_victory_overlay()
 	_setup_boss_hud()
@@ -116,9 +118,34 @@ func _validate_main_root_nodes() -> void:
 	if player_ref == null:
 		push_warning("Main: node 'Player' nao encontrado no no raiz.")
 	if hud_layer == null:
+		hud_layer = _resolve_hud_layer()
+	if hud_layer == null:
 		push_warning("Main: node 'HUD' nao encontrado no no raiz.")
 	if bgm_player == null:
 		push_warning("Main: node 'BGM' nao encontrado no no raiz.")
+
+
+func _resolve_hud_layer() -> CanvasLayer:
+	var direct_hud: CanvasLayer = get_node_or_null("HUD") as CanvasLayer
+	if direct_hud != null:
+		return direct_hud
+
+	for child in get_children():
+		var canvas_child: CanvasLayer = child as CanvasLayer
+		if canvas_child == null:
+			continue
+		if canvas_child.has_method("set_coin_count"):
+			return canvas_child
+		if String(canvas_child.name).to_lower().findn("hud") >= 0:
+			return canvas_child
+
+	var hud_nodes: Array[Node] = get_tree().get_nodes_in_group("hud")
+	for hud_node in hud_nodes:
+		var hud_canvas: CanvasLayer = hud_node as CanvasLayer
+		if hud_canvas != null:
+			return hud_canvas
+
+	return null
 
 
 func _physics_process(_delta: float) -> void:
