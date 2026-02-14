@@ -122,6 +122,8 @@ const DEFAULT_VOID_FOV_MARGIN_Y: float = 120.0
 const PLAYER_LAYER_MASK: int = 1
 const ENEMY_LAYER_MASK: int = 2
 const PLAYER_COLLISION_MASK: int = PLAYER_LAYER_MASK | ENEMY_LAYER_MASK
+const ATTACK_IMPACT_PARTICLE_COLOR: Color = Color(1.0, 0.42, 0.42, 1.0)
+const ATTACK_IMPACT_PARTICLE_COUNT: int = 10
 const SPAWN_DIALOG_TEXT: String = "Que lugar \u00e9 este ?"
 const SPAWN_DIALOG_DURATION: float = 2.8
 const SPAWN_DIALOG_FADE_IN_TIME: float = 0.2
@@ -133,6 +135,7 @@ const SPAWN_DIALOG_CONTENT_PADDING_X: float = 16.0
 const SPAWN_DIALOG_CONTENT_PADDING_Y: float = 10.0
 const SPAWN_DIALOG_FONT_SIZE: int = 15
 const SPAWN_DIALOG_SCREEN_CENTER_OFFSET_Y: float = 0.0
+const DEATH_VFX = preload("res://scripts/death_vfx.gd")
 @onready var animated_sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var attack_sfx: AudioStreamPlayer = $AttackSfx
 @onready var player_camera: Camera2D = get_node_or_null("Camera2D") as Camera2D
@@ -995,12 +998,27 @@ func _apply_attack_damage() -> void:
 			continue
 		if body.has_method("take_damage"):
 			body.take_damage(ATTACK_DAMAGE, global_position)
+			_play_attack_impact_vfx(body)
 			hit_enemy_ids[body_id] = true
 
 
 func _set_attack_hitbox_enabled(enabled: bool) -> void:
 	if attack_hitbox_shape != null:
 		attack_hitbox_shape.disabled = not enabled
+
+
+func _play_attack_impact_vfx(target: Node) -> void:
+	if DEATH_VFX == null:
+		return
+
+	var impact_position: Vector2 = global_position
+	if attack_hitbox_area != null:
+		impact_position = attack_hitbox_area.global_position
+	var target_node: Node2D = target as Node2D
+	if target_node != null:
+		impact_position = target_node.global_position
+
+	DEATH_VFX.spawn_burst(self, impact_position, ATTACK_IMPACT_PARTICLE_COLOR, ATTACK_IMPACT_PARTICLE_COUNT)
 
 
 func _apply_hit_knockback(from_position: Vector2) -> void:

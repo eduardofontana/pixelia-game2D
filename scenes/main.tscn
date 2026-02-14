@@ -14,6 +14,7 @@
 [ext_resource type="PackedScene" uid="uid://x1i0duyqthu3" path="res://scenes/level_01_portal.tscn" id="12_trceg"]
 [ext_resource type="PackedScene" uid="uid://db7djgbmewrgt" path="res://scenes/boss.tscn" id="14_a8y0u"]
 [ext_resource type="PackedScene" uid="uid://dkqkscac2v8ct" path="res://scenes/skeleton_boss.tscn" id="14_jkv2x"]
+[ext_resource type="PackedScene" uid="uid://fgsb0hpxohlj" path="res://scenes/plataform.tscn" id="15_jkv2x"]
 
 [node name="Main" type="Node2D" unique_id=839302726]
 script = ExtResource("5_main")
@@ -122,3 +123,9 @@ position = Vector2(1383, 589)
 
 [node name="SkeletonBoss" parent="." unique_id=556872807 instance=ExtResource("14_jkv2x")]
 position = Vector2(2503, 577)
+
+[node name="Plataform" parent="." unique_id=1107884670 instance=ExtResource("15_jkv2x")]
+position = Vector2(104, 567)
+
+[node name="Plataform01" parent="." unique_id=370448920 instance=ExtResource("15_jkv2x")]
+position = Vector2(389, 567)
