@@ -1,21 +1,16 @@
 # Pixelia2D
 
-Jogo de plataforma 2D feito na Godot.
+Pixelia2D e um jogo de plataforma 2D desenvolvido com Godot, com foco em combate corpo a corpo, progressao de fase e batalhas contra chefes.
 
-## Status
+## Status do projeto
 
-Projeto em desenvolvimento ativo.
-As mecanicas, fases, balanceamento e artes ainda podem mudar.
+Este projeto esta em desenvolvimento ativo.
+Novas mecanicas, ajustes de gameplay, polimento visual e balanceamento ainda estao em andamento.
 
-## Engine
+## Tecnologias
 
-- Godot `4.6` (conforme `project.godot`, `config/features`)
-- Rendering method: `GL Compatibility`
-
-## Sobre o jogo
-
-Pixelia2D e um platformer com combate corpo a corpo, inimigos variados e batalhas de boss.
-O jogador percorre o mapa, coleta itens e enfrenta inimigos com foco em movimento e timing de ataque.
+- Engine: Godot `4.6`
+- Render: `GL Compatibility`
 
 ## Controles padrao
 
@@ -29,10 +24,19 @@ O jogador percorre o mapa, coleta itens e enfrenta inimigos com foco em moviment
 ## Como executar
 
 1. Abra o projeto na Godot `4.6`.
-2. Carregue `project.godot`.
-3. Rode a cena principal pelo play do editor.
+2. Carregue o arquivo `project.godot`.
+3. Execute o jogo pelo Play do editor.
+
+## Licenca
+
+O codigo-fonte deste projeto esta licenciado sob a **MIT License**.
+Consulte o arquivo `LICENSE` para os termos completos.
+
+## Assets (imagens e sons)
+
+Todas as imagens e efeitos sonoros utilizados no jogo sao de uso livre (free), conforme as permissoes de uso dos respectivos autores/fontes.
 
 ## Observacoes
 
 - Arquivos locais de execucao/editor (`.appdata/`) sao ignorados no versionamento.
-- Recomendado versionar sempre as cenas e scripts apos testes no editor.
+- Recomenda-se validar alteracoes no editor antes de publicar novos commits.
