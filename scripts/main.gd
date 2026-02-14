@@ -50,9 +50,9 @@ const DIALOG_BOSS_PLAYER_WON: String = "F\u00e1cil Demais ! N\u00e3o compensa !"
 const DIALOG_BOSS_PLAYER_DIED_TAUNT: String = "Acabou J\u00e9ssica ? "
 const BOSS_DIALOG_TRIGGER_DISTANCE: float = 210.0
 
-@onready var bgm_player: AudioStreamPlayer = $BGM
-@onready var hud_layer: CanvasLayer = $HUD
-@onready var player_ref: CharacterBody2D = $Player
+@onready var bgm_player: AudioStreamPlayer = get_node_or_null("BGM") as AudioStreamPlayer
+@onready var hud_layer: CanvasLayer = get_node_or_null("HUD") as CanvasLayer
+@onready var player_ref: CharacterBody2D = get_node_or_null("Player") as CharacterBody2D
 @onready var level_portal: Area2D = get_node_or_null("Level01Portal") as Area2D
 @onready var map_gold_item: Area2D = get_node_or_null("MapGold") as Area2D
 @onready var boss_ref: CharacterBody2D = get_node_or_null("Boss") as CharacterBody2D
@@ -87,6 +87,7 @@ var saw_boss_approach_once: bool = false
 func _ready() -> void:
 	Engine.time_scale = 1.0
 	randomize()
+	_validate_main_root_nodes()
 	_setup_victory_overlay()
 	_setup_boss_hud()
 	_bind_level_portal()
@@ -109,6 +110,15 @@ func _ready() -> void:
 	_set_map_gold_active(false)
 	_update_portal_access_state()
 	_update_hud_coin_count()
+
+
+func _validate_main_root_nodes() -> void:
+	if player_ref == null:
+		push_warning("Main: node 'Player' nao encontrado no no raiz.")
+	if hud_layer == null:
+		push_warning("Main: node 'HUD' nao encontrado no no raiz.")
+	if bgm_player == null:
+		push_warning("Main: node 'BGM' nao encontrado no no raiz.")
 
 
 func _physics_process(_delta: float) -> void:
@@ -575,8 +585,8 @@ func _restore_all_coins() -> void:
 			coin_area.call("reset_coin_state")
 		else:
 			coin_area.visible = true
-			coin_area.monitoring = true
-			coin_area.monitorable = true
+			coin_area.set_deferred("monitoring", true)
+			coin_area.set_deferred("monitorable", true)
 			var collision_shape: CollisionShape2D = coin_area.get_node_or_null("CollisionShape2D") as CollisionShape2D
 			if collision_shape != null:
 				collision_shape.set_deferred("disabled", false)
@@ -694,7 +704,14 @@ func _on_boss_defeated() -> void:
 func _on_player_died() -> void:
 	if not _is_player_in_active_boss_battle():
 		return
-	_reset_progress_after_boss_death()
+	if boss_ref != null:
+		if boss_ref.has_method("set_boss_active"):
+			boss_ref.call("set_boss_active", true)
+		else:
+			boss_ref.visible = true
+			boss_ref.set_physics_process(true)
+	_set_boss_hud_visible(true)
+	_refresh_boss_hud_from_boss()
 	_queue_player_dialog_line(DIALOG_BOSS_PLAYER_DIED_TAUNT, PLAYER_DIALOG_DURATION)
 
 
@@ -716,40 +733,13 @@ func _is_player_in_active_boss_battle() -> bool:
 	return true
 
 
-func _reset_progress_after_boss_death() -> void:
-	coins_collected = 0
-	map_gold_unlocked = false
-	map_gold_collected = false
-	boss_spawned = false
-	boss_defeated = false
-	portal_unlocked = false
-	saw_boss_approach_once = false
-
-	_restore_all_coins()
-	_set_map_gold_active(false)
-	_update_hud_coin_count()
-	_update_portal_access_state()
-	_set_boss_hud_visible(false)
-
-	if boss_ref != null:
-		if boss_ref.has_method("reset_for_battle"):
-			boss_ref.call("reset_for_battle")
-		elif boss_ref.has_method("set_boss_active"):
-			boss_ref.call("set_boss_active", false)
-		else:
-			boss_ref.visible = false
-			boss_ref.set_physics_process(false)
-
-	_refresh_boss_hud_from_boss()
-
-
 func _set_map_gold_active(active: bool) -> void:
 	if map_gold_item == null:
 		return
 
 	map_gold_item.visible = active
-	map_gold_item.monitoring = active
-	map_gold_item.monitorable = active
+	map_gold_item.set_deferred("monitoring", active)
+	map_gold_item.set_deferred("monitorable", active)
 
 	var collision_shape: CollisionShape2D = map_gold_item.get_node_or_null("CollisionShape2D") as CollisionShape2D
 	if collision_shape != null:
@@ -760,8 +750,8 @@ func _update_portal_access_state() -> void:
 	if level_portal == null:
 		return
 
-	level_portal.monitoring = portal_unlocked
-	level_portal.monitorable = portal_unlocked
+	level_portal.set_deferred("monitoring", portal_unlocked)
+	level_portal.set_deferred("monitorable", portal_unlocked)
 
 	var portal_item: CanvasItem = level_portal as CanvasItem
 	if portal_item != null:

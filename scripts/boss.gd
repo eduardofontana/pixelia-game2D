@@ -34,25 +34,26 @@ const DEATH_SFX_STREAM: AudioStream = preload("res://sounds/boss_death.wav")
 @export var patrol_distance_x: float = 110.0
 @export var patrol_distance_y: float = 70.0
 @export var patrol_speed: float = 34.0
-@export var chase_speed: float = 44.0
-@export var detection_radius: float = 220.0
-@export var attack_range: float = 54.0
+@export var chase_speed: float = 52.0
+@export var detection_radius: float = 260.0
+@export var attack_range: float = 66.0
 @export var attack_damage: int = 16
 @export var attack_windup_time: float = 0.72
-@export var attack_cooldown: float = 1.4
+@export var attack_cooldown: float = 0.85
 @export var attack_hit_frame: int = 3
-@export var attack_commit_time: float = 0.34
-@export var miss_cooldown_penalty: float = 0.35
+@export var attack_commit_time: float = 0.22
+@export var miss_cooldown_penalty: float = 0.18
 @export var hit_recover_time: float = 0.28
 @export var touch_damage: int = 8
 @export var touch_damage_interval: float = 0.45
+@export var allow_contact_damage: bool = false
 @export var rage_hp_ratio: float = 0.45
 @export var rage_speed_multiplier: float = 1.28
 @export var rage_attack_bonus: int = 5
 @export var strafe_strength: float = 0.45
 @export var strafe_jitter_time_min: float = 0.35
 @export var strafe_jitter_time_max: float = 1.0
-@export var attack_range_jitter: float = 14.0
+@export var attack_range_jitter: float = 8.0
 @export var dash_speed_multiplier: float = 1.55
 @export var dash_duration_min: float = 0.2
 @export var dash_duration_max: float = 0.42
@@ -61,8 +62,7 @@ const DEATH_SFX_STREAM: AudioStream = preload("res://sounds/boss_death.wav")
 
 @onready var body_collision: CollisionShape2D = $CollisionShape2D
 @onready var animated_sprite: AnimatedSprite2D = $AnimatedSprite2D
-@onready var damage_area: Area2D = get_node_or_null("DamageArea") as Area2D
-@onready var damage_area_collision: CollisionShape2D = get_node_or_null("DamageArea/CollisionShape2D") as CollisionShape2D
+@onready var damage_area: Area2D = _resolve_damage_area()
 
 var player_ref: CharacterBody2D = null
 var boss_state: int = BossState.IDLE
@@ -87,6 +87,13 @@ var death_signal_emitted: bool = false
 var touch_damage_timer: float = 0.0
 var injured_sfx_player: AudioStreamPlayer = null
 var alive_loop_sfx_player: AudioStreamPlayer = null
+var damage_area_collisions: Array[CollisionShape2D] = []
+var damage_area_base_scale: Vector2 = Vector2.ONE
+var damage_area_orientation_sign: float = 1.0
+var damage_area_owner_enabled: bool = false
+var attack_damage_window_open: bool = false
+var attack_total_duration: float = 0.0
+var attack_direction: Vector2 = Vector2.RIGHT
 
 
 func _ready() -> void:
@@ -97,6 +104,7 @@ func _ready() -> void:
 	spawn_position = global_position
 	current_hp = max_hp
 	_bind_player()
+	_cache_damage_area_collisions()
 	_configure_damage_area()
 	_setup_audio_players()
 	_configure_animations()
@@ -140,6 +148,7 @@ func _physics_process(delta: float) -> void:
 
 func set_boss_active(enabled: bool) -> void:
 	is_active_boss = enabled
+	_set_attack_damage_window(false)
 	visible = enabled
 	set_physics_process(enabled)
 	if body_collision != null:
@@ -199,7 +208,7 @@ func take_damage(amount: int, from_position: Vector2 = Vector2.INF) -> void:
 
 	boss_state = BossState.HIT
 	hit_timer = hit_recover_time
-	_play_animation(&"boss_hit")
+	_play_hit_animation()
 
 
 func _process_idle(delta: float) -> void:
@@ -207,11 +216,22 @@ func _process_idle(delta: float) -> void:
 		var to_player: Vector2 = player_ref.global_position - global_position
 		var player_distance: float = to_player.length()
 		if player_distance <= detection_radius:
-			if player_distance <= _get_attack_trigger_range() and attack_cooldown_timer <= 0.0:
-				attack_commit_timer += delta
+			var trigger_range: float = _get_attack_trigger_range()
+			var immediate_attack_range: float = maxf(26.0, trigger_range * 0.78)
+			if attack_cooldown_timer <= 0.0 and player_distance <= immediate_attack_range:
+				attack_commit_timer = 0.0
+				_start_attack()
+				return
+			if player_distance <= (trigger_range + 28.0) and attack_cooldown_timer <= 0.0:
+				attack_commit_timer += delta * 1.45
 			else:
-				attack_commit_timer = maxf(0.0, attack_commit_timer - (delta * 1.8))
-			if attack_commit_timer >= maxf(0.1, attack_commit_time):
+				attack_commit_timer = maxf(0.0, attack_commit_timer - (delta * 1.2))
+			var commit_threshold: float = maxf(0.08, attack_commit_time)
+			if player_distance <= trigger_range:
+				commit_threshold = minf(commit_threshold, 0.12)
+			if _is_rage_mode():
+				commit_threshold = minf(commit_threshold, 0.09)
+			if attack_commit_timer >= commit_threshold:
 				attack_commit_timer = 0.0
 				_start_attack()
 				return
@@ -235,47 +255,60 @@ func _process_attack(delta: float) -> void:
 	attack_timer = maxf(0.0, attack_timer - delta)
 
 	var target_velocity: Vector2 = Vector2.ZERO
-	if player_ref != null:
-		var to_player: Vector2 = player_ref.global_position - global_position
-		var player_distance: float = to_player.length()
-		if to_player.length() > MOVE_EPSILON:
-			target_velocity = _compute_combat_velocity(to_player, player_distance)
-		if _is_attack_hit_frame_reached() and not attack_did_hit:
-			attack_did_hit = _try_attack_damage()
-	velocity = velocity.move_toward(target_velocity, MOVE_ACCELERATION * delta)
+	var attack_progress: float = _get_attack_progress()
+	if attack_progress <= 0.24:
+		target_velocity = attack_direction * (_get_current_chase_speed() * 0.18)
+	velocity = velocity.move_toward(target_velocity, MOVE_DECELERATION * delta)
+
+	var hit_frame_reached: bool = _is_attack_hit_frame_reached()
+	_set_attack_damage_window(_is_attack_animation_active() and _is_attack_damage_window_open())
+	if hit_frame_reached and not attack_did_hit:
+		attack_did_hit = _try_attack_damage()
 
 	var attack_animation_playing: bool = false
 	if animated_sprite != null and animated_sprite.animation == &"boss_attack":
 		attack_animation_playing = animated_sprite.is_playing()
 
 	if attack_timer <= 0.0 and not attack_animation_playing:
-		if not attack_did_hit and _can_force_attack_damage():
+		if not attack_did_hit and not _has_attack_damage_area_hitbox() and _can_force_attack_damage():
 			player_ref.take_damage(_get_current_attack_damage(), global_position)
 			attack_did_hit = true
 		_end_attack_state()
 
 
 func _process_hit(delta: float) -> void:
+	_set_attack_damage_window(false)
 	velocity = velocity.move_toward(Vector2.ZERO, MOVE_DECELERATION * delta)
 	hit_timer = maxf(0.0, hit_timer - delta)
-	if hit_timer <= 0.0:
+	if hit_timer <= 0.0 and not _is_hit_animation_playing():
 		boss_state = BossState.IDLE
 		_play_animation(&"idle")
 
 
 func _start_attack() -> void:
 	boss_state = BossState.ATTACK
-	attack_timer = _get_attack_animation_duration()
+	attack_total_duration = _get_attack_animation_duration()
+	attack_timer = attack_total_duration
 	attack_did_hit = false
+	_set_attack_damage_window(false)
+	_capture_attack_direction()
 	_play_animation(&"boss_attack")
 
 
 func _end_attack_state() -> void:
 	if boss_state != BossState.ATTACK:
 		return
-	attack_cooldown_timer = attack_cooldown
+	_set_attack_damage_window(false)
+	var cooldown_value: float = maxf(0.08, attack_cooldown)
+	if _is_rage_mode():
+		cooldown_value *= 0.72
+	if player_ref != null:
+		var distance_to_player: float = global_position.distance_to(player_ref.global_position)
+		if distance_to_player <= (_get_attack_trigger_range() + 20.0):
+			cooldown_value *= 0.6
+	attack_cooldown_timer = cooldown_value
 	if not attack_did_hit:
-		attack_cooldown_timer += maxf(0.0, miss_cooldown_penalty)
+		attack_cooldown_timer += maxf(0.0, miss_cooldown_penalty * 0.4)
 	_reroll_attack_profile()
 	boss_state = BossState.IDLE
 	_play_animation(&"idle")
@@ -284,6 +317,7 @@ func _end_attack_state() -> void:
 func _start_death() -> void:
 	boss_state = BossState.DEATH
 	attack_timer = 0.0
+	attack_total_duration = 0.0
 	attack_commit_timer = 0.0
 	hit_timer = 0.0
 	attack_did_hit = false
@@ -305,10 +339,13 @@ func _try_attack_damage() -> bool:
 	if not player_ref.has_method("take_damage"):
 		return false
 
-	if _is_player_overlapping_damage_area():
+	if damage_area != null and not damage_area_collisions.is_empty():
+		if not _is_player_overlapping_damage_area():
+			return false
 		player_ref.take_damage(_get_current_attack_damage(), global_position)
 		return true
 
+	# Fallback para manter compatibilidade caso a cena esteja sem DamageArea.
 	var max_attack_distance: float = _get_attack_trigger_range() + ATTACK_DAMAGE_RANGE_BONUS
 	if global_position.distance_to(player_ref.global_position) > max_attack_distance:
 		return false
@@ -338,6 +375,18 @@ func _is_attack_hit_frame_reached() -> bool:
 	return attack_timer <= hit_window
 
 
+func _is_attack_damage_window_open() -> bool:
+	if animated_sprite != null and animated_sprite.sprite_frames != null and animated_sprite.animation == &"boss_attack":
+		var frames: SpriteFrames = animated_sprite.sprite_frames
+		if frames.has_animation(&"boss_attack"):
+			var frame_count: int = frames.get_frame_count(&"boss_attack")
+			if frame_count > 0:
+				var start_frame: int = clampi(maxi(0, attack_hit_frame), 0, frame_count - 1)
+				var end_frame: int = mini(frame_count - 1, start_frame + 2)
+				return animated_sprite.frame >= start_frame and animated_sprite.frame <= end_frame
+	return _is_attack_hit_frame_reached()
+
+
 func _get_attack_animation_duration() -> float:
 	var fallback_duration: float = maxf(0.2, attack_windup_time)
 	if animated_sprite == null or animated_sprite.sprite_frames == null:
@@ -359,7 +408,8 @@ func _can_force_attack_damage() -> bool:
 		return false
 	if not player_ref.has_method("take_damage"):
 		return false
-	if global_position.distance_to(player_ref.global_position) > (detection_radius + 12.0):
+	var max_force_distance: float = _get_attack_trigger_range() + ATTACK_DAMAGE_RANGE_BONUS
+	if global_position.distance_to(player_ref.global_position) > max_force_distance:
 		return false
 	return true
 
@@ -392,6 +442,7 @@ func _configure_collision_filters() -> void:
 func _configure_damage_area() -> void:
 	if damage_area == null:
 		return
+	_cache_damage_area_collisions()
 	damage_area.collision_layer = 0
 	damage_area.collision_mask = PLAYER_STRUCTURE_LAYER_MASK
 	damage_area.monitorable = false
@@ -476,10 +527,8 @@ func _on_alive_loop_sfx_finished() -> void:
 
 
 func _sync_damage_area_state(enabled: bool) -> void:
-	if damage_area != null:
-		damage_area.monitoring = enabled
-	if damage_area_collision != null:
-		damage_area_collision.set_deferred("disabled", not enabled)
+	damage_area_owner_enabled = enabled
+	_update_damage_area_state()
 
 
 func _configure_animations() -> void:
@@ -490,13 +539,17 @@ func _configure_animations() -> void:
 		frames.set_animation_loop(&"boss_attack", false)
 	if frames.has_animation(&"boss_death"):
 		frames.set_animation_loop(&"boss_death", false)
+	if frames.has_animation(&"boss_hit"):
+		frames.set_animation_loop(&"boss_hit", false)
+	if frames.has_animation(&"boos_hit"):
+		frames.set_animation_loop(&"boos_hit", false)
 	if not animated_sprite.is_connected("animation_finished", Callable(self, "_on_animation_finished")):
 		animated_sprite.animation_finished.connect(_on_animation_finished)
 
 
 func _on_animation_finished() -> void:
 	if animated_sprite != null and boss_state == BossState.ATTACK and animated_sprite.animation == &"boss_attack":
-		if not attack_did_hit and _can_force_attack_damage():
+		if not attack_did_hit and not _has_attack_damage_area_hitbox() and _can_force_attack_damage():
 			player_ref.take_damage(_get_current_attack_damage(), global_position)
 			attack_did_hit = true
 		_end_attack_state()
@@ -529,9 +582,131 @@ func _update_visuals() -> void:
 	var hover_offset: float = sin(hover_time * HOVER_WAVE_SPEED) * HOVER_WAVE_AMPLITUDE
 	animated_sprite.position.y = hover_offset
 
-	if absf(velocity.x) > MOVE_EPSILON:
+	if boss_state == BossState.ATTACK and absf(attack_direction.x) > 0.05:
+		facing_direction = 1 if attack_direction.x > 0.0 else -1
+	elif player_ref != null and boss_state != BossState.DEATH:
+		var player_dx: float = player_ref.global_position.x - global_position.x
+		if absf(player_dx) > 8.0:
+			facing_direction = 1 if player_dx > 0.0 else -1
+	elif absf(velocity.x) > MOVE_EPSILON:
 		facing_direction = 1 if velocity.x > 0.0 else -1
 	animated_sprite.flip_h = facing_direction < 0
+
+	if damage_area != null:
+		var next_scale: Vector2 = damage_area_base_scale
+		next_scale.x = absf(damage_area_base_scale.x) * damage_area_orientation_sign * float(facing_direction)
+		damage_area.scale = next_scale
+
+
+func _resolve_damage_area() -> Area2D:
+	var preferred_area: Area2D = get_node_or_null("DamageArea") as Area2D
+	if preferred_area != null:
+		return preferred_area
+	var legacy_area: Area2D = get_node_or_null("DamagedArea") as Area2D
+	if legacy_area != null:
+		return legacy_area
+	for child in get_children():
+		var area_child: Area2D = child as Area2D
+		if area_child == null:
+			continue
+		if area_child.get_child_count() <= 0:
+			continue
+		for nested in area_child.find_children("*", "CollisionShape2D", true, false):
+			if nested is CollisionShape2D:
+				return area_child
+	return null
+
+
+func _cache_damage_area_collisions() -> void:
+	damage_area_collisions.clear()
+	damage_area_orientation_sign = 1.0
+	if damage_area == null:
+		return
+	damage_area_base_scale = damage_area.scale
+	var sampled_collision_x_sum: float = 0.0
+	var sampled_collision_count: int = 0
+	for child in damage_area.find_children("*", "CollisionShape2D", true, false):
+		var collision_shape: CollisionShape2D = child as CollisionShape2D
+		if collision_shape == null:
+			continue
+		damage_area_collisions.append(collision_shape)
+		var local_to_area: Vector2 = damage_area.to_local(collision_shape.global_position)
+		sampled_collision_x_sum += local_to_area.x
+		sampled_collision_count += 1
+	if sampled_collision_count > 0:
+		var avg_x: float = sampled_collision_x_sum / float(sampled_collision_count)
+		if absf(avg_x) > 0.001:
+			damage_area_orientation_sign = 1.0 if avg_x > 0.0 else -1.0
+
+
+func _set_attack_damage_window(enabled: bool) -> void:
+	if attack_damage_window_open == enabled:
+		return
+	attack_damage_window_open = enabled
+	_update_damage_area_state()
+
+
+func _update_damage_area_state() -> void:
+	var should_enable: bool = damage_area_owner_enabled \
+		and attack_damage_window_open \
+		and boss_state == BossState.ATTACK \
+		and _is_attack_animation_active()
+	if damage_area != null:
+		damage_area.monitoring = should_enable
+		damage_area.monitorable = false
+	for collision_shape in damage_area_collisions:
+		if collision_shape == null:
+			continue
+		collision_shape.set_deferred("disabled", not should_enable)
+
+
+func _is_attack_animation_active() -> bool:
+	if animated_sprite == null:
+		return false
+	return animated_sprite.animation == &"boss_attack"
+
+
+func _has_attack_damage_area_hitbox() -> bool:
+	return damage_area != null and not damage_area_collisions.is_empty()
+
+
+func _capture_attack_direction() -> void:
+	var next_direction: Vector2 = Vector2(float(facing_direction), 0.0)
+	if player_ref != null:
+		var to_player: Vector2 = player_ref.global_position - global_position
+		if absf(to_player.x) > MOVE_EPSILON:
+			next_direction = Vector2(1.0 if to_player.x > 0.0 else -1.0, 0.0)
+	if absf(next_direction.x) <= 0.001:
+		next_direction = Vector2(float(facing_direction if facing_direction != 0 else 1), 0.0)
+	attack_direction = next_direction
+	if absf(attack_direction.x) > 0.05:
+		facing_direction = 1 if attack_direction.x > 0.0 else -1
+
+
+func _get_attack_progress() -> float:
+	var safe_duration: float = maxf(attack_total_duration, 0.001)
+	return clampf(1.0 - (attack_timer / safe_duration), 0.0, 1.0)
+
+
+func _is_hit_animation_playing() -> bool:
+	if animated_sprite == null:
+		return false
+	if animated_sprite.animation == &"boss_hit" and animated_sprite.is_playing():
+		return true
+	if animated_sprite.animation == &"boos_hit" and animated_sprite.is_playing():
+		return true
+	return false
+
+
+func _play_hit_animation() -> void:
+	if animated_sprite != null and animated_sprite.sprite_frames != null:
+		if animated_sprite.sprite_frames.has_animation(&"boss_hit"):
+			_play_animation(&"boss_hit")
+			return
+		if animated_sprite.sprite_frames.has_animation(&"boos_hit"):
+			_play_animation(&"boos_hit")
+			return
+	_play_animation(&"idle")
 
 
 func _apply_hit_knockback(from_position: Vector2) -> void:
@@ -674,6 +849,8 @@ func _reset_dash_cooldown() -> void:
 
 
 func _try_touch_damage_player() -> void:
+	if not allow_contact_damage:
+		return
 	if touch_damage <= 0:
 		return
 	if touch_damage_timer > 0.0:
@@ -682,13 +859,6 @@ func _try_touch_damage_player() -> void:
 		return
 	if player_ref == null or not player_ref.has_method("take_damage"):
 		return
-
-	if damage_area != null:
-		for body in damage_area.get_overlapping_bodies():
-			if body == player_ref:
-				player_ref.take_damage(_get_current_touch_damage(), global_position)
-				touch_damage_timer = touch_damage_interval
-				return
 
 	for i in range(get_slide_collision_count()):
 		var collision: KinematicCollision2D = get_slide_collision(i)

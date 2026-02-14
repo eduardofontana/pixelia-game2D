@@ -429,22 +429,22 @@ texture = ExtResource("3_tw12r")
 position = Vector2(1604, -23)
 texture = ExtResource("3_tw12r")
 
-[node name="PlantBig" type="Sprite2D" parent="." unique_id=659781480]
-position = Vector2(676, 597)
+[node name="PlantBig7" type="Sprite2D" parent="Decoration" unique_id=659781480]
+position = Vector2(72, 5)
 texture = ExtResource("3_tw12r")
 
-[node name="Plant" type="Sprite2D" parent="." unique_id=1177852046]
-position = Vector2(536, 603)
+[node name="Plant5" type="Sprite2D" parent="Decoration" unique_id=1177852046]
+position = Vector2(-68, 11)
 texture = ExtResource("4_xqm8g")
 
-[node name="Plant2" type="Sprite2D" parent="." unique_id=1609144944]
-position = Vector2(63, 576)
+[node name="Plant6" type="Sprite2D" parent="Decoration" unique_id=1609144944]
+position = Vector2(-541, -16)
 texture = ExtResource("4_xqm8g")
 
-[node name="Plant3" type="Sprite2D" parent="." unique_id=2093553726]
-position = Vector2(278, 561)
+[node name="Plant7" type="Sprite2D" parent="Decoration" unique_id=2093553726]
+position = Vector2(-326, -31)
 texture = ExtResource("4_xqm8g")
 
-[node name="Plant4" type="Sprite2D" parent="." unique_id=1720978003]
-position = Vector2(300, 562)
+[node name="Plant8" type="Sprite2D" parent="Decoration" unique_id=1720978003]
+position = Vector2(-304, -30)
 texture = ExtResource("4_xqm8g")

@@ -3,20 +3,25 @@ extends CanvasLayer
 @export var player_path: NodePath
 
 const MAX_HEARTS_DISPLAY: int = 5
-const HEART_FULL: String = "\u2665"
-const HEART_EMPTY: String = "\u2661"
-const STAMINA_BAR_WIDTH: float = 84.0
+const HP_ICON: String = "💓"
+const MAX_LIFE_ICONS_DISPLAY: int = 5
+const LIFE_ICON_FULL: String = "❤️"
+const STAMINA_DOTS_TOTAL: int = 5
+const STAMINA_ICON_FULL: String = "🐇"
 const STAMINA_SMOOTH_SPEED: float = 9.0
-const HUD_FONT_PATH: String = "res://fonts/Buffied-GlqZ.ttf"
+const HUD_FONT_NAME: String = "Arial"
 const MIN_VOLUME_DB: float = -40.0
 const MAX_VOLUME_DB: float = 3.0
 const VOLUME_STEP_DB: float = 2.0
 
+@onready var life_label: Label = get_node_or_null("MarginContainer/PanelContainer/VBox/LifeRow/LifeLabel")
+@onready var life_icons_label: RichTextLabel = get_node_or_null("MarginContainer/PanelContainer/VBox/LifeRow/LifeIconsLabel")
 @onready var lives_label: RichTextLabel = get_node_or_null("MarginContainer/PanelContainer/VBox/TopRow/LivesLabel")
-@onready var stamina_fill: Panel = get_node_or_null("MarginContainer/PanelContainer/VBox/StaminaRow/StaminaBar/StaminaFill")
+@onready var stamina_label: Label = get_node_or_null("MarginContainer/PanelContainer/VBox/StaminaRow/StaminaLabel")
+@onready var stamina_dots_label: RichTextLabel = get_node_or_null("MarginContainer/PanelContainer/VBox/StaminaRow/StaminaDotsLabel")
 @onready var level_label: Label = get_node_or_null("MarginContainer/PanelContainer/VBox/InfoRow/LevelLabel")
 @onready var xp_label: Label = get_node_or_null("MarginContainer/PanelContainer/VBox/InfoRow/XpLabel")
-@onready var coins_label: Label = get_node_or_null("CoinsLabel")
+@onready var coins_label: Label = get_node_or_null("MarginContainer/PanelContainer/VBox/InfoRow/CoinsLabel")
 @onready var options_overlay: Control = get_node_or_null("OptionsOverlay")
 @onready var pause_volume_down_button: Button = get_node_or_null("OptionsOverlay/OptionsCard/OptionsVBox/VolumeControls/VolumeDownButton")
 @onready var pause_volume_up_button: Button = get_node_or_null("OptionsOverlay/OptionsCard/OptionsVBox/VolumeControls/VolumeUpButton")
@@ -33,7 +38,6 @@ var has_initial_hp_sample: bool = false
 var hearts_base_scale: Vector2 = Vector2.ONE
 var hearts_base_modulate: Color = Color(1, 1, 1, 1)
 var hearts_damage_tween: Tween = null
-var stamina_fill_style: StyleBoxFlat = null
 var master_bus_index: int = -1
 var coin_count: int = 0
 
@@ -44,8 +48,7 @@ func _ready() -> void:
 	if not _has_required_nodes():
 		return
 
-	_apply_vampire_font()
-	_setup_stamina_fill_style()
+	_apply_hud_font()
 	_setup_pause_options_menu()
 
 	hearts_base_scale = lives_label.scale
@@ -90,7 +93,7 @@ func _exit_tree() -> void:
 		get_tree().paused = false
 
 
-func _on_player_stats_changed(current_hp: int, max_hp_value: int, current_stamina: float, max_stamina_value: float, _current_lives: int) -> void:
+func _on_player_stats_changed(current_hp: int, max_hp_value: int, current_stamina: float, max_stamina_value: float, current_lives: int) -> void:
 	var ratio := 0.0
 	if max_stamina_value > 0.0:
 		ratio = clampf(current_stamina / max_stamina_value, 0.0, 1.0)
@@ -105,6 +108,7 @@ func _on_player_stats_changed(current_hp: int, max_hp_value: int, current_stamin
 	previous_hp_ratio = hp_ratio
 	has_initial_hp_sample = true
 
+	_update_life_label(current_lives)
 	_update_lives_display(current_hp, max_hp_value)
 
 
@@ -116,7 +120,8 @@ func _refresh_from_player() -> void:
 	var current_stamina := float(player_ref.get("stamina"))
 	var max_stamina_value := float(player_ref.get("max_stamina"))
 	var max_hp_value := int(player_ref.get("max_hp"))
-	_on_player_stats_changed(current_hp, max_hp_value, current_stamina, max_stamina_value, 0)
+	var current_lives := int(player_ref.get("lives"))
+	_on_player_stats_changed(current_hp, max_hp_value, current_stamina, max_stamina_value, current_lives)
 	_refresh_level_xp()
 
 
@@ -128,44 +133,48 @@ func _refresh_level_xp() -> void:
 	var xp_value := int(player_ref.get("xp"))
 	var xp_to_next := int(player_ref.get("xp_to_next_level"))
 
-	level_label.text = "Lv.: %d" % level_value
+	level_label.text = "Level: %d" % level_value
 	xp_label.text = "XP: %d / %d" % [xp_value, maxi(xp_to_next, 1)]
 
 
 func _update_lives_display(current_hp: int, max_hp_value: int) -> void:
-	var max_half_steps := MAX_HEARTS_DISPLAY * 2
-	var filled_half_steps := max_half_steps
-
+	var filled_icons := MAX_HEARTS_DISPLAY
 	if max_hp_value > 0:
 		var hp_ratio := clampf(float(current_hp) / float(max_hp_value), 0.0, 1.0)
-		filled_half_steps = clampi(int(floor(hp_ratio * float(max_half_steps) + 0.0001)), 0, max_half_steps)
+		filled_icons = clampi(int(round(hp_ratio * float(MAX_HEARTS_DISPLAY))), 0, MAX_HEARTS_DISPLAY)
+	var hidden_icons := MAX_HEARTS_DISPLAY - filled_icons
+	lives_label.text = "[color=#ffffff]%s[/color][color=#ffffff00]%s[/color]" % [
+		HP_ICON.repeat(filled_icons),
+		HP_ICON.repeat(maxi(hidden_icons, 0))
+	]
 
-	var full: int = int(filled_half_steps * 0.5)
-	var has_half: bool = (filled_half_steps % 2) == 1
-	var empty: int = MAX_HEARTS_DISPLAY - full - (1 if has_half else 0)
 
-	var hearts_bbcode := "[color=#ff4a5f]" + HEART_FULL.repeat(full) + "[/color]"
-	if has_half:
-		# Show a visually half-like heart using a lighter red, without the "1/2" glyph.
-		hearts_bbcode += "[color=#ff9aa8]" + HEART_FULL + "[/color]"
-	hearts_bbcode += "[color=#f0e7eb]" + HEART_EMPTY.repeat(maxi(empty, 0)) + "[/color]"
-	lives_label.text = hearts_bbcode
+func _update_life_label(current_lives: int) -> void:
+	if life_label == null:
+		return
+	life_label.text = "Life:"
+	if life_icons_label == null:
+		return
+
+	var filled_icons := clampi(current_lives, 0, MAX_LIFE_ICONS_DISPLAY)
+	var hidden_icons := MAX_LIFE_ICONS_DISPLAY - filled_icons
+	life_icons_label.text = "[color=#ffffff]%s[/color][color=#ffffff00]%s[/color]" % [
+		LIFE_ICON_FULL.repeat(filled_icons),
+		LIFE_ICON_FULL.repeat(maxi(hidden_icons, 0))
+	]
 
 
 func _apply_stamina_visuals(force_target: bool, _delta: float) -> void:
 	var ratio := target_stamina_ratio if force_target else displayed_stamina_ratio
-	var fill_width := STAMINA_BAR_WIDTH * ratio
-	stamina_fill.offset_right = fill_width
-
-	if stamina_fill_style == null:
+	if stamina_dots_label == null:
 		return
 
-	if ratio > 0.6:
-		stamina_fill_style.bg_color = Color(0.25, 0.86, 0.55, 1)
-	elif ratio > 0.3:
-		stamina_fill_style.bg_color = Color(0.97, 0.78, 0.27, 1)
-	else:
-		stamina_fill_style.bg_color = Color(0.93, 0.28, 0.33, 1)
+	var filled_dots := clampi(int(round(ratio * float(STAMINA_DOTS_TOTAL))), 0, STAMINA_DOTS_TOTAL)
+	var hidden_dots := STAMINA_DOTS_TOTAL - filled_dots
+	stamina_dots_label.text = "[color=#ffffff]%s[/color][color=#ffffff00]%s[/color]" % [
+		STAMINA_ICON_FULL.repeat(filled_dots),
+		STAMINA_ICON_FULL.repeat(maxi(hidden_dots, 0))
+	]
 
 
 func _retry_bind_player() -> void:
@@ -189,73 +198,49 @@ func _animate_hearts_damage(damage_ratio: float) -> void:
 	if hearts_damage_tween != null:
 		hearts_damage_tween.kill()
 
-	lives_label.scale = hearts_base_scale
-	lives_label.rotation_degrees = 0.0
+	# Mantem o texto estavel: sem escala/rotacao ao tomar dano.
 	lives_label.modulate = Color(1.0, 0.48, 0.48, 1.0)
-
-	var bump_scale := hearts_base_scale * (1.0 + (0.18 * intensity))
-	var squeeze_scale := hearts_base_scale * (1.0 - (0.12 * intensity))
 
 	hearts_damage_tween = create_tween()
 	hearts_damage_tween.set_trans(Tween.TRANS_QUAD)
 	hearts_damage_tween.set_ease(Tween.EASE_OUT)
-
-	hearts_damage_tween.tween_property(lives_label, "rotation_degrees", -6.0 * intensity, 0.035)
-	hearts_damage_tween.parallel().tween_property(lives_label, "scale", bump_scale, 0.07)
-
-	hearts_damage_tween.tween_property(lives_label, "rotation_degrees", 4.0 * intensity, 0.05)
-	hearts_damage_tween.parallel().tween_property(lives_label, "scale", squeeze_scale, 0.07)
-
-	hearts_damage_tween.tween_property(lives_label, "rotation_degrees", 0.0, 0.06)
-	hearts_damage_tween.parallel().tween_property(lives_label, "scale", hearts_base_scale, 0.1)
-	hearts_damage_tween.parallel().tween_property(lives_label, "modulate", hearts_base_modulate, 0.18)
+	hearts_damage_tween.tween_property(lives_label, "modulate", hearts_base_modulate, 0.16 + (0.04 * intensity))
 
 
 func _has_required_nodes() -> bool:
-	return lives_label != null \
-		and stamina_fill != null \
+	return life_label != null \
+		and life_icons_label != null \
+		and lives_label != null \
+		and stamina_label != null \
+		and stamina_dots_label != null \
 		and level_label != null \
 		and xp_label != null
 
 
-func _apply_vampire_font() -> void:
-	if not ResourceLoader.exists(HUD_FONT_PATH):
-		return
-
-	var loaded_font: Resource = load(HUD_FONT_PATH)
-	if not (loaded_font is Font):
-		return
-
-	var vampire_font: Font = loaded_font as Font
-	lives_label.add_theme_font_override("font", vampire_font)
-	level_label.add_theme_font_override("font", vampire_font)
-	xp_label.add_theme_font_override("font", vampire_font)
+func _apply_hud_font() -> void:
+	var hud_font := SystemFont.new()
+	hud_font.font_names = PackedStringArray([HUD_FONT_NAME])
+	life_label.add_theme_font_override("font", hud_font)
+	life_icons_label.add_theme_font_override("font", hud_font)
+	lives_label.add_theme_font_override("font", hud_font)
+	stamina_label.add_theme_font_override("font", hud_font)
+	stamina_dots_label.add_theme_font_override("font", hud_font)
+	level_label.add_theme_font_override("font", hud_font)
+	xp_label.add_theme_font_override("font", hud_font)
 	if coins_label != null:
-		coins_label.add_theme_font_override("font", vampire_font)
+		coins_label.add_theme_font_override("font", hud_font)
 	if pause_volume_value_label != null:
-		pause_volume_value_label.add_theme_font_override("font", vampire_font)
+		pause_volume_value_label.add_theme_font_override("font", hud_font)
 	if pause_resume_button != null:
-		pause_resume_button.add_theme_font_override("font", vampire_font)
+		pause_resume_button.add_theme_font_override("font", hud_font)
 	if pause_exit_button != null:
-		pause_exit_button.add_theme_font_override("font", vampire_font)
+		pause_exit_button.add_theme_font_override("font", hud_font)
 	var pause_title: Label = get_node_or_null("OptionsOverlay/OptionsCard/OptionsVBox/OptionsTitleLabel")
 	if pause_title != null:
-		pause_title.add_theme_font_override("font", vampire_font)
+		pause_title.add_theme_font_override("font", hud_font)
 	var pause_volume_label: Label = get_node_or_null("OptionsOverlay/OptionsCard/OptionsVBox/VolumeLabel")
 	if pause_volume_label != null:
-		pause_volume_label.add_theme_font_override("font", vampire_font)
-
-
-func _setup_stamina_fill_style() -> void:
-	if stamina_fill == null:
-		return
-
-	var panel_style: StyleBox = stamina_fill.get_theme_stylebox("panel")
-	if not (panel_style is StyleBoxFlat):
-		return
-
-	stamina_fill_style = (panel_style as StyleBoxFlat).duplicate() as StyleBoxFlat
-	stamina_fill.add_theme_stylebox_override("panel", stamina_fill_style)
+		pause_volume_label.add_theme_font_override("font", hud_font)
 
 
 func _setup_pause_options_menu() -> void:

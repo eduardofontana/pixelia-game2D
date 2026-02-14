@@ -13,6 +13,7 @@
 [ext_resource type="PackedScene" uid="uid://bedfggthexvw4" path="res://scenes/map_gold.tscn" id="12_a8y0u"]
 [ext_resource type="PackedScene" uid="uid://x1i0duyqthu3" path="res://scenes/level_01_portal.tscn" id="12_trceg"]
 [ext_resource type="PackedScene" uid="uid://db7djgbmewrgt" path="res://scenes/boss.tscn" id="14_a8y0u"]
+[ext_resource type="PackedScene" uid="uid://dkqkscac2v8ct" path="res://scenes/skeleton_boss.tscn" id="14_jkv2x"]
 
 [node name="Main" type="Node2D" unique_id=839302726]
 script = ExtResource("5_main")
@@ -90,7 +91,7 @@ monitorable = false
 
 [node name="Boss" parent="." unique_id=1440023123 instance=ExtResource("14_a8y0u")]
 visible = false
-position = Vector2(1227, 512)
+position = Vector2(1251, 449)
 
 [node name="Enemies" type="Node2D" parent="." unique_id=703039115]
 
@@ -121,5 +122,5 @@ position = Vector2(1078, 589)
 [node name="Slime2" parent="Enemies" unique_id=1105981009 instance=ExtResource("9_85g3d")]
 position = Vector2(1383, 589)
 
-[node name="Slime3" parent="Enemies" unique_id=1529550309 instance=ExtResource("9_85g3d")]
-position = Vector2(2377, 589)
+[node name="SkeletonBoss" parent="." unique_id=556872807 instance=ExtResource("14_jkv2x")]
+position = Vector2(2503, 577)

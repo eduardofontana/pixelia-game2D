@@ -51,8 +51,10 @@ const DEATH_TEXT_SHADOW_COLOR: Color = Color(0, 0, 0, 0.92)
 const DEATH_TEXT_FONT_PATH: String = "res://fonts/Buffied-GlqZ.ttf"
 const DEATH_TEXT_Y_OFFSET: float = -48.0
 const DEATH_EMOJI_TEXT: String = "\u2620"
-const DEATH_TIMEOUT_TEXT: String = "Relax ..."
-const DEATH_TIMEOUT_EMOJI_TEXT: String = "🎣"
+const GAME_OVER_TEXT: String = "Fim de Jogo"
+const GAME_OVER_EMOJI_TEXT: String = "\u2620"
+const DEATH_CONTINUE_TEXT: String = "Continuar"
+const DEATH_NEW_GAME_TEXT: String = "Novo Jogo"
 const DEATH_EMOJI_IN_TIME: float = 0.2
 const DEATH_EMOJI_FADE_OUT_TIME: float = 0.2
 const DEATH_EMOJI_HOLD_ALPHA: float = 0.92
@@ -60,7 +62,7 @@ const DEATH_EMOJI_START_SCALE: Vector2 = Vector2(1.45, 1.45)
 const DEATH_EMOJI_END_SCALE: Vector2 = Vector2(1.0, 1.0)
 const DEATH_EMOJI_COLOR: Color = Color(0.92, 0.88, 0.88, 0.0)
 const DEATH_EMOJI_Y_OFFSET: float = -104.0
-const DEATH_COUNTDOWN_START: int = 10
+const DEATH_COUNTDOWN_START: int = 5
 const DEATH_COUNTDOWN_STEP_TIME: float = 1.0
 const DEATH_COUNTDOWN_IN_TIME: float = 0.14
 const DEATH_COUNTDOWN_FADE_OUT_TIME: float = 0.16
@@ -996,6 +998,10 @@ func _start_death() -> void:
 	if is_dead:
 		return
 
+	if lives > 0:
+		lives -= 1
+	lives = maxi(lives, 0)
+
 	is_dead = true
 	is_attacking = false
 	is_defending = false
@@ -1044,6 +1050,7 @@ func _start_death() -> void:
 	hp_regen_accumulator = 0.0
 	defend_block_cooldown_timer = 0.0
 	velocity = Vector2.ZERO
+	_emit_stats_changed()
 	died.emit()
 
 	_start_death_visual_fx()
@@ -1455,7 +1462,7 @@ func _start_death_countdown() -> void:
 	death_countdown_timer = DEATH_COUNTDOWN_STEP_TIME
 	death_countdown_tremor_time = 0.0
 	_show_countdown_value()
-	_show_death_action_buttons(true)
+	_hide_death_action_buttons()
 
 
 func _process_death_countdown(delta: float) -> void:
@@ -1474,7 +1481,10 @@ func _process_death_countdown(delta: float) -> void:
 		death_countdown_active = false
 		_reset_countdown_tremor()
 		_fade_out_death_countdown()
-		_enter_death_timeout_mode()
+		if lives > 0:
+			_start_player_fade_out_for_respawn()
+		else:
+			_enter_death_timeout_mode()
 	else:
 		death_countdown_timer = DEATH_COUNTDOWN_STEP_TIME
 		_show_countdown_value()
@@ -1515,7 +1525,7 @@ func _fade_out_death_countdown() -> void:
 	death_countdown_tween.tween_callback(Callable(self, "_reset_countdown_tremor"))
 
 
-func _show_death_action_buttons(show_continue_button: bool = true) -> void:
+func _show_death_action_buttons(show_continue_button: bool = true, show_quit_button: bool = true, continue_text_value: String = DEATH_CONTINUE_TEXT) -> void:
 	if death_actions_row == null:
 		return
 
@@ -1526,11 +1536,12 @@ func _show_death_action_buttons(show_continue_button: bool = true) -> void:
 	death_actions_row.visible = true
 	death_actions_row.modulate = Color(1.0, 1.0, 1.0, 0.0)
 	if death_continue_button != null:
+		death_continue_button.text = continue_text_value
 		death_continue_button.visible = show_continue_button
 		death_continue_button.disabled = not show_continue_button
 	if death_quit_button != null:
-		death_quit_button.visible = true
-		death_quit_button.disabled = false
+		death_quit_button.visible = show_quit_button
+		death_quit_button.disabled = not show_quit_button
 
 	death_actions_tween = create_tween()
 	death_actions_tween.set_trans(Tween.TRANS_QUAD)
@@ -1542,12 +1553,12 @@ func _enter_death_timeout_mode() -> void:
 	if not is_dead or is_respawn_transition:
 		return
 	if death_text_label != null:
-		death_text_label.text = DEATH_TIMEOUT_TEXT
+		death_text_label.text = GAME_OVER_TEXT
 	if death_emoji_label != null:
-		death_emoji_label.text = DEATH_TIMEOUT_EMOJI_TEXT
+		death_emoji_label.text = GAME_OVER_EMOJI_TEXT
 	_start_death_text_fx()
 	_start_death_emoji_fx()
-	_show_death_action_buttons(false)
+	_show_death_action_buttons(true, false, DEATH_NEW_GAME_TEXT)
 
 
 func _hide_death_action_buttons() -> void:
@@ -1628,6 +1639,9 @@ func _configure_death_action_button(button: Button, is_primary: bool, death_font
 func _on_death_continue_pressed() -> void:
 	if not is_dead or is_respawn_transition:
 		return
+	if lives <= 0:
+		_restart_full_game()
+		return
 
 	death_countdown_active = false
 	death_countdown_value = 0
@@ -1642,6 +1656,17 @@ func _on_death_quit_pressed() -> void:
 	if not is_dead:
 		return
 	get_tree().quit()
+
+
+func _restart_full_game() -> void:
+	var tree_ref: SceneTree = get_tree()
+	if tree_ref == null:
+		return
+	if tree_ref.paused:
+		tree_ref.paused = false
+	if not is_equal_approx(Engine.time_scale, 1.0):
+		Engine.time_scale = 1.0
+	tree_ref.reload_current_scene()
 
 
 func _update_countdown_tremor() -> void:
