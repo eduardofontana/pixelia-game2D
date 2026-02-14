@@ -16,6 +16,9 @@ const MOVE_EPSILON: float = 2.0
 const HIT_KNOCKBACK_X: float = 84.0
 const DAMAGE_KNOCKBACK_MULTIPLIER: float = 1.45
 const ATTACK_DAMAGE_RANGE_BONUS: float = 24.0
+const ATTACK_DAMAGE_WINDOW_EXTRA_FRAMES: int = 3
+const ATTACK_FALLBACK_VERTICAL_TOLERANCE: float = 52.0
+const ATTACK_FALLBACK_BACK_ALLOWANCE_X: float = 10.0
 const PATROL_RETARGET_MIN_TIME: float = 0.9
 const PATROL_RETARGET_MAX_TIME: float = 2.2
 const PLAYER_STRUCTURE_LAYER_MASK: int = 1
@@ -342,7 +345,10 @@ func _try_attack_damage() -> bool:
 		return false
 
 	if damage_area != null and not damage_area_collisions.is_empty():
-		if not _is_player_overlapping_damage_area():
+		if _is_player_overlapping_damage_area():
+			player_ref.take_damage(_get_current_attack_damage(), global_position, &"boss")
+			return true
+		if not _can_force_attack_damage():
 			return false
 		player_ref.take_damage(_get_current_attack_damage(), global_position, &"boss")
 		return true
@@ -351,6 +357,8 @@ func _try_attack_damage() -> bool:
 	var max_attack_distance: float = _get_attack_trigger_range() + ATTACK_DAMAGE_RANGE_BONUS
 	if global_position.distance_to(player_ref.global_position) > max_attack_distance:
 		return false
+	if not _is_player_within_attack_fallback_arc():
+		return false
 
 	player_ref.take_damage(_get_current_attack_damage(), global_position, &"boss")
 	return true
@@ -358,8 +366,6 @@ func _try_attack_damage() -> bool:
 
 func _is_player_overlapping_damage_area() -> bool:
 	if damage_area == null:
-		return false
-	if not damage_area.monitoring:
 		return false
 
 	for body in damage_area.get_overlapping_bodies():
@@ -383,8 +389,8 @@ func _is_attack_damage_window_open() -> bool:
 		if frames.has_animation(&"boss_attack"):
 			var frame_count: int = frames.get_frame_count(&"boss_attack")
 			if frame_count > 0:
-				var start_frame: int = clampi(maxi(0, attack_hit_frame), 0, frame_count - 1)
-				var end_frame: int = mini(frame_count - 1, start_frame + 2)
+				var start_frame: int = clampi(maxi(0, attack_hit_frame - 1), 0, frame_count - 1)
+				var end_frame: int = mini(frame_count - 1, start_frame + ATTACK_DAMAGE_WINDOW_EXTRA_FRAMES)
 				return animated_sprite.frame >= start_frame and animated_sprite.frame <= end_frame
 	return _is_attack_hit_frame_reached()
 
@@ -412,6 +418,24 @@ func _can_force_attack_damage() -> bool:
 		return false
 	var max_force_distance: float = _get_attack_trigger_range() + ATTACK_DAMAGE_RANGE_BONUS
 	if global_position.distance_to(player_ref.global_position) > max_force_distance:
+		return false
+	if not _is_player_within_attack_fallback_arc():
+		return false
+	return true
+
+
+func _is_player_within_attack_fallback_arc() -> bool:
+	if player_ref == null:
+		return false
+	var to_player: Vector2 = player_ref.global_position - global_position
+	if absf(to_player.y) > ATTACK_FALLBACK_VERTICAL_TOLERANCE:
+		return false
+	var attack_facing: float = attack_direction.x
+	if absf(attack_facing) <= 0.05:
+		attack_facing = float(facing_direction if facing_direction != 0 else 1)
+	if absf(attack_facing) <= 0.05:
+		return true
+	if signf(to_player.x) != signf(attack_facing) and absf(to_player.x) > ATTACK_FALLBACK_BACK_ALLOWANCE_X:
 		return false
 	return true
 
