@@ -22,6 +22,8 @@ const DEATH_RISE_Y: float = -8.0
 const HIT_KNOCKBACK_X: float = 110.0
 const HIT_KNOCKBACK_Y: float = -95.0
 const DAMAGE_KNOCKBACK_MULTIPLIER: float = 1.25
+const HURT_SFX_PATH: String = "res://sounds/Zombie.wav"
+const HURT_SFX_VOLUME_DB: float = -6.0
 const DEATH_PARTICLE_COLOR: Color = Color(0.62, 0.86, 0.52, 1.0)
 const DEATH_FADE_DURATION: float = 0.24
 const DEATH_VFX = preload("res://scripts/death_vfx.gd")
@@ -65,6 +67,7 @@ var attack_animation_finished: bool = false
 var is_dying: bool = false
 var health_bar_timer: float = 0.0
 var health_fill_style: StyleBoxFlat = null
+var hurt_sfx_player: AudioStreamPlayer = null
 
 var contact_area: Area2D = null
 var contact_collision: CollisionShape2D = null
@@ -84,6 +87,7 @@ func _ready() -> void:
 		animated_sprite.animation_finished.connect(_on_animated_sprite_animation_finished)
 	_setup_health_fill_style()
 	_apply_vampire_percent_font()
+	_setup_hurt_sfx()
 	_update_health_bar()
 	if health_bar != null:
 		health_bar.visible = false
@@ -123,6 +127,7 @@ func take_damage(amount: int, from_position: Vector2 = Vector2.INF) -> void:
 		return
 
 	current_hp = maxi(0, current_hp - amount)
+	_play_hurt_sfx()
 	_apply_hit_knockback(from_position)
 	_show_health_bar()
 	_update_health_bar()
@@ -525,3 +530,26 @@ func _play_death_fade_and_burst() -> void:
 		death_tween.finished.connect(Callable(self, "queue_free"))
 	else:
 		queue_free()
+
+
+func _setup_hurt_sfx() -> void:
+	if hurt_sfx_player != null:
+		return
+
+	hurt_sfx_player = AudioStreamPlayer.new()
+	hurt_sfx_player.name = "HurtSfx"
+	hurt_sfx_player.bus = "SFX"
+	hurt_sfx_player.volume_db = HURT_SFX_VOLUME_DB
+	add_child(hurt_sfx_player)
+
+	if ResourceLoader.exists(HURT_SFX_PATH):
+		var loaded_stream: Resource = load(HURT_SFX_PATH)
+		if loaded_stream is AudioStream:
+			hurt_sfx_player.stream = loaded_stream
+
+
+func _play_hurt_sfx() -> void:
+	if hurt_sfx_player == null or hurt_sfx_player.stream == null:
+		return
+	hurt_sfx_player.stop()
+	hurt_sfx_player.play()

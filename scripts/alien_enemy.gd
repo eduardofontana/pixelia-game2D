@@ -25,6 +25,8 @@ const HIT_KNOCKBACK_X: float = 96.0
 const HIT_KNOCKBACK_Y: float = -84.0
 const DAMAGE_KNOCKBACK_MULTIPLIER: float = 1.3
 const HIT_STUN_TIME: float = 0.16
+const HURT_SFX_PATH: String = "res://sounds/Gore_Wet_7.wav"
+const HURT_SFX_VOLUME_DB: float = -7.5
 const DEATH_VFX = preload("res://scripts/death_vfx.gd")
 
 @export var player_path: NodePath
@@ -63,6 +65,7 @@ var health_bar_timer: float = 0.0
 var health_fill_style: StyleBoxFlat = null
 var hit_stun_timer: float = 0.0
 var is_dying: bool = false
+var hurt_sfx_player: AudioStreamPlayer = null
 
 var contact_area: Area2D = null
 var contact_collision: CollisionShape2D = null
@@ -80,6 +83,7 @@ func _ready() -> void:
 	_configure_collision_filters()
 	_setup_health_fill_style()
 	_apply_vampire_percent_font()
+	_setup_hurt_sfx()
 	_update_health_bar()
 	if health_bar != null:
 		health_bar.visible = false
@@ -120,6 +124,7 @@ func take_damage(amount: int, from_position: Vector2 = Vector2.INF) -> void:
 		return
 
 	current_hp = maxi(0, current_hp - amount)
+	_play_hurt_sfx()
 	_apply_hit_knockback(from_position)
 	hit_stun_timer = maxf(hit_stun_timer, HIT_STUN_TIME)
 	_show_health_bar()
@@ -448,6 +453,29 @@ func _apply_hit_knockback(from_position: Vector2) -> void:
 
 	velocity.x = push_dir * HIT_KNOCKBACK_X * DAMAGE_KNOCKBACK_MULTIPLIER
 	velocity.y = minf(velocity.y, HIT_KNOCKBACK_Y * DAMAGE_KNOCKBACK_MULTIPLIER)
+
+
+func _setup_hurt_sfx() -> void:
+	if hurt_sfx_player != null:
+		return
+
+	hurt_sfx_player = AudioStreamPlayer.new()
+	hurt_sfx_player.name = "HurtSfx"
+	hurt_sfx_player.bus = "SFX"
+	hurt_sfx_player.volume_db = HURT_SFX_VOLUME_DB
+	add_child(hurt_sfx_player)
+
+	if ResourceLoader.exists(HURT_SFX_PATH):
+		var loaded_stream: Resource = load(HURT_SFX_PATH)
+		if loaded_stream is AudioStream:
+			hurt_sfx_player.stream = loaded_stream
+
+
+func _play_hurt_sfx() -> void:
+	if hurt_sfx_player == null or hurt_sfx_player.stream == null:
+		return
+	hurt_sfx_player.stop()
+	hurt_sfx_player.play()
 
 
 func _has_floor_ahead(direction: int) -> bool:
