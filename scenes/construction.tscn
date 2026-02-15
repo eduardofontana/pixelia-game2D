@@ -16,6 +16,7 @@
 [ext_resource type="Texture2D" uid="uid://0w8qdiw8ie8o" path="res://props/sliced-objects/tree-1.png" id="14_85whd"]
 [ext_resource type="Texture2D" uid="uid://b2f86f0fqws4u" path="res://tiles/big-crate.png" id="15_qe1mn"]
 [ext_resource type="Texture2D" uid="uid://baytdbhiol126" path="res://tiles/crate.png" id="16_fvmap"]
+[ext_resource type="Texture2D" uid="uid://cnlwdlaqsesdx" path="res://props/sliced-objects/stone-4.png" id="17_fvmap"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_50pk6"]
 texture = ExtResource("1_twt7w")
@@ -842,6 +843,42 @@ texture = ExtResource("13_ljkoc")
 [node name="BigCrate" type="Sprite2D" parent="Decoration" unique_id=1900976185]
 position = Vector2(817, 576)
 texture = ExtResource("15_qe1mn")
+
+[node name="Stone4" type="Sprite2D" parent="Decoration" unique_id=1124132939]
+position = Vector2(1253, 589)
+texture = ExtResource("11_gnyn2")
+
+[node name="Stone5" type="Sprite2D" parent="Decoration" unique_id=896574963]
+position = Vector2(1281, 591)
+texture = ExtResource("12_t5f5t")
+
+[node name="Stone6" type="Sprite2D" parent="Decoration" unique_id=1876132980]
+position = Vector2(1332, 589)
+texture = ExtResource("17_fvmap")
+
+[node name="BushSmall4" type="Sprite2D" parent="Decoration" unique_id=1309695435]
+position = Vector2(1307, 594)
+texture = ExtResource("13_ljkoc")
+
+[node name="Tree2" type="Sprite2D" parent="Decoration" unique_id=1589229552]
+position = Vector2(1546, 549)
+texture = ExtResource("14_85whd")
+
+[node name="BushLarge3" type="Sprite2D" parent="Decoration" unique_id=1274913612]
+position = Vector2(1696, 576)
+texture = ExtResource("10_fvmap")
+
+[node name="BushSmall5" type="Sprite2D" parent="Decoration" unique_id=1820159432]
+position = Vector2(1742, 594)
+texture = ExtResource("13_ljkoc")
+
+[node name="BushSmall6" type="Sprite2D" parent="Decoration" unique_id=217852480]
+position = Vector2(1762, 594)
+texture = ExtResource("13_ljkoc")
+
+[node name="BushSmall7" type="Sprite2D" parent="Decoration" unique_id=1111307640]
+position = Vector2(1648, 594)
+texture = ExtResource("13_ljkoc")
 
 [node name="Plataform" type="AnimatableBody2D" parent="." unique_id=2108715708]
 position = Vector2(-144, 1)
