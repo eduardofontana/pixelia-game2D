@@ -3,6 +3,7 @@ extends Node2D
 const GAME_SCENE_PATH: String = "res://scenes/level01.tscn"
 const LOADING_IMAGE_PATH: String = "res://background/loadingpixelia.png"
 const LOADING_DURATION: float = 5.0
+const MENU_FONT_PATH: String = "res://fonts/Pixelia2D.ttf"
 const CLICK_SFX_STREAM: AudioStream = preload("res://sounds/click_double_off.wav")
 const CLICK_SFX_VOLUME_DB: float = -5.0
 const LOADING_BAR_LEFT_RATIO: float = 0.287
@@ -15,6 +16,7 @@ const LOADING_BAR_HEIGHT_RATIO: float = 0.032
 @onready var quit_button: Button = $UILayer/Root/CenterContainer/MenuCardFrame/ButtonsRoot/ButtonsVBox/QuitButton
 
 @onready var options_overlay: Control = $UILayer/Root/OptionsOverlay
+@onready var options_title: Label = $UILayer/Root/OptionsOverlay/Panel/VBox/OptionsTitle
 @onready var fullscreen_button: Button = $UILayer/Root/OptionsOverlay/Panel/VBox/FullscreenButton
 @onready var vsync_button: Button = $UILayer/Root/OptionsOverlay/Panel/VBox/VsyncButton
 @onready var back_button: Button = $UILayer/Root/OptionsOverlay/Panel/VBox/BackButton
@@ -30,6 +32,7 @@ func _ready() -> void:
 	_build_loading_overlay()
 	if not get_viewport().size_changed.is_connected(_on_viewport_size_changed):
 		get_viewport().size_changed.connect(_on_viewport_size_changed)
+	_apply_menu_button_font()
 	_bind_buttons()
 	_update_options_texts()
 	options_overlay.visible = false
@@ -178,6 +181,32 @@ func _is_vsync_enabled() -> bool:
 func _update_options_texts() -> void:
 	fullscreen_button.text = "Tela cheia: Ligado" if _is_fullscreen_enabled() else "Tela cheia: Desligado"
 	vsync_button.text = "VSync: Ligado" if _is_vsync_enabled() else "VSync: Desligado"
+
+
+func _apply_menu_button_font() -> void:
+	if not ResourceLoader.exists(MENU_FONT_PATH):
+		return
+	var loaded_font: Resource = load(MENU_FONT_PATH)
+	if not (loaded_font is Font):
+		return
+
+	var menu_font: Font = loaded_font as Font
+	var button_nodes: Array[Button] = [
+		play_button,
+		options_button,
+		quit_button,
+		fullscreen_button,
+		vsync_button,
+		back_button
+	]
+
+	for button_node in button_nodes:
+		if button_node == null:
+			continue
+		button_node.add_theme_font_override("font", menu_font)
+
+	if options_title != null:
+		options_title.add_theme_font_override("font", menu_font)
 
 
 func _on_viewport_size_changed() -> void:

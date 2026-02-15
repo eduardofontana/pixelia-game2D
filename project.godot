@@ -13,7 +13,6 @@ config_version=5
 config/name="Pixelia2D"
 run/main_scene="res://scenes/menu.tscn"
 config/features=PackedStringArray("4.6", "GL Compatibility")
-config/icon="res://icon.svg"
 
 [display]
 

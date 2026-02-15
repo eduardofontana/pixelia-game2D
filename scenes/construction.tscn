@@ -880,6 +880,36 @@ texture = ExtResource("13_ljkoc")
 position = Vector2(1648, 594)
 texture = ExtResource("13_ljkoc")
 
+[node name="Stone7" type="Sprite2D" parent="Decoration" unique_id=1520844894]
+position = Vector2(1605, 587)
+texture = ExtResource("8_3pkt2")
+
+[node name="Stone8" type="Sprite2D" parent="Decoration" unique_id=1886756530]
+position = Vector2(1822, 592)
+texture = ExtResource("12_t5f5t")
+
+[node name="Statue2" type="Sprite2D" parent="Decoration" unique_id=150502774]
+position = Vector2(2029, 571)
+texture = ExtResource("9_qe1mn")
+flip_h = true
+
+[node name="Stone9" type="Sprite2D" parent="Decoration" unique_id=1939203276]
+position = Vector2(1851, 590)
+texture = ExtResource("11_gnyn2")
+
+[node name="Tree5" type="Sprite2D" parent="Decoration" unique_id=255158033]
+position = Vector2(1919, 523)
+texture = ExtResource("7_68aj7")
+
+[node name="Stone10" type="Sprite2D" parent="Decoration" unique_id=470080052]
+position = Vector2(1967, 588)
+texture = ExtResource("8_3pkt2")
+
+[node name="BushLarge4" type="Sprite2D" parent="Decoration" unique_id=2046390385]
+position = Vector2(2098, 576)
+texture = ExtResource("10_fvmap")
+flip_h = true
+
 [node name="Plataform" type="AnimatableBody2D" parent="." unique_id=2108715708]
 position = Vector2(-144, 1)
 

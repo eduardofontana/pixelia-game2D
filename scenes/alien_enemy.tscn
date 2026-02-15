@@ -1,0 +1,150 @@
+[gd_scene format=3 uid="uid://dnksk3eq247dm"]
+
+[ext_resource type="Texture2D" uid="uid://bq7nc1nyof3vn" path="res://sprites/alien_enemy/alien-enemy-idle.png" id="1_uv7ju"]
+[ext_resource type="Texture2D" uid="uid://fjyvwekuppmk" path="res://sprites/alien_enemy/alien-enemy-walk.png" id="2_eifvn"]
+[ext_resource type="Script" path="res://scripts/alien_enemy.gd" id="3_alien_enemy_script"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_uv7ju"]
+radius = 12.0
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_mqjhs"]
+atlas = ExtResource("1_uv7ju")
+region = Rect2(0, 0, 48, 48)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_675du"]
+atlas = ExtResource("1_uv7ju")
+region = Rect2(48, 0, 48, 48)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_tslur"]
+atlas = ExtResource("1_uv7ju")
+region = Rect2(96, 0, 48, 48)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_1kqc3"]
+atlas = ExtResource("1_uv7ju")
+region = Rect2(144, 0, 48, 48)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_byyiu"]
+atlas = ExtResource("2_eifvn")
+region = Rect2(0, 0, 57, 42)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_lygyp"]
+atlas = ExtResource("2_eifvn")
+region = Rect2(57, 0, 57, 42)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_npve8"]
+atlas = ExtResource("2_eifvn")
+region = Rect2(114, 0, 57, 42)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_m0i07"]
+atlas = ExtResource("2_eifvn")
+region = Rect2(171, 0, 57, 42)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_7ptc0"]
+atlas = ExtResource("2_eifvn")
+region = Rect2(228, 0, 57, 42)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_krq5w"]
+atlas = ExtResource("2_eifvn")
+region = Rect2(285, 0, 57, 42)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_7pcut"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_mqjhs")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_675du")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_tslur")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_1kqc3")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_byyiu")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_lygyp")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_npve8")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_m0i07")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_7ptc0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_krq5w")
+}],
+"loop": true,
+"name": &"walk",
+"speed": 5.0
+}]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_health_bg"]
+bg_color = Color(0, 0, 0, 0.72)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_health_fill"]
+bg_color = Color(0.24, 0.86, 0.44, 0.95)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[node name="AlienEnemy" type="CharacterBody2D" unique_id=615484783 groups=["enemies"]]
+collision_layer = 2
+script = ExtResource("3_alien_enemy_script")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=189814374]
+shape = SubResource("CircleShape2D_uv7ju")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=2003997689]
+position = Vector2(0, -2.3841858e-07)
+scale = Vector2(0.8333333, 0.8333333)
+sprite_frames = SubResource("SpriteFrames_7pcut")
+animation = &"idle"
+autoplay = "idle"
+
+[node name="HealthBar" type="Node2D" parent="."]
+visible = false
+z_index = 5
+position = Vector2(-14, -24)
+
+[node name="Bg" type="Panel" parent="HealthBar"]
+offset_right = 28.0
+offset_bottom = 4.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_health_bg")
+
+[node name="Fill" type="Panel" parent="HealthBar/Bg"]
+layout_mode = 0
+offset_right = 28.0
+offset_bottom = 4.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_health_fill")
+
+[node name="PercentLabel" type="Label" parent="HealthBar"]
+offset_left = -6.0
+offset_top = -13.0
+offset_right = 34.0
+offset_bottom = -2.0
+theme_override_colors/font_color = Color(1, 0.96, 0.88, 0.95)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.85)
+theme_override_constants/outline_size = 1
+theme_override_font_sizes/font_size = 8
+text = "100%"
+horizontal_alignment = 1
+vertical_alignment = 1
