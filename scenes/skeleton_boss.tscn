@@ -140,14 +140,6 @@ region = Rect2(146, 256, 146, 64)
 atlas = ExtResource("2_chyyr")
 region = Rect2(292, 256, 146, 64)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_8x27e"]
-atlas = ExtResource("2_chyyr")
-region = Rect2(438, 256, 146, 64)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_oaf2y"]
-atlas = ExtResource("2_chyyr")
-region = Rect2(584, 256, 146, 64)
-
 [sub_resource type="AtlasTexture" id="AtlasTexture_j2e4r"]
 atlas = ExtResource("3_2ev3t")
 region = Rect2(0, 0, 118, 64)
@@ -400,12 +392,6 @@ animations = [{
 }, {
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_cuown")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_8x27e")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_oaf2y")
 }],
 "loop": true,
 "name": &"skeletonboss_attack",
@@ -590,7 +576,7 @@ shape = SubResource("RectangleShape2D_attack_sboss")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=101828782]
 sprite_frames = SubResource("SpriteFrames_fcfmr")
-animation = &"idle"
+animation = &"skeletonboss_attack"
 
 [node name="HealthBar" type="Node2D" parent="." unique_id=1074490266]
 visible = false

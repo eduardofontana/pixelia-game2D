@@ -54,7 +54,7 @@ const DEATH_TEXT_COLOR: Color = Color(0.72, 0.05, 0.08, 0.0)
 const DEATH_TEXT_OUTLINE_COLOR: Color = Color(0.02, 0, 0, 0.98)
 const DEATH_TEXT_SHADOW_COLOR: Color = Color(0, 0, 0, 0.92)
 const DEATH_TEXT_FONT_PATH: String = "res://fonts/Pixelia2D.ttf"
-const DEATH_TEXT_Y_OFFSET: float = -48.0
+const DEATH_TEXT_Y_OFFSET: float = -88.0
 const DEATH_EMOJI_TEXT: String = "\u2620"
 const GAME_OVER_TEXT: String = "Fim de Jogo"
 const GAME_OVER_EMOJI_TEXT: String = "\u2620"
@@ -63,10 +63,14 @@ const DEATH_NEW_GAME_TEXT: String = "Novo Jogo"
 const DEATH_EMOJI_IN_TIME: float = 0.2
 const DEATH_EMOJI_FADE_OUT_TIME: float = 0.2
 const DEATH_EMOJI_HOLD_ALPHA: float = 0.92
-const DEATH_EMOJI_START_SCALE: Vector2 = Vector2(1.45, 1.45)
-const DEATH_EMOJI_END_SCALE: Vector2 = Vector2(1.0, 1.0)
+const DEATH_EMOJI_START_SCALE: Vector2 = Vector2(1.55, 1.55)
+const DEATH_EMOJI_END_SCALE: Vector2 = Vector2(1.15, 1.15)
 const DEATH_EMOJI_COLOR: Color = Color(0.92, 0.88, 0.88, 0.0)
-const DEATH_EMOJI_Y_OFFSET: float = -104.0
+const DEATH_EMOJI_X_OFFSET: float = -30.0
+const DEATH_EMOJI_Y_OFFSET: float = 78.0
+const DEATH_PLAYER_FRAME_ANIMATION: StringName = &"death"
+const DEATH_PLAYER_FRAME_INDEX: int = 10
+const DEATH_PLAYER_FRAME_SIZE: Vector2 = Vector2(128.0, 116.0)
 const DEATH_COUNTDOWN_START: int = 5
 const DEATH_COUNTDOWN_STEP_TIME: float = 1.0
 const DEATH_COUNTDOWN_IN_TIME: float = 0.14
@@ -74,10 +78,10 @@ const DEATH_COUNTDOWN_FADE_OUT_TIME: float = 0.16
 const DEATH_COUNTDOWN_START_SCALE: Vector2 = Vector2(1.3, 1.3)
 const DEATH_COUNTDOWN_END_SCALE: Vector2 = Vector2.ONE
 const DEATH_COUNTDOWN_COLOR: Color = Color(0.96, 0.92, 0.9, 0.0)
-const DEATH_COUNTDOWN_Y_OFFSET: float = 56.0
+const DEATH_COUNTDOWN_Y_OFFSET: float = 16.0
 const DEATH_COUNTDOWN_TREMOR_STRENGTH: float = 2.2
 const DEATH_COUNTDOWN_TREMOR_SPEED: float = 22.0
-const DEATH_ACTIONS_Y_OFFSET: float = 126.0
+const DEATH_ACTIONS_Y_OFFSET: float = 86.0
 const DEATH_ACTIONS_ROW_HEIGHT: float = 36.0
 const DEATH_ACTIONS_BUTTON_WIDTH: float = 196.0
 const DEATH_ACTIONS_BUTTON_HEIGHT: float = 30.0
@@ -179,7 +183,7 @@ var base_sprite_modulate: Color = Color(1, 1, 1, 1)
 var death_overlay_layer: CanvasLayer = null
 var death_overlay: ColorRect = null
 var death_text_label: Label = null
-var death_emoji_label: Label = null
+var death_emoji_label: TextureRect = null
 var death_countdown_label: Label = null
 var death_actions_row: HBoxContainer = null
 var death_continue_button: Button = null
@@ -1087,7 +1091,7 @@ func _start_death() -> void:
 	if death_text_label != null:
 		death_text_label.text = DEATH_TEXT
 	if death_emoji_label != null:
-		death_emoji_label.text = DEATH_EMOJI_TEXT
+		death_emoji_label.texture = _resolve_death_player_frame_texture()
 	_hide_death_action_buttons()
 	if health_bar != null:
 		health_bar.visible = false
@@ -1326,28 +1330,22 @@ func _setup_cinematic_overlay() -> void:
 	death_text_label.add_theme_constant_override("shadow_offset_y", 5)
 	death_overlay_layer.add_child(death_text_label)
 
-	death_emoji_label = Label.new()
+	death_emoji_label = TextureRect.new()
 	death_emoji_label.name = "DeathEmoji"
-	death_emoji_label.anchor_left = 0.0
-	death_emoji_label.anchor_top = 0.0
-	death_emoji_label.anchor_right = 1.0
-	death_emoji_label.anchor_bottom = 1.0
-	death_emoji_label.offset_left = 0.0
-	death_emoji_label.offset_top = DEATH_EMOJI_Y_OFFSET
-	death_emoji_label.offset_right = 0.0
-	death_emoji_label.offset_bottom = DEATH_EMOJI_Y_OFFSET
-	death_emoji_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	death_emoji_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	death_emoji_label.anchor_left = 0.5
+	death_emoji_label.anchor_top = 0.5
+	death_emoji_label.anchor_right = 0.5
+	death_emoji_label.anchor_bottom = 0.5
+	death_emoji_label.offset_left = (-DEATH_PLAYER_FRAME_SIZE.x * 0.5) + DEATH_EMOJI_X_OFFSET
+	death_emoji_label.offset_top = DEATH_EMOJI_Y_OFFSET - (DEATH_PLAYER_FRAME_SIZE.y * 0.5)
+	death_emoji_label.offset_right = (DEATH_PLAYER_FRAME_SIZE.x * 0.5) + DEATH_EMOJI_X_OFFSET
+	death_emoji_label.offset_bottom = DEATH_EMOJI_Y_OFFSET + (DEATH_PLAYER_FRAME_SIZE.y * 0.5)
+	death_emoji_label.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	death_emoji_label.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	death_emoji_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	death_emoji_label.text = DEATH_EMOJI_TEXT
+	death_emoji_label.texture = _resolve_death_player_frame_texture()
 	death_emoji_label.modulate = DEATH_EMOJI_COLOR
 	death_emoji_label.scale = DEATH_EMOJI_START_SCALE
-	if death_font != null:
-		death_emoji_label.add_theme_font_override("font", death_font)
-	death_emoji_label.add_theme_font_size_override("font_size", 52)
-	death_emoji_label.add_theme_constant_override("outline_size", 7)
-	death_emoji_label.add_theme_color_override("font_outline_color", DEATH_TEXT_OUTLINE_COLOR)
-	death_emoji_label.add_theme_color_override("font_shadow_color", DEATH_TEXT_SHADOW_COLOR)
 	death_overlay_layer.add_child(death_emoji_label)
 
 	death_countdown_label = Label.new()
@@ -1407,6 +1405,28 @@ func _setup_cinematic_overlay() -> void:
 	_configure_death_action_button(death_quit_button, false, death_font)
 	death_quit_button.pressed.connect(_on_death_quit_pressed)
 	death_actions_row.add_child(death_quit_button)
+
+
+func _resolve_death_player_frame_texture() -> Texture2D:
+	if animated_sprite == null:
+		return null
+	if animated_sprite.sprite_frames == null:
+		return null
+
+	var frames: SpriteFrames = animated_sprite.sprite_frames
+	var animation_name: StringName = DEATH_PLAYER_FRAME_ANIMATION
+	if not frames.has_animation(animation_name):
+		var animation_names: PackedStringArray = frames.get_animation_names()
+		if animation_names.is_empty():
+			return null
+		animation_name = StringName(animation_names[0])
+
+	var frame_count: int = frames.get_frame_count(animation_name)
+	if frame_count <= 0:
+		return null
+
+	var clamped_index: int = clampi(DEATH_PLAYER_FRAME_INDEX, 0, frame_count - 1)
+	return frames.get_frame_texture(animation_name, clamped_index)
 
 
 func _start_cinematic_overlay_fx() -> void:
@@ -1644,7 +1664,7 @@ func _enter_death_timeout_mode() -> void:
 	if death_text_label != null:
 		death_text_label.text = GAME_OVER_TEXT
 	if death_emoji_label != null:
-		death_emoji_label.text = GAME_OVER_EMOJI_TEXT
+		death_emoji_label.texture = _resolve_death_player_frame_texture()
 	_start_death_text_fx()
 	_start_death_emoji_fx()
 	_show_death_action_buttons(true, false, DEATH_NEW_GAME_TEXT)

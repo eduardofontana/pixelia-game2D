@@ -14,6 +14,7 @@ const PLAYER_VOID_WORLD_MARGIN_Y: float = 160.0
 const PLAYER_VOID_FOV_MARGIN_Y: float = 120.0
 const REQUIRED_COIN_COUNT: int = 15
 const COIN_SCENE: PackedScene = preload("res://scenes/coin.tscn")
+const PLAYER_SCENE: PackedScene = preload("res://scenes/player.tscn")
 const PORTAL_LOCKED_ALPHA: float = 0.35
 const PORTAL_UNLOCKED_ALPHA: float = 1.0
 const BOSS_HUD_TEXTURE_PATH: String = "res://sprites/Dead/HUD_Boss.png"
@@ -52,10 +53,11 @@ const BOSS_DIALOG_TRIGGER_DISTANCE: float = 210.0
 const BUS_MASTER: StringName = &"Master"
 const BUS_MUSIC: StringName = &"Music"
 const BUS_SFX: StringName = &"SFX"
+const CHARACTER_PLAYER_ID: StringName = &"player"
 
 @onready var bgm_player: AudioStreamPlayer = get_node_or_null("BGM") as AudioStreamPlayer
 @onready var hud_layer: CanvasLayer = get_node_or_null("HUD") as CanvasLayer
-@onready var player_ref: CharacterBody2D = get_node_or_null("Player") as CharacterBody2D
+@onready var player_ref: CharacterBody2D = _resolve_player_reference()
 @onready var level_portal: Area2D = get_node_or_null("Level01Portal") as Area2D
 @onready var map_gold_item: Area2D = get_node_or_null("MapGold") as Area2D
 @onready var boss_ref: CharacterBody2D = get_node_or_null("Boss") as CharacterBody2D
@@ -85,11 +87,19 @@ var saw_skeleton_once: bool = false
 var saw_bat_once: bool = false
 var saw_slime_once: bool = false
 var saw_boss_approach_once: bool = false
+var player_spawn_position: Vector2 = Vector2.ZERO
+var selected_character_id: StringName = CHARACTER_PLAYER_ID
+var character_select_overlay: CanvasLayer = null
+var character_select_confirm_button: Button = null
+var character_option_buttons: Dictionary = {}
 
 
 func _ready() -> void:
 	Engine.time_scale = 1.0
 	randomize()
+	player_ref = _resolve_player_reference()
+	player_spawn_position = _resolve_player_spawn_position()
+	selected_character_id = CHARACTER_PLAYER_ID
 	_ensure_audio_buses()
 	_ensure_hud_layer()
 	_validate_main_root_nodes()
@@ -109,17 +119,18 @@ func _ready() -> void:
 		if not bgm_player.playing:
 			bgm_player.play()
 
-	_apply_platform_ordering()
+	_apply_scene_ordering()
 	_bind_collectible_coins()
 	_cache_coin_spawn_snapshots()
 	_set_map_gold_active(false)
 	_update_portal_access_state()
 	_update_hud_coin_count()
+	_setup_character_select_overlay()
 
 
 func _validate_main_root_nodes() -> void:
 	if player_ref == null:
-		push_warning("Main: node 'Player' nao encontrado no no raiz.")
+		push_warning("Main: player nao encontrado no no raiz (Player/grupo 'player').")
 	_ensure_hud_layer()
 	if hud_layer == null:
 		push_warning("Main: node 'HUD' nao encontrado no no raiz.")
@@ -392,6 +403,298 @@ func _on_victory_restart_pressed() -> void:
 	get_tree().reload_current_scene()
 
 
+func _resolve_player_spawn_position() -> Vector2:
+	var root_player: CharacterBody2D = get_node_or_null("Player") as CharacterBody2D
+	if root_player != null:
+		return root_player.global_position
+	if player_ref != null:
+		return player_ref.global_position
+	return Vector2.ZERO
+
+
+func _setup_character_select_overlay() -> void:
+	if character_select_overlay != null:
+		return
+
+	character_select_overlay = CanvasLayer.new()
+	character_select_overlay.name = "CharacterSelectOverlay"
+	character_select_overlay.layer = 200
+	character_select_overlay.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+	add_child(character_select_overlay)
+
+	var root := Control.new()
+	root.name = "Root"
+	root.anchor_left = 0.0
+	root.anchor_top = 0.0
+	root.anchor_right = 1.0
+	root.anchor_bottom = 1.0
+	root.offset_left = 0.0
+	root.offset_top = 0.0
+	root.offset_right = 0.0
+	root.offset_bottom = 0.0
+	root.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+	character_select_overlay.add_child(root)
+
+	var dim := ColorRect.new()
+	dim.anchor_left = 0.0
+	dim.anchor_top = 0.0
+	dim.anchor_right = 1.0
+	dim.anchor_bottom = 1.0
+	dim.offset_left = 0.0
+	dim.offset_top = 0.0
+	dim.offset_right = 0.0
+	dim.offset_bottom = 0.0
+	dim.color = Color(0.02, 0.02, 0.03, 0.78)
+	root.add_child(dim)
+
+	var card := PanelContainer.new()
+	card.name = "Card"
+	card.anchor_left = 0.5
+	card.anchor_top = 0.5
+	card.anchor_right = 0.5
+	card.anchor_bottom = 0.5
+	card.offset_left = -260.0
+	card.offset_top = -176.0
+	card.offset_right = 260.0
+	card.offset_bottom = 176.0
+	card.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+	root.add_child(card)
+
+	var card_style := StyleBoxFlat.new()
+	card_style.bg_color = Color(0.07, 0.07, 0.1, 0.96)
+	card_style.border_width_left = 2
+	card_style.border_width_top = 2
+	card_style.border_width_right = 2
+	card_style.border_width_bottom = 2
+	card_style.border_color = Color(0.93, 0.74, 0.36, 0.86)
+	card_style.corner_radius_top_left = 12
+	card_style.corner_radius_top_right = 12
+	card_style.corner_radius_bottom_right = 12
+	card_style.corner_radius_bottom_left = 12
+	card_style.content_margin_left = 18.0
+	card_style.content_margin_top = 16.0
+	card_style.content_margin_right = 18.0
+	card_style.content_margin_bottom = 16.0
+	card.add_theme_stylebox_override("panel", card_style)
+
+	var layout := VBoxContainer.new()
+	layout.alignment = BoxContainer.ALIGNMENT_CENTER
+	layout.add_theme_constant_override("separation", 14)
+	card.add_child(layout)
+
+	var title := Label.new()
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.text = "Escolha seu personagem"
+	title.add_theme_font_size_override("font_size", 28)
+	layout.add_child(title)
+
+	var options_row := HBoxContainer.new()
+	options_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	options_row.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	options_row.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	options_row.add_theme_constant_override("separation", 16)
+	layout.add_child(options_row)
+
+	var options_group := ButtonGroup.new()
+	var player_button: Button = _build_character_option_button(CHARACTER_PLAYER_ID, PLAYER_SCENE, options_group)
+	options_row.add_child(player_button)
+
+	character_option_buttons.clear()
+	character_option_buttons[CHARACTER_PLAYER_ID] = player_button
+
+	character_select_confirm_button = Button.new()
+	character_select_confirm_button.custom_minimum_size = Vector2(170.0, 36.0)
+	character_select_confirm_button.focus_mode = Control.FOCUS_ALL
+	character_select_confirm_button.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+	character_select_confirm_button.pressed.connect(_on_character_select_confirm_pressed)
+	layout.add_child(character_select_confirm_button)
+
+	_set_selected_character(selected_character_id)
+	player_button.grab_focus()
+	get_tree().paused = true
+
+
+func _build_character_option_button(character_id: StringName, character_scene: PackedScene, option_group: ButtonGroup) -> Button:
+	var option_button := Button.new()
+	option_button.toggle_mode = true
+	option_button.button_group = option_group
+	option_button.custom_minimum_size = Vector2(180.0, 188.0)
+	option_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	option_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	option_button.focus_mode = Control.FOCUS_ALL
+	option_button.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+	option_button.pressed.connect(Callable(self, "_on_character_option_pressed").bind(character_id))
+
+	var normal_style := StyleBoxFlat.new()
+	normal_style.bg_color = Color(0.13, 0.13, 0.17, 0.96)
+	normal_style.border_width_left = 2
+	normal_style.border_width_top = 2
+	normal_style.border_width_right = 2
+	normal_style.border_width_bottom = 2
+	normal_style.border_color = Color(0.42, 0.45, 0.5, 0.8)
+	normal_style.corner_radius_top_left = 8
+	normal_style.corner_radius_top_right = 8
+	normal_style.corner_radius_bottom_right = 8
+	normal_style.corner_radius_bottom_left = 8
+	option_button.add_theme_stylebox_override("normal", normal_style)
+
+	var hover_style := normal_style.duplicate() as StyleBoxFlat
+	hover_style.border_color = Color(0.72, 0.76, 0.82, 0.9)
+	hover_style.bg_color = Color(0.17, 0.17, 0.22, 0.98)
+	option_button.add_theme_stylebox_override("hover", hover_style)
+
+	var pressed_style := normal_style.duplicate() as StyleBoxFlat
+	pressed_style.bg_color = Color(0.22, 0.2, 0.12, 0.98)
+	pressed_style.border_color = Color(0.94, 0.78, 0.38, 1.0)
+	option_button.add_theme_stylebox_override("pressed", pressed_style)
+
+	var content := Control.new()
+	content.anchor_left = 0.0
+	content.anchor_top = 0.0
+	content.anchor_right = 1.0
+	content.anchor_bottom = 1.0
+	content.offset_left = 10.0
+	content.offset_top = 10.0
+	content.offset_right = -10.0
+	content.offset_bottom = -10.0
+	content.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	option_button.add_child(content)
+
+	var preview := TextureRect.new()
+	preview.anchor_left = 0.5
+	preview.anchor_top = 0.5
+	preview.anchor_right = 0.5
+	preview.anchor_bottom = 0.5
+	preview.offset_left = -70.0
+	preview.offset_top = -64.0
+	preview.offset_right = 70.0
+	preview.offset_bottom = 64.0
+	preview.custom_minimum_size = Vector2(140.0, 128.0)
+	preview.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	preview.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	preview.texture = _resolve_character_preview_texture(character_scene)
+	preview.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	content.add_child(preview)
+
+	return option_button
+
+
+func _resolve_character_preview_texture(character_scene: PackedScene) -> Texture2D:
+	if character_scene == null:
+		return null
+
+	var preview_node: Node = character_scene.instantiate()
+	if preview_node == null:
+		return null
+
+	var preview_texture: Texture2D = null
+	var sprite: AnimatedSprite2D = preview_node.get_node_or_null("AnimatedSprite2D") as AnimatedSprite2D
+	if sprite != null and sprite.sprite_frames != null:
+		var idle_animation: StringName = &"idle"
+		if not sprite.sprite_frames.has_animation(idle_animation):
+			var animation_names: PackedStringArray = sprite.sprite_frames.get_animation_names()
+			if not animation_names.is_empty():
+				idle_animation = StringName(animation_names[0])
+		if sprite.sprite_frames.has_animation(idle_animation) and sprite.sprite_frames.get_frame_count(idle_animation) > 0:
+			preview_texture = sprite.sprite_frames.get_frame_texture(idle_animation, 0)
+
+	preview_node.free()
+	return preview_texture
+
+
+func _on_character_option_pressed(character_id: StringName) -> void:
+	_set_selected_character(character_id)
+
+
+func _set_selected_character(character_id: StringName) -> void:
+	selected_character_id = character_id
+	for option_id_variant in character_option_buttons.keys():
+		var option_id: StringName = StringName(option_id_variant)
+		var option_button: Button = character_option_buttons[option_id_variant] as Button
+		if option_button == null:
+			continue
+		var is_selected: bool = option_id == selected_character_id
+		option_button.button_pressed = is_selected
+		option_button.modulate = Color(1.0, 1.0, 1.0, 1.0) if is_selected else Color(0.86, 0.86, 0.86, 1.0)
+
+	if character_select_confirm_button != null:
+		character_select_confirm_button.text = "Confirmar"
+
+
+func _on_character_select_confirm_pressed() -> void:
+	_apply_selected_character()
+
+	if character_select_overlay != null:
+		character_select_overlay.queue_free()
+		character_select_overlay = null
+	character_select_confirm_button = null
+	character_option_buttons.clear()
+	get_tree().paused = false
+
+
+func _apply_selected_character() -> void:
+	if player_spawn_position == Vector2.ZERO and player_ref != null:
+		player_spawn_position = player_ref.global_position
+
+	var active_player: CharacterBody2D = _resolve_player_reference()
+	if active_player == null:
+		active_player = PLAYER_SCENE.instantiate() as CharacterBody2D
+		if active_player != null:
+			active_player.name = "Player"
+			add_child(active_player)
+	if active_player != null:
+		_apply_player_spawn_anchor(active_player)
+
+	player_ref = _resolve_player_reference()
+	_bind_player_lifecycle()
+	_rebind_player_dependents()
+	_apply_scene_ordering()
+	_rebuild_terrain_spawn_map()
+	_configure_player_void_fov()
+	_update_hud_coin_count()
+
+
+func _apply_player_spawn_anchor(player_node: CharacterBody2D) -> void:
+	if player_node == null:
+		return
+	player_node.global_position = player_spawn_position
+	if _node_has_property(player_node, &"spawn_position"):
+		player_node.set("spawn_position", player_spawn_position)
+	var player_camera: Camera2D = player_node.get_node_or_null("Camera2D") as Camera2D
+	if player_camera != null:
+		player_camera.make_current()
+
+
+func _rebind_player_dependents() -> void:
+	var nodes_to_rebind: Array[Node] = []
+	nodes_to_rebind.append_array(get_tree().get_nodes_in_group("enemies"))
+	if boss_ref != null:
+		nodes_to_rebind.append(boss_ref)
+	if hud_layer != null:
+		nodes_to_rebind.append(hud_layer)
+
+	for node in nodes_to_rebind:
+		if node == null:
+			continue
+		if _node_has_property(node, &"player_ref"):
+			node.set("player_ref", null)
+		if node.has_method("_retry_bind_player"):
+			node.call("_retry_bind_player")
+		elif node.has_method("_bind_player"):
+			node.call("_bind_player")
+		if node.has_method("_refresh_from_player"):
+			node.call("_refresh_from_player")
+
+
+func _node_has_property(target_node: Object, property_name: StringName) -> bool:
+	if target_node == null:
+		return false
+	for property_data in target_node.get_property_list():
+		if StringName(property_data.get("name", "")) == property_name:
+			return true
+	return false
+
+
 func _on_bgm_finished() -> void:
 	if is_instance_valid(bgm_player):
 		bgm_player.play()
@@ -494,8 +797,8 @@ func _on_boss_health_changed(current_hp_value: int, max_hp_value: int) -> void:
 			0.96
 		)
 
-func _apply_platform_ordering() -> void:
-	# Padroniza camadas visuais para comportamento consistente de plataforma.
+func _apply_scene_ordering() -> void:
+	# Padroniza camadas visuais para manter o ordenamento consistente.
 	_apply_background_ordering()
 
 	var terrain_node: CanvasItem = get_node_or_null("Terrain") as CanvasItem
@@ -709,10 +1012,25 @@ func _bind_boss() -> void:
 
 
 func _bind_player_lifecycle() -> void:
+	player_ref = _resolve_player_reference()
 	if player_ref == null:
 		return
 
 	_connect_signal_once(player_ref, &"died", Callable(self, "_on_player_died"))
+
+
+func _resolve_player_reference() -> CharacterBody2D:
+	var direct_player: CharacterBody2D = get_node_or_null("Player") as CharacterBody2D
+	if direct_player != null:
+		return direct_player
+
+	var players: Array[Node] = get_tree().get_nodes_in_group("player")
+	for player_node in players:
+		var body: CharacterBody2D = player_node as CharacterBody2D
+		if body != null:
+			return body
+
+	return null
 
 
 func _spawn_boss_for_battle() -> void:
