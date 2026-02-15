@@ -55,6 +55,13 @@ const CHARACTER_PLAYER_ID: StringName = &"player"
 const LEVEL02_SCENE_PATH: String = "res://scenes/level_02.tscn"
 const LEVEL_TRANSITION_FADE_SECONDS: float = 0.55
 const LEVEL_TRANSITION_LAYER: int = 260
+const LEVEL_TRANSITION_LOADING_IMAGE_PATH: String = "res://background/loadingpixelia.png"
+const LEVEL_TRANSITION_LOADING_SECONDS: float = 5.0
+const LEVEL_LOADING_BAR_LEFT_RATIO: float = 0.287
+const LEVEL_LOADING_BAR_TOP_RATIO: float = 0.864
+const LEVEL_LOADING_BAR_WIDTH_RATIO: float = 0.427
+const LEVEL_LOADING_BAR_HEIGHT_RATIO: float = 0.032
+const LEVEL_LOADING_BAR_INSET: float = 2.0
 
 @onready var bgm_player: AudioStreamPlayer = get_node_or_null("BGM") as AudioStreamPlayer
 @onready var hud_layer: CanvasLayer = get_node_or_null("HUD") as CanvasLayer
@@ -72,6 +79,9 @@ var boss_spawned: bool = false
 var boss_defeated: bool = false
 var level_transition_overlay: CanvasLayer = null
 var level_transition_dim_rect: ColorRect = null
+var level_transition_loading_image: TextureRect = null
+var level_transition_loading_bar_bg: Panel = null
+var level_transition_loading_bar_fill: Panel = null
 var level_transition_tween: Tween = null
 var level_transition_in_progress: bool = false
 var boss_hud_overlay: CanvasLayer = null
@@ -102,6 +112,8 @@ func _ready() -> void:
 	_ensure_hud_layer()
 	_validate_level01_root_nodes()
 	_setup_level_transition_overlay()
+	if get_viewport() != null and not get_viewport().size_changed.is_connected(_on_level_transition_viewport_size_changed):
+		get_viewport().size_changed.connect(_on_level_transition_viewport_size_changed)
 	_setup_boss_hud()
 	_bind_level_portal()
 	_bind_map_gold_item()
@@ -245,6 +257,56 @@ func _setup_level_transition_overlay() -> void:
 	level_transition_dim_rect.color = Color(0.0, 0.0, 0.0, 0.0)
 	level_transition_overlay.add_child(level_transition_dim_rect)
 
+	level_transition_loading_image = TextureRect.new()
+	level_transition_loading_image.name = "LoadingImage"
+	level_transition_loading_image.anchor_left = 0.0
+	level_transition_loading_image.anchor_top = 0.0
+	level_transition_loading_image.anchor_right = 1.0
+	level_transition_loading_image.anchor_bottom = 1.0
+	level_transition_loading_image.offset_left = 0.0
+	level_transition_loading_image.offset_top = 0.0
+	level_transition_loading_image.offset_right = 0.0
+	level_transition_loading_image.offset_bottom = 0.0
+	level_transition_loading_image.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	level_transition_loading_image.stretch_mode = TextureRect.STRETCH_SCALE
+	level_transition_loading_image.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	level_transition_loading_image.visible = false
+	level_transition_overlay.add_child(level_transition_loading_image)
+	if ResourceLoader.exists(LEVEL_TRANSITION_LOADING_IMAGE_PATH):
+		var loading_texture_res: Resource = load(LEVEL_TRANSITION_LOADING_IMAGE_PATH)
+		if loading_texture_res is Texture2D:
+			level_transition_loading_image.texture = loading_texture_res as Texture2D
+
+	level_transition_loading_bar_bg = Panel.new()
+	level_transition_loading_bar_bg.name = "LoadingBarBg"
+	level_transition_loading_bar_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	level_transition_loading_bar_bg.visible = false
+	level_transition_overlay.add_child(level_transition_loading_bar_bg)
+
+	var bar_bg_style := StyleBoxFlat.new()
+	bar_bg_style.bg_color = Color(0.15, 0.03, 0.01, 0.75)
+	bar_bg_style.corner_radius_top_left = 8
+	bar_bg_style.corner_radius_top_right = 8
+	bar_bg_style.corner_radius_bottom_right = 8
+	bar_bg_style.corner_radius_bottom_left = 8
+	level_transition_loading_bar_bg.add_theme_stylebox_override("panel", bar_bg_style)
+
+	level_transition_loading_bar_fill = Panel.new()
+	level_transition_loading_bar_fill.name = "LoadingBarFill"
+	level_transition_loading_bar_fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	level_transition_loading_bar_bg.add_child(level_transition_loading_bar_fill)
+
+	var bar_fill_style := StyleBoxFlat.new()
+	bar_fill_style.bg_color = Color(1.0, 0.37, 0.08, 0.9)
+	bar_fill_style.corner_radius_top_left = 7
+	bar_fill_style.corner_radius_top_right = 7
+	bar_fill_style.corner_radius_bottom_right = 7
+	bar_fill_style.corner_radius_bottom_left = 7
+	level_transition_loading_bar_fill.add_theme_stylebox_override("panel", bar_fill_style)
+
+	_layout_level_transition_loading_bar()
+	_set_level_transition_loading_progress(0.0)
+
 
 func _start_level_transition_to_level02() -> void:
 	if level_transition_in_progress:
@@ -271,11 +333,30 @@ func _start_level_transition_to_level02() -> void:
 
 	level_transition_overlay.visible = true
 	level_transition_dim_rect.color = Color(0.0, 0.0, 0.0, 0.0)
+	_set_level_transition_loading_visible(false)
+	_set_level_transition_loading_progress(0.0)
 	level_transition_tween = create_tween()
 	level_transition_tween.set_trans(Tween.TRANS_SINE)
 	level_transition_tween.set_ease(Tween.EASE_IN_OUT)
 	level_transition_tween.tween_property(level_transition_dim_rect, "color:a", 1.0, LEVEL_TRANSITION_FADE_SECONDS)
-	level_transition_tween.tween_callback(Callable(self, "_change_to_level02_scene"))
+	level_transition_tween.tween_callback(Callable(self, "_start_level_loading_to_level02"))
+
+
+func _start_level_loading_to_level02() -> void:
+	_set_level_transition_loading_visible(true)
+	_layout_level_transition_loading_bar()
+	_set_level_transition_loading_progress(0.0)
+
+	var start_time_ms: int = Time.get_ticks_msec()
+	while true:
+		var elapsed_sec: float = maxf(0.0, float(Time.get_ticks_msec() - start_time_ms) / 1000.0)
+		var progress: float = clampf(elapsed_sec / LEVEL_TRANSITION_LOADING_SECONDS, 0.0, 1.0)
+		_set_level_transition_loading_progress(progress)
+		if progress >= 1.0:
+			break
+		await get_tree().process_frame
+
+	_change_to_level02_scene()
 
 
 func _change_to_level02_scene() -> void:
@@ -304,6 +385,43 @@ func _change_to_level02_scene() -> void:
 		level_transition_dim_rect.color = Color(0.0, 0.0, 0.0, 0.0)
 	if level_transition_overlay != null:
 		level_transition_overlay.visible = false
+	_set_level_transition_loading_visible(false)
+	_set_level_transition_loading_progress(0.0)
+
+
+func _set_level_transition_loading_visible(visible_value: bool) -> void:
+	if level_transition_loading_image != null:
+		level_transition_loading_image.visible = visible_value
+	if level_transition_loading_bar_bg != null:
+		level_transition_loading_bar_bg.visible = visible_value
+
+
+func _on_level_transition_viewport_size_changed() -> void:
+	_layout_level_transition_loading_bar()
+
+
+func _layout_level_transition_loading_bar() -> void:
+	if level_transition_loading_bar_bg == null:
+		return
+	var viewport_size: Vector2 = get_viewport_rect().size
+	var x: float = viewport_size.x * LEVEL_LOADING_BAR_LEFT_RATIO
+	var y: float = viewport_size.y * LEVEL_LOADING_BAR_TOP_RATIO
+	var width: float = viewport_size.x * LEVEL_LOADING_BAR_WIDTH_RATIO
+	var height: float = viewport_size.y * LEVEL_LOADING_BAR_HEIGHT_RATIO
+	level_transition_loading_bar_bg.position = Vector2(x, y)
+	level_transition_loading_bar_bg.size = Vector2(width, height)
+
+	if level_transition_loading_bar_fill != null:
+		level_transition_loading_bar_fill.position = Vector2(LEVEL_LOADING_BAR_INSET, LEVEL_LOADING_BAR_INSET)
+		level_transition_loading_bar_fill.size = Vector2(0.0, maxf(1.0, height - (LEVEL_LOADING_BAR_INSET * 2.0)))
+
+
+func _set_level_transition_loading_progress(progress: float) -> void:
+	if level_transition_loading_bar_bg == null or level_transition_loading_bar_fill == null:
+		return
+	var clamped_progress: float = clampf(progress, 0.0, 1.0)
+	var inner_width: float = maxf(0.0, level_transition_loading_bar_bg.size.x - (LEVEL_LOADING_BAR_INSET * 2.0))
+	level_transition_loading_bar_fill.size.x = inner_width * clamped_progress
 
 
 func _resolve_player_spawn_position() -> Vector2:

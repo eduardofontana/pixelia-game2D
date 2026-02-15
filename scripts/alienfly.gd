@@ -20,6 +20,8 @@ const HEALTH_BAR_WIDTH: float = 28.0
 const HEALTH_PERCENT_FONT_SIZE: int = 10
 const HEALTH_PERCENT_OUTLINE_SIZE: int = 2
 const VAMPIRE_FONT_PATH: String = "res://fonts/Pixelia2D.ttf"
+const HURT_SFX_PATH: String = "res://sounds/Gore_Wet_7.wav"
+const HURT_SFX_VOLUME_DB: float = -7.5
 const DEATH_PARTICLE_COLOR: Color = Color(0.76, 0.6, 1.0, 1.0)
 const DEATH_FADE_DURATION: float = 0.2
 const DEATH_VFX = preload("res://scripts/death_vfx.gd")
@@ -60,6 +62,7 @@ var contact_damage_timer: float = 0.0
 var health_bar_timer: float = 0.0
 var health_fill_style: StyleBoxFlat = null
 var hit_stun_timer: float = 0.0
+var hurt_sfx_player: AudioStreamPlayer = null
 
 var contact_area: Area2D = null
 var contact_collision: CollisionShape2D = null
@@ -78,6 +81,7 @@ func _ready() -> void:
 	_configure_collision_filters()
 	_setup_health_fill_style()
 	_apply_vampire_percent_font()
+	_setup_hurt_sfx()
 	_update_health_bar()
 	if health_bar != null:
 		health_bar.visible = false
@@ -119,6 +123,7 @@ func take_damage(amount: int, from_position: Vector2 = Vector2.INF) -> void:
 		return
 
 	current_hp = maxi(0, current_hp - amount)
+	_play_hurt_sfx()
 	_apply_hit_knockback(from_position)
 	hit_stun_timer = maxf(hit_stun_timer, HIT_STUN_TIME)
 	_show_health_bar()
@@ -437,6 +442,29 @@ func _apply_hit_knockback(from_position: Vector2) -> void:
 		push_vector = Vector2.RIGHT
 	push_vector = push_vector.normalized()
 	velocity = push_vector * HIT_KNOCKBACK_FORCE
+
+
+func _setup_hurt_sfx() -> void:
+	if hurt_sfx_player != null:
+		return
+
+	hurt_sfx_player = AudioStreamPlayer.new()
+	hurt_sfx_player.name = "HurtSfx"
+	hurt_sfx_player.bus = "SFX"
+	hurt_sfx_player.volume_db = HURT_SFX_VOLUME_DB
+	add_child(hurt_sfx_player)
+
+	if ResourceLoader.exists(HURT_SFX_PATH):
+		var loaded_stream: Resource = load(HURT_SFX_PATH)
+		if loaded_stream is AudioStream:
+			hurt_sfx_player.stream = loaded_stream
+
+
+func _play_hurt_sfx() -> void:
+	if hurt_sfx_player == null or hurt_sfx_player.stream == null:
+		return
+	hurt_sfx_player.stop()
+	hurt_sfx_player.play()
 
 
 func _play_death_animation_then_fade() -> void:

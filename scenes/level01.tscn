@@ -26,6 +26,7 @@ volume_db = -2.5
 
 [node name="Player" parent="." unique_id=1980650489 instance=ExtResource("2_sugp2")]
 position = Vector2(37, 565)
+player_light_enabled = false
 
 [node name="Background" parent="." unique_id=306216750 instance=ExtResource("3_sugp2")]
 z_index = -100

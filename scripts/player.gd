@@ -144,6 +144,7 @@ const DEATH_VFX = preload("res://scripts/death_vfx.gd")
 @onready var attack_sfx: AudioStreamPlayer = $AttackSfx
 @onready var player_camera: Camera2D = get_node_or_null("Camera2D") as Camera2D
 @onready var player_light: PointLight2D = get_node_or_null("PlayerLight") as PointLight2D
+@onready var player_light_core: PointLight2D = get_node_or_null("PlayerLightCore") as PointLight2D
 @onready var health_bar: Node2D = get_node_or_null("HealthBar")
 @onready var health_fill: Control = get_node_or_null("HealthBar/Bg/Fill")
 @onready var health_percent_label: Label = get_node_or_null("HealthBar/PercentLabel")
@@ -249,6 +250,8 @@ func _ready() -> void:
 	if player_light != null:
 		player_light.visible = player_light_enabled
 		player_light_flicker_time = 0.0
+	if player_light_core != null:
+		player_light_core.visible = player_light_enabled
 	hp = max_hp
 	stamina = max_stamina
 	hp_regen_delay_timer = 0.0
@@ -891,21 +894,27 @@ func get_last_death_source_tag() -> StringName:
 
 
 func _update_light_visuals(delta: float, _direction: float) -> void:
-	if player_light == null:
+	if player_light == null and player_light_core == null:
 		return
 
 	if not player_light_enabled:
-		player_light.visible = false
+		if player_light != null:
+			player_light.visible = false
+		if player_light_core != null:
+			player_light_core.visible = false
 		return
-	if not player_light.visible:
+	if player_light != null and not player_light.visible:
 		player_light.visible = true
+	if player_light_core != null and not player_light_core.visible:
+		player_light_core.visible = true
 
 	player_light_flicker_time += maxf(delta, 0.0) * maxf(player_light_flicker_speed, 0.0)
 	var flicker_wave: float = sin(player_light_flicker_time)
 	var flicker_strength: float = maxf(player_light_flicker_strength, 0.0)
 	var base_energy: float = maxf(player_light_base_energy, 0.05)
 	var target_energy: float = base_energy + (flicker_wave * flicker_strength)
-	player_light.energy = clampf(target_energy, base_energy - flicker_strength, base_energy + flicker_strength)
+	if player_light != null:
+		player_light.energy = clampf(target_energy, base_energy - flicker_strength, base_energy + flicker_strength)
 
 
 func _setup_player_health_fill_style() -> void:
