@@ -123,7 +123,6 @@ func _ready() -> void:
 	_set_map_gold_active(false)
 	_update_portal_access_state()
 	_update_hud_coin_count()
-	_setup_character_select_overlay()
 
 
 func _validate_level01_root_nodes() -> void:
@@ -317,105 +316,7 @@ func _resolve_player_spawn_position() -> Vector2:
 
 
 func _setup_character_select_overlay() -> void:
-	if character_select_overlay != null:
-		return
-
-	character_select_overlay = CanvasLayer.new()
-	character_select_overlay.name = "CharacterSelectOverlay"
-	character_select_overlay.layer = 200
-	character_select_overlay.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
-	add_child(character_select_overlay)
-
-	var root := Control.new()
-	root.name = "Root"
-	root.anchor_left = 0.0
-	root.anchor_top = 0.0
-	root.anchor_right = 1.0
-	root.anchor_bottom = 1.0
-	root.offset_left = 0.0
-	root.offset_top = 0.0
-	root.offset_right = 0.0
-	root.offset_bottom = 0.0
-	root.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
-	character_select_overlay.add_child(root)
-
-	var dim := ColorRect.new()
-	dim.anchor_left = 0.0
-	dim.anchor_top = 0.0
-	dim.anchor_right = 1.0
-	dim.anchor_bottom = 1.0
-	dim.offset_left = 0.0
-	dim.offset_top = 0.0
-	dim.offset_right = 0.0
-	dim.offset_bottom = 0.0
-	dim.color = Color(0.02, 0.02, 0.03, 0.78)
-	root.add_child(dim)
-
-	var card := PanelContainer.new()
-	card.name = "Card"
-	card.anchor_left = 0.5
-	card.anchor_top = 0.5
-	card.anchor_right = 0.5
-	card.anchor_bottom = 0.5
-	card.offset_left = -260.0
-	card.offset_top = -176.0
-	card.offset_right = 260.0
-	card.offset_bottom = 176.0
-	card.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
-	root.add_child(card)
-
-	var card_style := StyleBoxFlat.new()
-	card_style.bg_color = Color(0.07, 0.07, 0.1, 0.96)
-	card_style.border_width_left = 2
-	card_style.border_width_top = 2
-	card_style.border_width_right = 2
-	card_style.border_width_bottom = 2
-	card_style.border_color = Color(0.93, 0.74, 0.36, 0.86)
-	card_style.corner_radius_top_left = 12
-	card_style.corner_radius_top_right = 12
-	card_style.corner_radius_bottom_right = 12
-	card_style.corner_radius_bottom_left = 12
-	card_style.content_margin_left = 18.0
-	card_style.content_margin_top = 16.0
-	card_style.content_margin_right = 18.0
-	card_style.content_margin_bottom = 16.0
-	card.add_theme_stylebox_override("panel", card_style)
-
-	var layout := VBoxContainer.new()
-	layout.alignment = BoxContainer.ALIGNMENT_CENTER
-	layout.add_theme_constant_override("separation", 14)
-	card.add_child(layout)
-
-	var title := Label.new()
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.text = "Escolha seu personagem"
-	title.add_theme_font_size_override("font_size", 28)
-	layout.add_child(title)
-
-	var options_row := HBoxContainer.new()
-	options_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	options_row.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	options_row.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	options_row.add_theme_constant_override("separation", 16)
-	layout.add_child(options_row)
-
-	var options_group := ButtonGroup.new()
-	var player_button: Button = _build_character_option_button(CHARACTER_PLAYER_ID, PLAYER_SCENE, options_group)
-	options_row.add_child(player_button)
-
-	character_option_buttons.clear()
-	character_option_buttons[CHARACTER_PLAYER_ID] = player_button
-
-	character_select_confirm_button = Button.new()
-	character_select_confirm_button.custom_minimum_size = Vector2(170.0, 36.0)
-	character_select_confirm_button.focus_mode = Control.FOCUS_ALL
-	character_select_confirm_button.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
-	character_select_confirm_button.pressed.connect(_on_character_select_confirm_pressed)
-	layout.add_child(character_select_confirm_button)
-
-	_set_selected_character(selected_character_id)
-	player_button.grab_focus()
-	get_tree().paused = true
+	return
 
 
 func _build_character_option_button(character_id: StringName, character_scene: PackedScene, option_group: ButtonGroup) -> Button:

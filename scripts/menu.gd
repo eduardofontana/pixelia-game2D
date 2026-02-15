@@ -6,7 +6,10 @@ const MIN_VOLUME_DB: float = -40.0
 const MAX_VOLUME_DB: float = 3.0
 const VOLUME_STEP_DB: float = 2.0
 const MENU_CLICK_SFX_VOLUME_DB: float = -5.0
-const MENU_PARALLAX_OFFSET: Vector2 = Vector2(0.0, -135.0)
+const MENU_PARALLAX_OFFSET: Vector2 = Vector2.ZERO
+const MENU_CARD_BACKGROUND_PATH: String = "res://background/menupixelia.png"
+const MENU_LOADING_IMAGE_PATH: String = "res://background/loadingpixelia.png"
+const MENU_LOADING_DURATION: float = 5.0
 const BUS_MASTER: StringName = &"Master"
 const BUS_MUSIC: StringName = &"Music"
 const BUS_SFX: StringName = &"SFX"
@@ -35,11 +38,16 @@ const MENU_CLICK_SFX_STREAM: AudioStream = preload("res://sounds/click_double_of
 var master_bus_index: int = -1
 var music_bus_index: int = -1
 var sfx_bus_index: int = -1
+var is_starting_game: bool = false
+var loading_overlay: CanvasLayer = null
+var loading_image_rect: TextureRect = null
 
 
 func _ready() -> void:
 	_ensure_audio_buses()
-	_setup_skull_emoji()
+	_setup_menu_card_background()
+	_setup_loading_overlay()
+	_remove_menu_emblem()
 	_bind_signals()
 	_apply_vampire_font()
 	_setup_audio_controls()
@@ -51,6 +59,8 @@ func _ready() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if is_starting_game:
+		return
 	if event.is_action_pressed("ui_cancel") and options_card.visible:
 		_show_main_menu()
 		get_viewport().set_input_as_handled()
@@ -107,10 +117,109 @@ func _apply_vampire_font() -> void:
 		node.add_theme_font_override("font", vampire_font)
 
 
-func _setup_skull_emoji() -> void:
+func _remove_menu_emblem() -> void:
 	if skull_label == null:
 		return
-	skull_label.text = char(0x2620)
+	var emblem := skull_label.get_node_or_null("DefendIcon")
+	if emblem != null:
+		emblem.queue_free()
+	skull_label.visible = false
+	skull_label.text = ""
+
+
+func _setup_menu_card_background() -> void:
+	if menu_card == null:
+		return
+
+	var card_background := menu_card.get_node_or_null("CardBackground") as TextureRect
+	if card_background == null:
+		card_background = TextureRect.new()
+		card_background.name = "CardBackground"
+		card_background.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		card_background.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		card_background.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		card_background.z_index = -1
+		menu_card.add_child(card_background)
+		menu_card.move_child(card_background, 0)
+
+	card_background.set_anchors_preset(Control.PRESET_FULL_RECT)
+	card_background.offset_left = 6.0
+	card_background.offset_top = 6.0
+	card_background.offset_right = -6.0
+	card_background.offset_bottom = -6.0
+	card_background.modulate = Color(1.0, 1.0, 1.0, 0.98)
+
+	if ResourceLoader.exists(MENU_CARD_BACKGROUND_PATH):
+		var loaded_texture: Resource = load(MENU_CARD_BACKGROUND_PATH)
+		if loaded_texture is Texture2D:
+			card_background.texture = loaded_texture as Texture2D
+
+
+func _setup_loading_overlay() -> void:
+	if loading_overlay != null:
+		return
+
+	loading_overlay = CanvasLayer.new()
+	loading_overlay.name = "LoadingOverlay"
+	loading_overlay.layer = 100
+	loading_overlay.visible = false
+	add_child(loading_overlay)
+
+	var shade := ColorRect.new()
+	shade.name = "Shade"
+	shade.set_anchors_preset(Control.PRESET_FULL_RECT)
+	shade.color = Color(0.0, 0.0, 0.0, 1.0)
+	shade.mouse_filter = Control.MOUSE_FILTER_STOP
+	loading_overlay.add_child(shade)
+
+	loading_image_rect = TextureRect.new()
+	loading_image_rect.name = "LoadingImage"
+	loading_image_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+	loading_image_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	loading_image_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	loading_image_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	loading_overlay.add_child(loading_image_rect)
+
+	if ResourceLoader.exists(MENU_LOADING_IMAGE_PATH):
+		var loaded_texture: Resource = load(MENU_LOADING_IMAGE_PATH)
+		if loaded_texture is Texture2D:
+			loading_image_rect.texture = loaded_texture as Texture2D
+
+
+func _set_menu_interactable(enabled: bool) -> void:
+	if play_button != null:
+		play_button.disabled = not enabled
+	if options_button != null:
+		options_button.disabled = not enabled
+	if quit_button != null:
+		quit_button.disabled = not enabled
+	if music_down_button != null:
+		music_down_button.disabled = not enabled
+	if music_up_button != null:
+		music_up_button.disabled = not enabled
+	if music_slider != null:
+		music_slider.editable = enabled
+	if sfx_down_button != null:
+		sfx_down_button.disabled = not enabled
+	if sfx_up_button != null:
+		sfx_up_button.disabled = not enabled
+	if sfx_slider != null:
+		sfx_slider.editable = enabled
+	if fullscreen_button != null:
+		fullscreen_button.disabled = not enabled
+	if vsync_button != null:
+		vsync_button.disabled = not enabled
+	if back_button != null:
+		back_button.disabled = not enabled
+
+
+func _show_loading_overlay() -> void:
+	if loading_overlay != null:
+		loading_overlay.visible = true
+	menu_card.visible = false
+	options_card.visible = false
+	if menu_bgm != null:
+		menu_bgm.stop()
 
 
 func _ensure_audio_buses() -> void:
@@ -234,21 +343,33 @@ func _show_options_menu() -> void:
 
 
 func _on_play_pressed() -> void:
+	if is_starting_game:
+		return
+	is_starting_game = true
 	_play_menu_click_sfx()
+	_set_menu_interactable(false)
+	_show_loading_overlay()
+	await get_tree().create_timer(MENU_LOADING_DURATION).timeout
 	get_tree().change_scene_to_file(GAME_SCENE_PATH)
 
 
 func _on_options_pressed() -> void:
+	if is_starting_game:
+		return
 	_play_menu_click_sfx()
 	_show_options_menu()
 
 
 func _on_quit_pressed() -> void:
+	if is_starting_game:
+		return
 	_play_menu_click_sfx()
 	get_tree().quit()
 
 
 func _on_back_pressed() -> void:
+	if is_starting_game:
+		return
 	_play_menu_click_sfx()
 	_show_main_menu()
 

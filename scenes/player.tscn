@@ -10,7 +10,7 @@
 [ext_resource type="Texture2D" uid="uid://dr132bb3dohxk" path="res://sprites/knightoutline/RUN.png" id="8_3v2ag"]
 [ext_resource type="Texture2D" uid="uid://bn64hf43f4yvh" path="res://sprites/knightoutline/WALK.png" id="9_jej6c"]
 [ext_resource type="AudioStream" uid="uid://bi4112g1shi7c" path="res://sounds/Sword Attack 1.wav" id="10_sfx"]
-[ext_resource type="Texture2D" path="res://sprites/lights/player_light_mask.png" id="11_light"]
+[ext_resource type="Texture2D" uid="uid://bo6vio1r5hb4r" path="res://sprites/lights/player_light_mask.png" id="11_light"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_3v2ag"]
 atlas = ExtResource("2_ur7pv")
@@ -473,7 +473,7 @@ script = ExtResource("1_6e8lb")
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1155286953]
 position = Vector2(2, -9)
 sprite_frames = SubResource("SpriteFrames_8svfe")
-animation = &"death"
+animation = &"defend"
 autoplay = "idle"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1790564496]
@@ -487,21 +487,20 @@ limit_top = 0
 limit_bottom = 648
 limit_smoothed = true
 
-[node name="PlayerLight" type="PointLight2D" parent="."]
+[node name="PlayerLight" type="PointLight2D" parent="." unique_id=427714613]
 position = Vector2(0, -6)
-texture = ExtResource("11_light")
 color = Color(0.64, 0.73, 0.95, 1)
 energy = 1.38
-texture_scale = 0.5
-shadow_enabled = false
-
-[node name="PlayerLightCore" type="PointLight2D" parent="."]
-position = Vector2(0, -6)
 texture = ExtResource("11_light")
+texture_scale = 0.5
+
+[node name="PlayerLightCore" type="PointLight2D" parent="." unique_id=2050788732]
+position = Vector2(0, -6)
 color = Color(1, 0.95, 0.86, 1)
 energy = 0.52
+shadow_color = Color(0, 0, 0, 0.003921569)
+texture = ExtResource("11_light")
 texture_scale = 1.2
-shadow_enabled = false
 
 [node name="AttackSfx" type="AudioStreamPlayer" parent="." unique_id=364933091]
 stream = ExtResource("10_sfx")
