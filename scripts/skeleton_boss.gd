@@ -27,6 +27,9 @@ const ENEMY_LAYER_MASK: int = 2
 const FLOOR_CHECK_FORWARD_DISTANCE: float = 14.0
 const FLOOR_CHECK_DOWN_START_Y: float = 4.0
 const FLOOR_CHECK_DOWN_DISTANCE: float = 56.0
+const ATTACK_FALLBACK_MARGIN_X: float = 8.0
+const ATTACK_FALLBACK_MARGIN_Y: float = 10.0
+const ATTACK_FALLBACK_MAX_VERTICAL: float = 42.0
 const DEATH_PARTICLE_COLOR: Color = Color(0.9, 0.9, 0.94, 1.0)
 const DEATH_FADE_DURATION: float = 0.2
 const VICTORY_SFX_PATH: String = "res://sounds/Retro Success Melody Win.wav"
@@ -141,6 +144,8 @@ func _physics_process(delta: float) -> void:
 			velocity.x = move_toward(velocity.x, 0.0, GROUND_DECELERATION * delta)
 
 	move_and_slide()
+	if boss_state == BossState.HURT and is_on_floor() and velocity.y > 0.0:
+		velocity.y = 0.0
 	_process_contact_damage()
 	_update_visuals()
 	if boss_state == BossState.DEAD and death_fallback_timer >= 0.0:
@@ -370,8 +375,7 @@ func _deal_attack_damage() -> bool:
 				player_ref.take_damage(attack_damage, global_position)
 				return true
 
-	var to_player: Vector2 = player_ref.global_position - global_position
-	if absf(to_player.x) <= (attack_range + 14.0) and absf(to_player.y) <= (vertical_engage_tolerance + 18.0):
+	if _is_player_inside_attack_fallback_bounds():
 		player_ref.take_damage(attack_damage, global_position)
 		return true
 	return false
@@ -646,6 +650,37 @@ func _is_player_target(node: Node) -> bool:
 	if player_ref != null and node == player_ref:
 		return true
 	return node.is_in_group("player")
+
+
+func _is_player_inside_attack_fallback_bounds() -> bool:
+	if player_ref == null:
+		return false
+
+	var center: Vector2 = global_position + Vector2(absf(attack_area_offset_x) * float(facing_direction), attack_area_offset_y)
+	var half_width: float = maxf(18.0, attack_range * 0.5)
+	var half_height: float = maxf(16.0, minf(ATTACK_FALLBACK_MAX_VERTICAL, vertical_engage_tolerance * 0.35))
+
+	if attack_area != null:
+		center = attack_area.global_position
+	if attack_collision != null:
+		center = attack_collision.global_position
+		if attack_collision.shape is RectangleShape2D:
+			var rect_shape: RectangleShape2D = attack_collision.shape as RectangleShape2D
+			half_width = maxf(half_width, rect_shape.size.x * 0.5)
+			half_height = maxf(half_height, rect_shape.size.y * 0.5)
+
+	var to_player: Vector2 = player_ref.global_position - center
+	if absf(to_player.x) > (half_width + ATTACK_FALLBACK_MARGIN_X):
+		return false
+	if absf(to_player.y) > (half_height + ATTACK_FALLBACK_MARGIN_Y):
+		return false
+
+	# Mantem o dano no lado frontal do ataque.
+	if facing_direction != 0:
+		var player_side: int = int(signf(to_player.x))
+		if player_side != 0 and player_side != facing_direction:
+			return false
+	return true
 
 
 func _set_collision_enabled(enabled: bool, deferred: bool, include_body_collision: bool = true) -> void:

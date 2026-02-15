@@ -455,6 +455,27 @@ theme_override_font_sizes/font_size = 11
 text = "Esc: Pausa"
 horizontal_alignment = 0
 
+[node name="FpsCounterLabel" type="Label" parent="."]
+visible = false
+layout_mode = 0
+anchor_left = 1.0
+anchor_top = 0.0
+anchor_right = 1.0
+anchor_bottom = 0.0
+offset_left = -148.0
+offset_top = 12.0
+offset_right = -12.0
+offset_bottom = 34.0
+theme_override_colors/font_color = Color(0.95, 0.97, 1, 0.98)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.75)
+theme_override_colors/font_outline_color = Color(0.05, 0.08, 0.12, 0.85)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_constants/outline_size = 1
+theme_override_font_sizes/font_size = 15
+text = "FPS: 0"
+horizontal_alignment = 2
+
 [node name="OptionsOverlay" type="Control" parent="." unique_id=1010923900]
 visible = false
 layout_mode = 3
@@ -476,67 +497,176 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -165.0
-offset_top = -116.0
-offset_right = 165.0
-offset_bottom = 116.0
+offset_left = -210.0
+offset_top = -210.0
+offset_right = 210.0
+offset_bottom = 210.0
 mouse_filter = 1
 theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
 
 [node name="OptionsVBox" type="VBoxContainer" parent="OptionsOverlay/OptionsCard" unique_id=101699443]
 layout_mode = 2
-theme_override_constants/separation = 8
+theme_override_constants/separation = 10
 
 [node name="OptionsTitleLabel" type="Label" parent="OptionsOverlay/OptionsCard/OptionsVBox" unique_id=1228380695]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.95, 0.9, 0.84, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 0.9)
 theme_override_constants/outline_size = 2
-theme_override_font_sizes/font_size = 34
+theme_override_font_sizes/font_size = 30
 text = "Opcoes"
 horizontal_alignment = 1
 
-[node name="VolumeLabel" type="Label" parent="OptionsOverlay/OptionsCard/OptionsVBox" unique_id=1975370628]
+[node name="MusicRow" type="HBoxContainer" parent="OptionsOverlay/OptionsCard/OptionsVBox"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.9, 0.84, 0.75, 1)
-theme_override_font_sizes/font_size = 16
-text = "Volume Mestre"
-horizontal_alignment = 1
-
-[node name="VolumeControls" type="HBoxContainer" parent="OptionsOverlay/OptionsCard/OptionsVBox" unique_id=113030669]
-layout_mode = 2
-theme_override_constants/separation = 7
 alignment = 1
 
-[node name="VolumeDownButton" type="Button" parent="OptionsOverlay/OptionsCard/OptionsVBox/VolumeControls" unique_id=1288758754]
-custom_minimum_size = Vector2(40, 30)
+[node name="MusicLabel" type="Label" parent="OptionsOverlay/OptionsCard/OptionsVBox/MusicRow"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 22
+theme_override_colors/font_color = Color(0.9, 0.84, 0.75, 1)
+theme_override_font_sizes/font_size = 18
+text = "Volume Musica"
+
+[node name="MusicControls" type="HBoxContainer" parent="OptionsOverlay/OptionsCard/OptionsVBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="MusicDownButton" type="Button" parent="OptionsOverlay/OptionsCard/OptionsVBox/MusicControls"]
+custom_minimum_size = Vector2(46, 34)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
 theme_override_styles/normal = SubResource("StyleBoxFlat_button_normal")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
 theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
 text = "-"
 
-[node name="VolumeSlider" type="HSlider" parent="OptionsOverlay/OptionsCard/OptionsVBox/VolumeControls" unique_id=2007271349]
-custom_minimum_size = Vector2(170, 30)
+[node name="MusicSlider" type="HSlider" parent="OptionsOverlay/OptionsCard/OptionsVBox/MusicControls"]
+custom_minimum_size = Vector2(210, 34)
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="VolumeUpButton" type="Button" parent="OptionsOverlay/OptionsCard/OptionsVBox/VolumeControls" unique_id=152940064]
-custom_minimum_size = Vector2(40, 30)
+[node name="MusicUpButton" type="Button" parent="OptionsOverlay/OptionsCard/OptionsVBox/MusicControls"]
+custom_minimum_size = Vector2(46, 34)
 layout_mode = 2
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 20
 theme_override_styles/normal = SubResource("StyleBoxFlat_button_normal")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
 theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
 text = "+"
 
-[node name="VolumeValueLabel" type="Label" parent="OptionsOverlay/OptionsCard/OptionsVBox" unique_id=1467278028]
+[node name="MusicValueLabel" type="Label" parent="OptionsOverlay/OptionsCard/OptionsVBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.87, 0.92, 1, 1)
-theme_override_font_sizes/font_size = 16
-text = "Volume: 100%"
+theme_override_font_sizes/font_size = 18
+text = "Musica: 100%"
 horizontal_alignment = 1
+
+[node name="SfxRow" type="HBoxContainer" parent="OptionsOverlay/OptionsCard/OptionsVBox"]
+layout_mode = 2
+alignment = 1
+
+[node name="SfxLabel" type="Label" parent="OptionsOverlay/OptionsCard/OptionsVBox/SfxRow"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.84, 0.75, 1)
+theme_override_font_sizes/font_size = 18
+text = "Volume Efeitos"
+
+[node name="SfxControls" type="HBoxContainer" parent="OptionsOverlay/OptionsCard/OptionsVBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="SfxDownButton" type="Button" parent="OptionsOverlay/OptionsCard/OptionsVBox/SfxControls"]
+custom_minimum_size = Vector2(46, 34)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("StyleBoxFlat_button_normal")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
+text = "-"
+
+[node name="SfxSlider" type="HSlider" parent="OptionsOverlay/OptionsCard/OptionsVBox/SfxControls"]
+custom_minimum_size = Vector2(210, 34)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="SfxUpButton" type="Button" parent="OptionsOverlay/OptionsCard/OptionsVBox/SfxControls"]
+custom_minimum_size = Vector2(46, 34)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("StyleBoxFlat_button_normal")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
+text = "+"
+
+[node name="SfxValueLabel" type="Label" parent="OptionsOverlay/OptionsCard/OptionsVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.87, 0.92, 1, 1)
+theme_override_font_sizes/font_size = 18
+text = "Efeitos: 100%"
+horizontal_alignment = 1
+
+[node name="FullscreenRow" type="HBoxContainer" parent="OptionsOverlay/OptionsCard/OptionsVBox"]
+layout_mode = 2
+alignment = 1
+
+[node name="FullscreenLabel" type="Label" parent="OptionsOverlay/OptionsCard/OptionsVBox/FullscreenRow"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.84, 0.75, 1)
+theme_override_font_sizes/font_size = 18
+text = "Tela Cheia"
+
+[node name="FullscreenButton" type="Button" parent="OptionsOverlay/OptionsCard/OptionsVBox/FullscreenRow"]
+custom_minimum_size = Vector2(124, 34)
+layout_mode = 2
+theme_override_font_sizes/font_size = 17
+theme_override_styles/normal = SubResource("StyleBoxFlat_button_normal")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
+text = "Desligado"
+
+[node name="VSyncRow" type="HBoxContainer" parent="OptionsOverlay/OptionsCard/OptionsVBox"]
+layout_mode = 2
+alignment = 1
+
+[node name="VSyncLabel" type="Label" parent="OptionsOverlay/OptionsCard/OptionsVBox/VSyncRow"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.84, 0.75, 1)
+theme_override_font_sizes/font_size = 18
+text = "V-Sync"
+
+[node name="VSyncButton" type="Button" parent="OptionsOverlay/OptionsCard/OptionsVBox/VSyncRow"]
+custom_minimum_size = Vector2(124, 34)
+layout_mode = 2
+theme_override_font_sizes/font_size = 17
+theme_override_styles/normal = SubResource("StyleBoxFlat_button_normal")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
+text = "Ligado"
+
+[node name="FpsRow" type="HBoxContainer" parent="OptionsOverlay/OptionsCard/OptionsVBox"]
+layout_mode = 2
+alignment = 1
+
+[node name="FpsLabel" type="Label" parent="OptionsOverlay/OptionsCard/OptionsVBox/FpsRow"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.84, 0.75, 1)
+theme_override_font_sizes/font_size = 18
+text = "Mostrar FPS"
+
+[node name="FpsButton" type="Button" parent="OptionsOverlay/OptionsCard/OptionsVBox/FpsRow"]
+custom_minimum_size = Vector2(124, 34)
+layout_mode = 2
+theme_override_font_sizes/font_size = 17
+theme_override_styles/normal = SubResource("StyleBoxFlat_button_normal")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
+text = "Desligado"
+
+[node name="BottomSpacer" type="Control" parent="OptionsOverlay/OptionsCard/OptionsVBox"]
+custom_minimum_size = Vector2(0, 4)
+layout_mode = 2
 
 [node name="ActionsRow" type="HBoxContainer" parent="OptionsOverlay/OptionsCard/OptionsVBox" unique_id=1275434653]
 layout_mode = 2
@@ -546,7 +676,7 @@ alignment = 1
 [node name="ResumeButton" type="Button" parent="OptionsOverlay/OptionsCard/OptionsVBox/ActionsRow" unique_id=2124076294]
 custom_minimum_size = Vector2(124, 34)
 layout_mode = 2
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 18
 theme_override_styles/normal = SubResource("StyleBoxFlat_button_normal")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
 theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
@@ -555,7 +685,7 @@ text = "Retornar"
 [node name="ExitButton" type="Button" parent="OptionsOverlay/OptionsCard/OptionsVBox/ActionsRow" unique_id=1094317058]
 custom_minimum_size = Vector2(124, 34)
 layout_mode = 2
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 18
 theme_override_styles/normal = SubResource("StyleBoxFlat_button_normal")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
 theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")

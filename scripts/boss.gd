@@ -367,6 +367,8 @@ func _try_attack_damage() -> bool:
 func _is_player_overlapping_damage_area() -> bool:
 	if damage_area == null:
 		return false
+	if not damage_area.monitoring:
+		return false
 
 	for body in damage_area.get_overlapping_bodies():
 		if body == player_ref:

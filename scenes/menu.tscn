@@ -166,7 +166,7 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.95, 0.9, 0.84, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 0.9)
 theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 46
+theme_override_font_sizes/font_size = 34
 text = "Opcoes"
 horizontal_alignment = 1
 
@@ -177,7 +177,7 @@ alignment = 1
 [node name="MusicLabel" type="Label" parent="UILayer/OptionsCard/OptionsVBox/MusicRow" unique_id=1104121551]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.9, 0.84, 0.75, 1)
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 18
 text = "Volume Musica"
 
 [node name="MusicControls" type="HBoxContainer" parent="UILayer/OptionsCard/OptionsVBox" unique_id=174655626]
@@ -188,7 +188,7 @@ alignment = 1
 [node name="MusicDownButton" type="Button" parent="UILayer/OptionsCard/OptionsVBox/MusicControls" unique_id=2172984]
 custom_minimum_size = Vector2(46, 34)
 layout_mode = 2
-theme_override_font_sizes/font_size = 24
+theme_override_font_sizes/font_size = 20
 theme_override_styles/normal = SubResource("StyleBoxFlat_button_normal")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
 theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
@@ -202,7 +202,7 @@ size_flags_horizontal = 3
 [node name="MusicUpButton" type="Button" parent="UILayer/OptionsCard/OptionsVBox/MusicControls" unique_id=1151781943]
 custom_minimum_size = Vector2(46, 34)
 layout_mode = 2
-theme_override_font_sizes/font_size = 24
+theme_override_font_sizes/font_size = 20
 theme_override_styles/normal = SubResource("StyleBoxFlat_button_normal")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
 theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
@@ -211,7 +211,7 @@ text = "+"
 [node name="MusicValueLabel" type="Label" parent="UILayer/OptionsCard/OptionsVBox" unique_id=583262585]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.87, 0.92, 1, 1)
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 18
 text = "Musica: 100%"
 horizontal_alignment = 1
 
@@ -222,7 +222,7 @@ alignment = 1
 [node name="SfxLabel" type="Label" parent="UILayer/OptionsCard/OptionsVBox/SfxRow"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.9, 0.84, 0.75, 1)
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 18
 text = "Volume Efeitos"
 
 [node name="SfxControls" type="HBoxContainer" parent="UILayer/OptionsCard/OptionsVBox"]
@@ -233,7 +233,7 @@ alignment = 1
 [node name="SfxDownButton" type="Button" parent="UILayer/OptionsCard/OptionsVBox/SfxControls"]
 custom_minimum_size = Vector2(46, 34)
 layout_mode = 2
-theme_override_font_sizes/font_size = 24
+theme_override_font_sizes/font_size = 20
 theme_override_styles/normal = SubResource("StyleBoxFlat_button_normal")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
 theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
@@ -247,7 +247,7 @@ size_flags_horizontal = 3
 [node name="SfxUpButton" type="Button" parent="UILayer/OptionsCard/OptionsVBox/SfxControls"]
 custom_minimum_size = Vector2(46, 34)
 layout_mode = 2
-theme_override_font_sizes/font_size = 24
+theme_override_font_sizes/font_size = 20
 theme_override_styles/normal = SubResource("StyleBoxFlat_button_normal")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
 theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
@@ -256,7 +256,7 @@ text = "+"
 [node name="SfxValueLabel" type="Label" parent="UILayer/OptionsCard/OptionsVBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.87, 0.92, 1, 1)
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 18
 text = "Efeitos: 100%"
 horizontal_alignment = 1
 
@@ -267,13 +267,13 @@ alignment = 1
 [node name="FullscreenLabel" type="Label" parent="UILayer/OptionsCard/OptionsVBox/FullscreenRow"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.9, 0.84, 0.75, 1)
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 18
 text = "Tela Cheia"
 
 [node name="FullscreenButton" type="Button" parent="UILayer/OptionsCard/OptionsVBox/FullscreenRow"]
 custom_minimum_size = Vector2(124, 34)
 layout_mode = 2
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 17
 theme_override_styles/normal = SubResource("StyleBoxFlat_button_normal")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
 theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
@@ -286,13 +286,13 @@ alignment = 1
 [node name="VSyncLabel" type="Label" parent="UILayer/OptionsCard/OptionsVBox/VSyncRow"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.9, 0.84, 0.75, 1)
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 18
 text = "V-Sync"
 
 [node name="VSyncButton" type="Button" parent="UILayer/OptionsCard/OptionsVBox/VSyncRow"]
 custom_minimum_size = Vector2(124, 34)
 layout_mode = 2
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 17
 theme_override_styles/normal = SubResource("StyleBoxFlat_button_normal")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
 theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
@@ -305,7 +305,7 @@ layout_mode = 2
 [node name="BackButton" type="Button" parent="UILayer/OptionsCard/OptionsVBox" unique_id=264850680]
 custom_minimum_size = Vector2(0, 42)
 layout_mode = 2
-theme_override_font_sizes/font_size = 24
+theme_override_font_sizes/font_size = 20
 theme_override_styles/normal = SubResource("StyleBoxFlat_button_normal")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
 theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")

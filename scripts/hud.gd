@@ -12,6 +12,9 @@ const MIN_VOLUME_DB: float = -40.0
 const MAX_VOLUME_DB: float = 3.0
 const VOLUME_STEP_DB: float = 2.0
 const MENU_CLICK_SFX_VOLUME_DB: float = -5.0
+const BUS_MASTER: StringName = &"Master"
+const BUS_MUSIC: StringName = &"Music"
+const BUS_SFX: StringName = &"SFX"
 const MENU_CLICK_SFX_STREAM: AudioStream = preload("res://sounds/click_double_off.wav")
 
 @onready var life_label: Label = get_node_or_null("MarginContainer/PanelContainer/VBox/LifeRow/LifeLabel")
@@ -25,11 +28,19 @@ const MENU_CLICK_SFX_STREAM: AudioStream = preload("res://sounds/click_double_of
 @onready var xp_label: Label = get_node_or_null("MarginContainer/PanelContainer/VBox/InfoRow/XpLabel")
 @onready var coins_label: Label = get_node_or_null("MarginContainer/PanelContainer/VBox/InfoRow/CoinsLabel")
 @onready var controls_hint_card: Control = get_node_or_null("ControlsHintCard")
+@onready var fps_counter_label: Label = get_node_or_null("FpsCounterLabel")
 @onready var options_overlay: Control = get_node_or_null("OptionsOverlay")
-@onready var pause_volume_down_button: Button = get_node_or_null("OptionsOverlay/OptionsCard/OptionsVBox/VolumeControls/VolumeDownButton")
-@onready var pause_volume_up_button: Button = get_node_or_null("OptionsOverlay/OptionsCard/OptionsVBox/VolumeControls/VolumeUpButton")
-@onready var pause_volume_slider: HSlider = get_node_or_null("OptionsOverlay/OptionsCard/OptionsVBox/VolumeControls/VolumeSlider")
-@onready var pause_volume_value_label: Label = get_node_or_null("OptionsOverlay/OptionsCard/OptionsVBox/VolumeValueLabel")
+@onready var pause_music_down_button: Button = get_node_or_null("OptionsOverlay/OptionsCard/OptionsVBox/MusicControls/MusicDownButton")
+@onready var pause_music_up_button: Button = get_node_or_null("OptionsOverlay/OptionsCard/OptionsVBox/MusicControls/MusicUpButton")
+@onready var pause_music_slider: HSlider = get_node_or_null("OptionsOverlay/OptionsCard/OptionsVBox/MusicControls/MusicSlider")
+@onready var pause_music_value_label: Label = get_node_or_null("OptionsOverlay/OptionsCard/OptionsVBox/MusicValueLabel")
+@onready var pause_sfx_down_button: Button = get_node_or_null("OptionsOverlay/OptionsCard/OptionsVBox/SfxControls/SfxDownButton")
+@onready var pause_sfx_up_button: Button = get_node_or_null("OptionsOverlay/OptionsCard/OptionsVBox/SfxControls/SfxUpButton")
+@onready var pause_sfx_slider: HSlider = get_node_or_null("OptionsOverlay/OptionsCard/OptionsVBox/SfxControls/SfxSlider")
+@onready var pause_sfx_value_label: Label = get_node_or_null("OptionsOverlay/OptionsCard/OptionsVBox/SfxValueLabel")
+@onready var pause_fullscreen_button: Button = get_node_or_null("OptionsOverlay/OptionsCard/OptionsVBox/FullscreenRow/FullscreenButton")
+@onready var pause_vsync_button: Button = get_node_or_null("OptionsOverlay/OptionsCard/OptionsVBox/VSyncRow/VSyncButton")
+@onready var pause_fps_button: Button = get_node_or_null("OptionsOverlay/OptionsCard/OptionsVBox/FpsRow/FpsButton")
 @onready var pause_resume_button: Button = get_node_or_null("OptionsOverlay/OptionsCard/OptionsVBox/ActionsRow/ResumeButton")
 @onready var pause_exit_button: Button = get_node_or_null("OptionsOverlay/OptionsCard/OptionsVBox/ActionsRow/ExitButton")
 
@@ -43,10 +54,13 @@ var hearts_damage_tween: Tween = null
 var stamina_fill_style: StyleBoxFlat = null
 var stamina_low_pulse_time: float = 0.0
 var master_bus_index: int = -1
+var music_bus_index: int = -1
+var sfx_bus_index: int = -1
 var coin_count: int = 0
 var hp_hearts: Array[CanvasItem] = []
 var life_hearts: Array[CanvasItem] = []
 var hud_nodes_ready: bool = false
+var show_fps_counter: bool = false
 
 
 func _ready() -> void:
@@ -71,21 +85,34 @@ func _ready() -> void:
 		var parent_node := get_parent()
 		if parent_node != null:
 			player_ref = parent_node.get_node_or_null("Player")
+	if player_ref == null:
+		player_ref = _resolve_player_reference()
 
 	if player_ref == null:
 		call_deferred("_retry_bind_player")
-	elif player_ref.has_signal("stats_changed"):
-		player_ref.connect("stats_changed", Callable(self, "_on_player_stats_changed"))
+	else:
+		_connect_player_stats_signal(player_ref)
 
 	_refresh_from_player()
 	_apply_stamina_visuals(true, 1.0)
 	_update_coin_label()
+	_set_fps_counter_enabled(show_fps_counter)
 
 
-func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("esc") or event.is_action_pressed("ui_cancel"):
-		_toggle_options_overlay()
-		get_viewport().set_input_as_handled()
+func _input(event: InputEvent) -> void:
+	if not (event.is_action_pressed("esc") or event.is_action_pressed("ui_cancel")):
+		return
+	if event is InputEventKey and event.echo:
+		return
+	if get_tree() == null:
+		return
+
+	# Evita conflito com outros overlays que pausam o jogo (ex.: selecao de personagem).
+	if get_tree().paused and (options_overlay == null or not options_overlay.visible):
+		return
+
+	_toggle_options_overlay()
+	get_viewport().set_input_as_handled()
 
 
 func _process(delta: float) -> void:
@@ -97,6 +124,8 @@ func _process(delta: float) -> void:
 	_apply_stamina_visuals(false, delta)
 
 	_refresh_level_xp()
+	if show_fps_counter:
+		_update_fps_counter_text()
 
 
 func _exit_tree() -> void:
@@ -229,10 +258,34 @@ func _retry_bind_player() -> void:
 	var parent_node := get_parent()
 	if parent_node != null:
 		player_ref = parent_node.get_node_or_null("Player")
+	if player_ref == null:
+		player_ref = _resolve_player_reference()
 
-	if player_ref != null and player_ref.has_signal("stats_changed"):
-		player_ref.connect("stats_changed", Callable(self, "_on_player_stats_changed"))
+	if player_ref != null:
+		_connect_player_stats_signal(player_ref)
 		_refresh_from_player()
+
+
+func _connect_player_stats_signal(target_player: Node) -> void:
+	if target_player == null or not target_player.has_signal("stats_changed"):
+		return
+	var on_stats_changed := Callable(self, "_on_player_stats_changed")
+	if not target_player.is_connected("stats_changed", on_stats_changed):
+		target_player.connect("stats_changed", on_stats_changed)
+
+
+func _resolve_player_reference() -> Node:
+	var parent_node: Node = get_parent()
+	if parent_node != null:
+		var direct_player: Node = parent_node.get_node_or_null("Player")
+		if direct_player != null:
+			return direct_player
+
+	var players: Array[Node] = get_tree().get_nodes_in_group("player")
+	if not players.is_empty():
+		return players[0]
+
+	return null
 
 
 func _animate_hearts_damage(damage_ratio: float) -> void:
@@ -279,22 +332,48 @@ func _apply_hud_font() -> void:
 	xp_label.add_theme_font_override("font", hud_font)
 	if coins_label != null:
 		coins_label.add_theme_font_override("font", hud_font)
-	if pause_volume_value_label != null:
-		pause_volume_value_label.add_theme_font_override("font", hud_font)
+	if fps_counter_label != null:
+		fps_counter_label.add_theme_font_override("font", hud_font)
+	if pause_music_value_label != null:
+		pause_music_value_label.add_theme_font_override("font", hud_font)
+	if pause_sfx_value_label != null:
+		pause_sfx_value_label.add_theme_font_override("font", hud_font)
 	if pause_resume_button != null:
 		pause_resume_button.add_theme_font_override("font", hud_font)
 	if pause_exit_button != null:
 		pause_exit_button.add_theme_font_override("font", hud_font)
-	if pause_volume_down_button != null:
-		pause_volume_down_button.add_theme_font_override("font", hud_font)
-	if pause_volume_up_button != null:
-		pause_volume_up_button.add_theme_font_override("font", hud_font)
+	if pause_music_down_button != null:
+		pause_music_down_button.add_theme_font_override("font", hud_font)
+	if pause_music_up_button != null:
+		pause_music_up_button.add_theme_font_override("font", hud_font)
+	if pause_sfx_down_button != null:
+		pause_sfx_down_button.add_theme_font_override("font", hud_font)
+	if pause_sfx_up_button != null:
+		pause_sfx_up_button.add_theme_font_override("font", hud_font)
+	if pause_fullscreen_button != null:
+		pause_fullscreen_button.add_theme_font_override("font", hud_font)
+	if pause_vsync_button != null:
+		pause_vsync_button.add_theme_font_override("font", hud_font)
+	if pause_fps_button != null:
+		pause_fps_button.add_theme_font_override("font", hud_font)
 	var pause_title: Label = get_node_or_null("OptionsOverlay/OptionsCard/OptionsVBox/OptionsTitleLabel")
 	if pause_title != null:
 		pause_title.add_theme_font_override("font", hud_font)
-	var pause_volume_label: Label = get_node_or_null("OptionsOverlay/OptionsCard/OptionsVBox/VolumeLabel")
-	if pause_volume_label != null:
-		pause_volume_label.add_theme_font_override("font", hud_font)
+	var pause_music_label: Label = get_node_or_null("OptionsOverlay/OptionsCard/OptionsVBox/MusicRow/MusicLabel")
+	if pause_music_label != null:
+		pause_music_label.add_theme_font_override("font", hud_font)
+	var pause_sfx_label: Label = get_node_or_null("OptionsOverlay/OptionsCard/OptionsVBox/SfxRow/SfxLabel")
+	if pause_sfx_label != null:
+		pause_sfx_label.add_theme_font_override("font", hud_font)
+	var pause_fullscreen_label: Label = get_node_or_null("OptionsOverlay/OptionsCard/OptionsVBox/FullscreenRow/FullscreenLabel")
+	if pause_fullscreen_label != null:
+		pause_fullscreen_label.add_theme_font_override("font", hud_font)
+	var pause_vsync_label: Label = get_node_or_null("OptionsOverlay/OptionsCard/OptionsVBox/VSyncRow/VSyncLabel")
+	if pause_vsync_label != null:
+		pause_vsync_label.add_theme_font_override("font", hud_font)
+	var pause_fps_label: Label = get_node_or_null("OptionsOverlay/OptionsCard/OptionsVBox/FpsRow/FpsLabel")
+	if pause_fps_label != null:
+		pause_fps_label.add_theme_font_override("font", hud_font)
 	var controls_hint_root: Node = get_node_or_null("ControlsHintCard")
 	if controls_hint_root != null:
 		for label_node in controls_hint_root.find_children("*", "Label", true, false):
@@ -331,31 +410,58 @@ func _setup_controls_hint_card() -> void:
 
 
 func _setup_pause_options_menu() -> void:
-	if options_overlay == null or pause_volume_slider == null:
+	if options_overlay == null or pause_music_slider == null or pause_sfx_slider == null:
 		return
 
 	options_overlay.visible = false
 
+	if pause_music_down_button != null:
+		pause_music_down_button.pressed.connect(_on_pause_music_down_pressed)
+	if pause_music_up_button != null:
+		pause_music_up_button.pressed.connect(_on_pause_music_up_pressed)
+	if pause_sfx_down_button != null:
+		pause_sfx_down_button.pressed.connect(_on_pause_sfx_down_pressed)
+	if pause_sfx_up_button != null:
+		pause_sfx_up_button.pressed.connect(_on_pause_sfx_up_pressed)
+	if pause_fullscreen_button != null:
+		pause_fullscreen_button.pressed.connect(_on_pause_fullscreen_pressed)
+	if pause_vsync_button != null:
+		pause_vsync_button.pressed.connect(_on_pause_vsync_pressed)
+	if pause_fps_button != null:
+		pause_fps_button.pressed.connect(_on_pause_fps_pressed)
 	if pause_resume_button != null:
 		pause_resume_button.pressed.connect(_on_pause_resume_pressed)
 	if pause_exit_button != null:
 		pause_exit_button.pressed.connect(_on_pause_exit_pressed)
-	if pause_volume_down_button != null:
-		pause_volume_down_button.pressed.connect(_on_pause_volume_down_pressed)
-	if pause_volume_up_button != null:
-		pause_volume_up_button.pressed.connect(_on_pause_volume_up_pressed)
-	pause_volume_slider.value_changed.connect(_on_pause_volume_slider_changed)
+	pause_music_slider.value_changed.connect(_on_pause_music_slider_changed)
+	pause_sfx_slider.value_changed.connect(_on_pause_sfx_slider_changed)
 
-	master_bus_index = AudioServer.get_bus_index("Master")
+	master_bus_index = AudioServer.get_bus_index(BUS_MASTER)
 	if master_bus_index < 0:
 		master_bus_index = 0
 
-	pause_volume_slider.min_value = MIN_VOLUME_DB
-	pause_volume_slider.max_value = MAX_VOLUME_DB
-	pause_volume_slider.step = 0.5
+	music_bus_index = AudioServer.get_bus_index(BUS_MUSIC)
+	if music_bus_index < 0:
+		music_bus_index = master_bus_index
 
-	var current_db: float = AudioServer.get_bus_volume_db(master_bus_index)
-	_apply_pause_volume_db(current_db, false)
+	sfx_bus_index = AudioServer.get_bus_index(BUS_SFX)
+	if sfx_bus_index < 0:
+		sfx_bus_index = master_bus_index
+
+	pause_music_slider.min_value = MIN_VOLUME_DB
+	pause_music_slider.max_value = MAX_VOLUME_DB
+	pause_music_slider.step = 0.5
+	pause_sfx_slider.min_value = MIN_VOLUME_DB
+	pause_sfx_slider.max_value = MAX_VOLUME_DB
+	pause_sfx_slider.step = 0.5
+
+	var music_db: float = AudioServer.get_bus_volume_db(music_bus_index)
+	var sfx_db: float = AudioServer.get_bus_volume_db(sfx_bus_index)
+	_apply_pause_music_volume_db(music_db, false)
+	_apply_pause_sfx_volume_db(sfx_db, false)
+	_update_pause_fullscreen_button_text()
+	_update_pause_vsync_button_text()
+	_update_pause_fps_button_text()
 
 
 func _toggle_options_overlay() -> void:
@@ -372,6 +478,8 @@ func _open_options_overlay() -> void:
 	if options_overlay == null:
 		return
 
+	_update_pause_fullscreen_button_text()
+	_update_pause_vsync_button_text()
 	options_overlay.visible = true
 	get_tree().paused = true
 	if pause_resume_button != null:
@@ -396,42 +504,136 @@ func _on_pause_exit_pressed() -> void:
 	get_tree().quit()
 
 
-func _on_pause_volume_down_pressed() -> void:
+func _on_pause_music_down_pressed() -> void:
 	_play_menu_click_sfx()
-	if pause_volume_slider == null:
+	if pause_music_slider == null:
 		return
-	_apply_pause_volume_db(pause_volume_slider.value - VOLUME_STEP_DB)
+	_apply_pause_music_volume_db(pause_music_slider.value - VOLUME_STEP_DB)
 
 
-func _on_pause_volume_up_pressed() -> void:
+func _on_pause_music_up_pressed() -> void:
 	_play_menu_click_sfx()
-	if pause_volume_slider == null:
+	if pause_music_slider == null:
 		return
-	_apply_pause_volume_db(pause_volume_slider.value + VOLUME_STEP_DB)
+	_apply_pause_music_volume_db(pause_music_slider.value + VOLUME_STEP_DB)
 
 
-func _on_pause_volume_slider_changed(value: float) -> void:
-	_apply_pause_volume_db(value)
+func _on_pause_music_slider_changed(value: float) -> void:
+	_apply_pause_music_volume_db(value)
 
 
-func _apply_pause_volume_db(volume_db: float, write_bus: bool = true) -> void:
-	if pause_volume_slider == null:
+func _on_pause_sfx_down_pressed() -> void:
+	_play_menu_click_sfx()
+	if pause_sfx_slider == null:
+		return
+	_apply_pause_sfx_volume_db(pause_sfx_slider.value - VOLUME_STEP_DB)
+
+
+func _on_pause_sfx_up_pressed() -> void:
+	_play_menu_click_sfx()
+	if pause_sfx_slider == null:
+		return
+	_apply_pause_sfx_volume_db(pause_sfx_slider.value + VOLUME_STEP_DB)
+
+
+func _on_pause_sfx_slider_changed(value: float) -> void:
+	_apply_pause_sfx_volume_db(value)
+
+
+func _apply_pause_music_volume_db(volume_db: float, write_bus: bool = true) -> void:
+	if pause_music_slider == null:
 		return
 
 	var clamped_db: float = clampf(volume_db, MIN_VOLUME_DB, MAX_VOLUME_DB)
-	if write_bus and master_bus_index >= 0:
-		AudioServer.set_bus_volume_db(master_bus_index, clamped_db)
+	if write_bus and music_bus_index >= 0:
+		AudioServer.set_bus_volume_db(music_bus_index, clamped_db)
 
-	pause_volume_slider.set_value_no_signal(clamped_db)
-	_update_pause_volume_label(clamped_db)
+	pause_music_slider.set_value_no_signal(clamped_db)
+	_update_pause_volume_label(pause_music_value_label, "Musica", clamped_db)
 
 
-func _update_pause_volume_label(volume_db: float) -> void:
-	if pause_volume_value_label == null:
+func _apply_pause_sfx_volume_db(volume_db: float, write_bus: bool = true) -> void:
+	if pause_sfx_slider == null:
 		return
 
+	var clamped_db: float = clampf(volume_db, MIN_VOLUME_DB, MAX_VOLUME_DB)
+	if write_bus and sfx_bus_index >= 0:
+		AudioServer.set_bus_volume_db(sfx_bus_index, clamped_db)
+
+	pause_sfx_slider.set_value_no_signal(clamped_db)
+	_update_pause_volume_label(pause_sfx_value_label, "Efeitos", clamped_db)
+
+
+func _update_pause_volume_label(target_label: Label, prefix: String, volume_db: float) -> void:
+	if target_label == null:
+		return
 	var percent: int = int(round(clampf(db_to_linear(volume_db), 0.0, 1.0) * 100.0))
-	pause_volume_value_label.text = "Volume: %d%%" % percent
+	target_label.text = "%s: %d%%" % [prefix, percent]
+
+
+func _on_pause_fullscreen_pressed() -> void:
+	_play_menu_click_sfx()
+	if _is_fullscreen_enabled():
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
+	else:
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
+	_update_pause_fullscreen_button_text()
+
+
+func _on_pause_vsync_pressed() -> void:
+	_play_menu_click_sfx()
+	if _is_vsync_enabled():
+		DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
+	else:
+		DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED)
+	_update_pause_vsync_button_text()
+
+
+func _is_fullscreen_enabled() -> bool:
+	var mode: int = DisplayServer.window_get_mode()
+	return mode == DisplayServer.WINDOW_MODE_FULLSCREEN or mode == DisplayServer.WINDOW_MODE_EXCLUSIVE_FULLSCREEN
+
+
+func _is_vsync_enabled() -> bool:
+	return DisplayServer.window_get_vsync_mode() != DisplayServer.VSYNC_DISABLED
+
+
+func _update_pause_fullscreen_button_text() -> void:
+	if pause_fullscreen_button == null:
+		return
+	pause_fullscreen_button.text = "Ligado" if _is_fullscreen_enabled() else "Desligado"
+
+
+func _update_pause_vsync_button_text() -> void:
+	if pause_vsync_button == null:
+		return
+	pause_vsync_button.text = "Ligado" if _is_vsync_enabled() else "Desligado"
+
+
+func _on_pause_fps_pressed() -> void:
+	_play_menu_click_sfx()
+	_set_fps_counter_enabled(not show_fps_counter)
+
+
+func _set_fps_counter_enabled(enabled: bool) -> void:
+	show_fps_counter = enabled
+	if fps_counter_label != null:
+		fps_counter_label.visible = enabled
+		if enabled:
+			_update_fps_counter_text()
+	_update_pause_fps_button_text()
+
+
+func _update_pause_fps_button_text() -> void:
+	if pause_fps_button == null:
+		return
+	pause_fps_button.text = "Ligado" if show_fps_counter else "Desligado"
+
+
+func _update_fps_counter_text() -> void:
+	if fps_counter_label == null:
+		return
+	fps_counter_label.text = "FPS: %d" % Engine.get_frames_per_second()
 
 
 func set_coin_count(value: int) -> void:
@@ -452,7 +654,7 @@ func _play_menu_click_sfx() -> void:
 	if root_node == null:
 		return
 	var click_player: AudioStreamPlayer = AudioStreamPlayer.new()
-	click_player.bus = "SFX"
+	click_player.bus = BUS_SFX
 	click_player.volume_db = MENU_CLICK_SFX_VOLUME_DB
 	click_player.process_mode = Node.PROCESS_MODE_ALWAYS
 	click_player.stream = MENU_CLICK_SFX_STREAM
