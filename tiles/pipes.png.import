@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dhkaqukmowedg"
-path="res://.godot/imported/vent-pipes.png-d5e78cbbd8701fad17241f5a1efebc02.ctex"
+uid="uid://b1tgn8duq0qp1"
+path="res://.godot/imported/pipes.png-2fa5bd154c2d4512834c48f44c6af542.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://new_sprites/vent-pipes.png"
-dest_files=["res://.godot/imported/vent-pipes.png-d5e78cbbd8701fad17241f5a1efebc02.ctex"]
+source_file="res://tiles/pipes.png"
+dest_files=["res://.godot/imported/pipes.png-2fa5bd154c2d4512834c48f44c6af542.ctex"]
 
 [params]
 

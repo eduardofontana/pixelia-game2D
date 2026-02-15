@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://voer846bwjhl"]
 
 [ext_resource type="Script" uid="uid://cwcs67qxir8pp" path="res://scripts/hud.gd" id="1_hud"]
-[ext_resource type="Texture2D" uid="uid://b7gj103kwgwoj" path="res://new_sprites/AllTheHearts(16x16).png" id="2_oo0fn"]
+[ext_resource type="Texture2D" uid="uid://b7gj103kwgwoj" path="res://tiles/AllTheHearts(16x16).png" id="2_oo0fn"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_hp_heart"]
 atlas = ExtResource("2_oo0fn")

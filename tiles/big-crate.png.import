@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cimimcxq3n14e"
-path="res://.godot/imported/plant-big.png-e7dd6fad770ab8ba0e3489763b8f28c4.ctex"
+uid="uid://b2f86f0fqws4u"
+path="res://.godot/imported/big-crate.png-7e9babbeb6e8e07dd3ef7d50fb2abaa9.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://new_sprites/plants/plant-big.png"
-dest_files=["res://.godot/imported/plant-big.png-e7dd6fad770ab8ba0e3489763b8f28c4.ctex"]
+source_file="res://tiles/big-crate.png"
+dest_files=["res://.godot/imported/big-crate.png-7e9babbeb6e8e07dd3ef7d50fb2abaa9.ctex"]
 
 [params]
 

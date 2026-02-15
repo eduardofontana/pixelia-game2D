@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cvy7v16gbs0b2"
-path="res://.godot/imported/floating-platform.png-c398eef81e22b4dc77d8db91120b8d8b.ctex"
+uid="uid://emlscxeqqg8m"
+path="res://.godot/imported/console.png-4a34e622ce24bb99fef03258a71ee46b.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://new_sprites/floating-platform.png"
-dest_files=["res://.godot/imported/floating-platform.png-c398eef81e22b4dc77d8db91120b8d8b.ctex"]
+source_file="res://tiles/console.png"
+dest_files=["res://.godot/imported/console.png-4a34e622ce24bb99fef03258a71ee46b.ctex"]
 
 [params]
 

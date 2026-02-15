@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://emlscxeqqg8m"
-path="res://.godot/imported/console.png-5ee2ed91b4f58ba7ed6d1fd9d434a6c3.ctex"
+uid="uid://b7gj103kwgwoj"
+path="res://.godot/imported/AllTheHearts(16x16).png-8a773a9c7a3ee682ec29ade4cb08f489.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://new_sprites/console.png"
-dest_files=["res://.godot/imported/console.png-5ee2ed91b4f58ba7ed6d1fd9d434a6c3.ctex"]
+source_file="res://tiles/AllTheHearts(16x16).png"
+dest_files=["res://.godot/imported/AllTheHearts(16x16).png-8a773a9c7a3ee682ec29ade4cb08f489.ctex"]
 
 [params]
 

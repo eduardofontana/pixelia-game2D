@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://b1tgn8duq0qp1"
-path="res://.godot/imported/pipes.png-4ced82e00ee6c0bf0beb4e313a65c28e.ctex"
+uid="uid://cvy7v16gbs0b2"
+path="res://.godot/imported/floating-platform.png-4cfa5434e2eb5aa57ae5d807073ca265.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://new_sprites/pipes.png"
-dest_files=["res://.godot/imported/pipes.png-4ced82e00ee6c0bf0beb4e313a65c28e.ctex"]
+source_file="res://tiles/floating-platform.png"
+dest_files=["res://.godot/imported/floating-platform.png-4cfa5434e2eb5aa57ae5d807073ca265.ctex"]
 
 [params]
 
