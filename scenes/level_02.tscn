@@ -1,0 +1,15 @@
+[gd_scene format=3 uid="uid://tksqkl8ubv6c"]
+
+[ext_resource type="PackedScene" uid="uid://de5q0rieujm5k" path="res://scenes/construction.tscn" id="1_830kt"]
+[ext_resource type="PackedScene" uid="uid://cclktgyx4fddx" path="res://scenes/player.tscn" id="2_player"]
+[ext_resource type="PackedScene" uid="uid://voer846bwjhl" path="res://scenes/hud.tscn" id="3_hud"]
+
+[node name="Level02" type="Node2D" unique_id=2115518694]
+
+[node name="Construction" parent="." unique_id=792502334 instance=ExtResource("1_830kt")]
+
+[node name="Player" parent="." unique_id=1980650489 instance=ExtResource("2_player")]
+position = Vector2(19, 597)
+
+[node name="HUD" parent="." unique_id=1172209584 instance=ExtResource("3_hud")]
+player_path = NodePath("../Player")

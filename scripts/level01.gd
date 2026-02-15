@@ -1,7 +1,5 @@
 extends Node2D
 
-const HUD_FONT_PATH: String = "res://fonts/Pixelia2D.ttf"
-
 const FALLBACK_SPAWN_MIN_X: float = 144.0
 const FALLBACK_SPAWN_MAX_X: float = 1320.0
 const FALLBACK_GROUND_Y: float = 624.0
@@ -54,6 +52,9 @@ const BUS_MASTER: StringName = &"Master"
 const BUS_MUSIC: StringName = &"Music"
 const BUS_SFX: StringName = &"SFX"
 const CHARACTER_PLAYER_ID: StringName = &"player"
+const LEVEL02_SCENE_PATH: String = "res://scenes/level_02.tscn"
+const LEVEL_TRANSITION_FADE_SECONDS: float = 0.55
+const LEVEL_TRANSITION_LAYER: int = 260
 
 @onready var bgm_player: AudioStreamPlayer = get_node_or_null("BGM") as AudioStreamPlayer
 @onready var hud_layer: CanvasLayer = get_node_or_null("HUD") as CanvasLayer
@@ -69,13 +70,10 @@ var map_gold_unlocked: bool = false
 var map_gold_collected: bool = false
 var boss_spawned: bool = false
 var boss_defeated: bool = false
-var victory_overlay: CanvasLayer = null
-var victory_dim_rect: ColorRect = null
-var victory_card: PanelContainer = null
-var victory_restart_button: Button = null
-var victory_intro_tween: Tween = null
-var victory_card_base_top: float = -88.0
-var victory_card_base_bottom: float = 88.0
+var level_transition_overlay: CanvasLayer = null
+var level_transition_dim_rect: ColorRect = null
+var level_transition_tween: Tween = null
+var level_transition_in_progress: bool = false
 var boss_hud_overlay: CanvasLayer = null
 var boss_hud_root: Control = null
 var boss_hud_fill: ColorRect = null
@@ -103,7 +101,7 @@ func _ready() -> void:
 	_ensure_audio_buses()
 	_ensure_hud_layer()
 	_validate_level01_root_nodes()
-	_setup_victory_overlay()
+	_setup_level_transition_overlay()
 	_setup_boss_hud()
 	_bind_level_portal()
 	_bind_map_gold_item()
@@ -220,187 +218,93 @@ func _on_level_portal_body_entered(body: Node2D) -> void:
 		return
 
 	portal_finished = true
-	_show_victory_overlay()
+	_start_level_transition_to_level02()
 
 
-func _setup_victory_overlay() -> void:
-	if victory_overlay != null:
+func _setup_level_transition_overlay() -> void:
+	if level_transition_overlay != null:
 		return
 
-	victory_overlay = CanvasLayer.new()
-	victory_overlay.name = "VictoryOverlay"
-	victory_overlay.layer = 180
-	victory_overlay.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
-	victory_overlay.visible = false
-	add_child(victory_overlay)
+	level_transition_overlay = CanvasLayer.new()
+	level_transition_overlay.name = "LevelTransitionOverlay"
+	level_transition_overlay.layer = LEVEL_TRANSITION_LAYER
+	level_transition_overlay.process_mode = Node.PROCESS_MODE_ALWAYS
+	level_transition_overlay.visible = false
+	add_child(level_transition_overlay)
 
-	victory_dim_rect = ColorRect.new()
-	victory_dim_rect.name = "Dim"
-	victory_dim_rect.anchor_left = 0.0
-	victory_dim_rect.anchor_top = 0.0
-	victory_dim_rect.anchor_right = 1.0
-	victory_dim_rect.anchor_bottom = 1.0
-	victory_dim_rect.offset_left = 0.0
-	victory_dim_rect.offset_top = 0.0
-	victory_dim_rect.offset_right = 0.0
-	victory_dim_rect.offset_bottom = 0.0
-	victory_dim_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	victory_dim_rect.color = Color(0.0, 0.0, 0.0, 0.0)
-	victory_overlay.add_child(victory_dim_rect)
-
-	victory_card = PanelContainer.new()
-	victory_card.name = "Card"
-	victory_card.anchor_left = 0.5
-	victory_card.anchor_top = 0.5
-	victory_card.anchor_right = 0.5
-	victory_card.anchor_bottom = 0.5
-	victory_card.offset_left = -228.0
-	victory_card.offset_top = victory_card_base_top
-	victory_card.offset_right = 228.0
-	victory_card.offset_bottom = victory_card_base_bottom
-	victory_card.modulate = Color(1.0, 1.0, 1.0, 0.0)
-	victory_overlay.add_child(victory_card)
-
-	var card_style: StyleBoxFlat = StyleBoxFlat.new()
-	card_style.bg_color = Color(0.06, 0.04, 0.08, 0.9)
-	card_style.border_width_left = 2
-	card_style.border_width_top = 2
-	card_style.border_width_right = 2
-	card_style.border_width_bottom = 2
-	card_style.border_color = Color(0.74, 0.56, 0.36, 0.74)
-	card_style.corner_radius_top_left = 14
-	card_style.corner_radius_top_right = 14
-	card_style.corner_radius_bottom_right = 14
-	card_style.corner_radius_bottom_left = 14
-	card_style.shadow_color = Color(0.0, 0.0, 0.0, 0.56)
-	card_style.shadow_size = 8
-	card_style.shadow_offset = Vector2(0.0, 4.0)
-	card_style.content_margin_left = 20.0
-	card_style.content_margin_top = 18.0
-	card_style.content_margin_right = 20.0
-	card_style.content_margin_bottom = 18.0
-	victory_card.add_theme_stylebox_override("panel", card_style)
-
-	var center_box := VBoxContainer.new()
-	center_box.name = "CenterBox"
-	center_box.custom_minimum_size = Vector2(406.0, 126.0)
-	center_box.alignment = BoxContainer.ALIGNMENT_CENTER
-	center_box.add_theme_constant_override("separation", 14)
-	victory_card.add_child(center_box)
-
-	var title_label: Label = Label.new()
-	title_label.name = "TitleLabel"
-	title_label.custom_minimum_size = Vector2(406.0, 56.0)
-	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	title_label.text = "Vencedor!"
-	title_label.add_theme_font_size_override("font_size", 62)
-	title_label.add_theme_constant_override("outline_size", 7)
-	title_label.add_theme_color_override("font_color", Color(0.95, 0.9, 0.84, 1.0))
-	title_label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.92))
-	title_label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.85))
-	title_label.add_theme_constant_override("shadow_offset_x", 3)
-	title_label.add_theme_constant_override("shadow_offset_y", 3)
-	center_box.add_child(title_label)
-
-	victory_restart_button = Button.new()
-	victory_restart_button.name = "RestartButton"
-	victory_restart_button.custom_minimum_size = Vector2(270.0, 48.0)
-	victory_restart_button.focus_mode = Control.FOCUS_ALL
-	victory_restart_button.text = "Jogar Novamente"
-	victory_restart_button.add_theme_font_size_override("font_size", 28)
-	victory_restart_button.add_theme_constant_override("outline_size", 3)
-	victory_restart_button.add_theme_color_override("font_color", Color(0.98, 0.94, 0.86, 1.0))
-	victory_restart_button.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.92))
-	_apply_victory_button_style(victory_restart_button)
-	victory_restart_button.pressed.connect(_on_victory_restart_pressed)
-	center_box.add_child(victory_restart_button)
-
-	if ResourceLoader.exists(HUD_FONT_PATH):
-		var loaded_font: Resource = load(HUD_FONT_PATH)
-		if loaded_font is Font:
-			title_label.add_theme_font_override("font", loaded_font as Font)
-			victory_restart_button.add_theme_font_override("font", loaded_font as Font)
+	level_transition_dim_rect = ColorRect.new()
+	level_transition_dim_rect.name = "Fade"
+	level_transition_dim_rect.anchor_left = 0.0
+	level_transition_dim_rect.anchor_top = 0.0
+	level_transition_dim_rect.anchor_right = 1.0
+	level_transition_dim_rect.anchor_bottom = 1.0
+	level_transition_dim_rect.offset_left = 0.0
+	level_transition_dim_rect.offset_top = 0.0
+	level_transition_dim_rect.offset_right = 0.0
+	level_transition_dim_rect.offset_bottom = 0.0
+	level_transition_dim_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	level_transition_dim_rect.color = Color(0.0, 0.0, 0.0, 0.0)
+	level_transition_overlay.add_child(level_transition_dim_rect)
 
 
-func _apply_victory_button_style(button: Button) -> void:
-	if button == null:
+func _start_level_transition_to_level02() -> void:
+	if level_transition_in_progress:
+		return
+	level_transition_in_progress = true
+
+	_setup_level_transition_overlay()
+	if level_transition_overlay == null or level_transition_dim_rect == null:
+		_change_to_level02_scene()
 		return
 
-	var normal_style := StyleBoxFlat.new()
-	normal_style.bg_color = Color(0.17, 0.06, 0.09, 0.9)
-	normal_style.border_width_left = 2
-	normal_style.border_width_top = 2
-	normal_style.border_width_right = 2
-	normal_style.border_width_bottom = 2
-	normal_style.border_color = Color(0.82, 0.27, 0.24, 0.86)
-	normal_style.corner_radius_top_left = 10
-	normal_style.corner_radius_top_right = 10
-	normal_style.corner_radius_bottom_right = 10
-	normal_style.corner_radius_bottom_left = 10
-	button.add_theme_stylebox_override("normal", normal_style)
+	if player_ref != null:
+		player_ref.velocity = Vector2.ZERO
+		player_ref.set_process_input(false)
+		player_ref.set_process_unhandled_input(false)
+		player_ref.set_physics_process(false)
 
-	var hover_style := normal_style.duplicate() as StyleBoxFlat
-	hover_style.bg_color = Color(0.24, 0.08, 0.12, 0.95)
-	hover_style.border_color = Color(0.94, 0.34, 0.28, 0.95)
-	button.add_theme_stylebox_override("hover", hover_style)
-
-	var pressed_style := normal_style.duplicate() as StyleBoxFlat
-	pressed_style.bg_color = Color(0.11, 0.03, 0.05, 0.96)
-	pressed_style.border_color = Color(0.98, 0.41, 0.32, 0.95)
-	button.add_theme_stylebox_override("pressed", pressed_style)
-
-
-func _play_victory_intro_animation() -> void:
-	if victory_overlay == null or victory_dim_rect == null or victory_card == null:
-		return
-
-	if victory_intro_tween != null:
-		victory_intro_tween.kill()
-		victory_intro_tween = null
-
-	victory_dim_rect.color = Color(0.0, 0.0, 0.0, 0.0)
-	victory_card.modulate = Color(1.0, 1.0, 1.0, 0.0)
-	victory_card.offset_top = victory_card_base_top + 24.0
-	victory_card.offset_bottom = victory_card_base_bottom + 24.0
-
-	victory_intro_tween = create_tween()
-	victory_intro_tween.set_trans(Tween.TRANS_QUAD)
-	victory_intro_tween.set_ease(Tween.EASE_OUT)
-	victory_intro_tween.tween_property(victory_dim_rect, "color:a", 0.0, 0.22)
-	victory_intro_tween.parallel().tween_property(victory_card, "modulate:a", 1.0, 0.24)
-	victory_intro_tween.parallel().tween_property(victory_card, "offset_top", victory_card_base_top, 0.24)
-	victory_intro_tween.parallel().tween_property(victory_card, "offset_bottom", victory_card_base_bottom, 0.24)
-	victory_intro_tween.tween_callback(Callable(self, "_finish_victory_intro"))
-
-
-func _finish_victory_intro() -> void:
-	get_tree().paused = true
-	if victory_restart_button != null:
-		victory_restart_button.grab_focus()
-
-
-func _show_victory_overlay() -> void:
-	if victory_overlay == null:
-		return
 	if is_instance_valid(bgm_player):
 		bgm_player.stop()
-	if not is_equal_approx(Engine.time_scale, 1.0):
-		Engine.time_scale = 1.0
 
-	victory_overlay.visible = true
-	_play_victory_intro_animation()
+	if level_transition_tween != null:
+		level_transition_tween.kill()
+		level_transition_tween = null
+
+	level_transition_overlay.visible = true
+	level_transition_dim_rect.color = Color(0.0, 0.0, 0.0, 0.0)
+	level_transition_tween = create_tween()
+	level_transition_tween.set_trans(Tween.TRANS_SINE)
+	level_transition_tween.set_ease(Tween.EASE_IN_OUT)
+	level_transition_tween.tween_property(level_transition_dim_rect, "color:a", 1.0, LEVEL_TRANSITION_FADE_SECONDS)
+	level_transition_tween.tween_callback(Callable(self, "_change_to_level02_scene"))
 
 
-func _on_victory_restart_pressed() -> void:
-	if victory_intro_tween != null:
-		victory_intro_tween.kill()
-		victory_intro_tween = null
+func _change_to_level02_scene() -> void:
 	if not is_equal_approx(Engine.time_scale, 1.0):
 		Engine.time_scale = 1.0
 	get_tree().paused = false
+
+	var change_error: int = get_tree().change_scene_to_file(LEVEL02_SCENE_PATH)
+	if change_error == OK:
+		return
+
+	push_warning("Level01: falha ao carregar '%s' (erro %d)." % [LEVEL02_SCENE_PATH, change_error])
+	level_transition_in_progress = false
 	portal_finished = false
-	get_tree().reload_current_scene()
+
+	if player_ref != null:
+		player_ref.set_process_input(true)
+		player_ref.set_process_unhandled_input(true)
+		player_ref.set_physics_process(true)
+
+	if level_transition_tween != null:
+		level_transition_tween.kill()
+		level_transition_tween = null
+
+	if level_transition_dim_rect != null:
+		level_transition_dim_rect.color = Color(0.0, 0.0, 0.0, 0.0)
+	if level_transition_overlay != null:
+		level_transition_overlay.visible = false
 
 
 func _resolve_player_spawn_position() -> Vector2:

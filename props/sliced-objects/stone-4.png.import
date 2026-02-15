@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dm6lknmfb8jc0"
-path="res://.godot/imported/Layer_0003_6.png-4097c6c2a94723959d16b3b143bf58d0.ctex"
+uid="uid://cnlwdlaqsesdx"
+path="res://.godot/imported/stone-4.png-9fad1aa0d3144e94017ce3c0e20d2b65.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://background/Layer_0003_6.png"
-dest_files=["res://.godot/imported/Layer_0003_6.png-4097c6c2a94723959d16b3b143bf58d0.ctex"]
+source_file="res://props/sliced-objects/stone-4.png"
+dest_files=["res://.godot/imported/stone-4.png-9fad1aa0d3144e94017ce3c0e20d2b65.ctex"]
 
 [params]
 
