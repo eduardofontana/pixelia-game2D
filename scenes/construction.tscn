@@ -16,7 +16,6 @@
 [ext_resource type="Texture2D" uid="uid://0w8qdiw8ie8o" path="res://props/sliced-objects/tree-1.png" id="14_85whd"]
 [ext_resource type="Texture2D" uid="uid://b2f86f0fqws4u" path="res://tiles/big-crate.png" id="15_qe1mn"]
 [ext_resource type="Texture2D" uid="uid://baytdbhiol126" path="res://tiles/crate.png" id="16_fvmap"]
-[ext_resource type="Texture2D" uid="uid://cyghhmx3xp7sn" path="res://tiles/tileset.png" id="18_gnyn2"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_50pk6"]
 texture = ExtResource("1_twt7w")
@@ -719,7 +718,7 @@ animations = [{
 }]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_fvmap"]
-size = Vector2(46, 15)
+size = Vector2(46, 14)
 
 [sub_resource type="Animation" id="Animation_gnyn2"]
 length = 0.001
@@ -848,14 +847,14 @@ texture = ExtResource("15_qe1mn")
 position = Vector2(-144, 1)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Plataform" unique_id=1743326029]
-position = Vector2(329, 579.5)
+position = Vector2(329, 580)
 shape = SubResource("RectangleShape2D_fvmap")
 
 [node name="Sprite2D" type="Sprite2D" parent="Plataform" unique_id=1204968003]
 position = Vector2(329, 580)
-texture = ExtResource("18_gnyn2")
+texture = ExtResource("1_twt7w")
 region_enabled = true
-region_rect = Rect2(64.07388, 112.09055, 47.81093, 16.391304)
+region_rect = Rect2(197.46857, 143.63693, 49.673737, 12.982895)
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="Plataform" unique_id=903983977]
 libraries/ = SubResource("AnimationLibrary_ljkoc")

@@ -155,6 +155,7 @@ const DEATH_VFX = preload("res://scripts/death_vfx.gd")
 @export var xp_to_next_level: int = 100
 @export var void_fall_kill_y: float = DEFAULT_VOID_FALL_KILL_Y
 @export var void_fov_margin_y: float = DEFAULT_VOID_FOV_MARGIN_Y
+@export var enable_spawn_dialog: bool = true
 
 var is_attacking: bool = false
 var facing_direction: int = 1
@@ -249,14 +250,16 @@ func _ready() -> void:
 	_apply_sprite_offset(&"idle")
 	_play_animation(&"idle")
 	_update_light_visuals(1.0, 0.0)
-	_setup_spawn_dialog()
-	_show_spawn_dialog_once()
+	if enable_spawn_dialog:
+		_setup_spawn_dialog()
+		_show_spawn_dialog_once()
 	_emit_stats_changed()
 
 
 func _physics_process(delta: float) -> void:
 	_update_player_health_bar_timer(delta)
-	_process_spawn_dialog(delta)
+	if enable_spawn_dialog:
+		_process_spawn_dialog(delta)
 	defend_block_cooldown_timer = maxf(0.0, defend_block_cooldown_timer - delta)
 
 	if is_dead:
@@ -417,6 +420,9 @@ func _show_spawn_dialog_once() -> void:
 
 
 func queue_dialog_line(text: String, duration: float = SPAWN_DIALOG_DURATION) -> void:
+	if not enable_spawn_dialog:
+		return
+
 	if spawn_dialog_panel == null:
 		_setup_spawn_dialog()
 	if spawn_dialog_panel == null:
@@ -434,6 +440,9 @@ func queue_dialog_line(text: String, duration: float = SPAWN_DIALOG_DURATION) ->
 
 
 func queue_dialog_lines(lines: Array[String], duration_per_line: float = SPAWN_DIALOG_DURATION) -> void:
+	if not enable_spawn_dialog:
+		return
+
 	if lines.is_empty():
 		return
 	for line_text in lines:
@@ -613,6 +622,9 @@ func _measure_spawn_dialog_text_width(text: String) -> float:
 
 
 func has_active_dialog() -> bool:
+	if not enable_spawn_dialog:
+		return false
+
 	if spawn_dialog_panel != null and spawn_dialog_panel.visible:
 		return true
 	return not spawn_dialog_queue.is_empty()
