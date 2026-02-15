@@ -1029,7 +1029,7 @@ func _apply_attack_damage() -> void:
 	for body in attack_hitbox_area.get_overlapping_bodies():
 		if body == self or not (body is Node):
 			continue
-		if not body.is_in_group("enemies"):
+		if not _is_enemy_damage_target(body):
 			continue
 		var body_id := body.get_instance_id()
 		if hit_enemy_ids.has(body_id):
@@ -1038,6 +1038,17 @@ func _apply_attack_damage() -> void:
 			body.take_damage(ATTACK_DAMAGE, global_position)
 			_play_attack_impact_vfx(body)
 			hit_enemy_ids[body_id] = true
+
+
+func _is_enemy_damage_target(body: Node) -> bool:
+	if body == null:
+		return false
+	if body.is_in_group("enemies"):
+		return true
+	var collision_body: CollisionObject2D = body as CollisionObject2D
+	if collision_body == null:
+		return false
+	return (collision_body.collision_layer & ENEMY_LAYER_MASK) != 0
 
 
 func _set_attack_hitbox_enabled(enabled: bool) -> void:

@@ -1,0 +1,150 @@
+[gd_scene format=3 uid="uid://c7qkil5pl0n8o"]
+
+[ext_resource type="Texture2D" uid="uid://b8x1b831hv54m" path="res://sprites/SpritesOgro/Idle/ogre-idle1.png" id="1_0nkuu"]
+[ext_resource type="Texture2D" uid="uid://by2ubkicn6ant" path="res://sprites/SpritesOgro/Attack/ogre-attack1.png" id="1_3g6hw"]
+[ext_resource type="Texture2D" uid="uid://drxj5t7tqgvfb" path="res://sprites/SpritesOgro/Attack/ogre-attack2.png" id="2_i32pr"]
+[ext_resource type="Texture2D" uid="uid://ck6pgwf1o8mw5" path="res://sprites/SpritesOgro/Idle/ogre-idle2.png" id="2_u08t7"]
+[ext_resource type="Texture2D" uid="uid://cibskqwaenytn" path="res://sprites/SpritesOgro/Idle/ogre-idle3.png" id="3_hk85p"]
+[ext_resource type="Texture2D" uid="uid://civa55tcnr0mu" path="res://sprites/SpritesOgro/Attack/ogre-attack3.png" id="3_oihex"]
+[ext_resource type="Texture2D" uid="uid://bkipi4bk27bo0" path="res://sprites/SpritesOgro/Attack/ogre-attack4.png" id="4_atpfq"]
+[ext_resource type="Texture2D" uid="uid://km5s7grdalce" path="res://sprites/SpritesOgro/Idle/ogre-idle4.png" id="4_jtiyl"]
+[ext_resource type="Texture2D" uid="uid://jkdroys1jwwq" path="res://sprites/SpritesOgro/walk/ogre-walk1.png" id="5_6sish"]
+[ext_resource type="Texture2D" uid="uid://b65iymowef12g" path="res://sprites/SpritesOgro/Attack/ogre-attack5.png" id="5_py4uj"]
+[ext_resource type="Texture2D" uid="uid://dauci2hm8scmm" path="res://sprites/SpritesOgro/Attack/ogre-attack6.png" id="6_aw65e"]
+[ext_resource type="Texture2D" uid="uid://jrhckm3olrdn" path="res://sprites/SpritesOgro/walk/ogre-walk2.png" id="6_xo6v2"]
+[ext_resource type="Texture2D" uid="uid://c8cj8vxg1x34v" path="res://sprites/SpritesOgro/Attack/ogre-attack7.png" id="7_0lp6r"]
+[ext_resource type="Texture2D" uid="uid://ctjdba52015bx" path="res://sprites/SpritesOgro/walk/ogre-walk3.png" id="7_ob7cc"]
+[ext_resource type="Texture2D" uid="uid://b4f0cg7g46jfm" path="res://sprites/SpritesOgro/walk/ogre-walk4.png" id="8_qhni5"]
+[ext_resource type="Texture2D" uid="uid://bxrweefprjqqu" path="res://sprites/SpritesOgro/walk/ogre-walk5.png" id="9_0sr2j"]
+[ext_resource type="Texture2D" uid="uid://dn2b5lg705hfw" path="res://sprites/SpritesOgro/walk/ogre-walk6.png" id="10_1dmmt"]
+[ext_resource type="Script" uid="uid://dv6jl2jgdhn32" path="res://scripts/ogro.gd" id="11_ogro_script"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_7sbec"]
+size = Vector2(41, 56)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_8haiu"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("1_3g6hw")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_i32pr")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3_oihex")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_atpfq")
+}, {
+"duration": 1.0,
+"texture": ExtResource("5_py4uj")
+}, {
+"duration": 1.0,
+"texture": ExtResource("6_aw65e")
+}, {
+"duration": 1.0,
+"texture": ExtResource("7_0lp6r")
+}],
+"loop": false,
+"name": &"attack",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("1_0nkuu")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_u08t7")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3_hk85p")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_jtiyl")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("5_6sish")
+}, {
+"duration": 1.0,
+"texture": ExtResource("6_xo6v2")
+}, {
+"duration": 1.0,
+"texture": ExtResource("7_ob7cc")
+}, {
+"duration": 1.0,
+"texture": ExtResource("8_qhni5")
+}, {
+"duration": 1.0,
+"texture": ExtResource("9_0sr2j")
+}, {
+"duration": 1.0,
+"texture": ExtResource("10_1dmmt")
+}],
+"loop": true,
+"name": &"walk",
+"speed": 5.0
+}]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_health_bg"]
+bg_color = Color(0, 0, 0, 0.72)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_health_fill"]
+bg_color = Color(0.24, 0.86, 0.44, 0.95)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[node name="Ogro" type="CharacterBody2D" unique_id=183918203 groups=["enemies"]]
+collision_layer = 2
+script = ExtResource("11_ogro_script")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1452411058]
+position = Vector2(0.5, 11)
+shape = SubResource("RectangleShape2D_7sbec")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1194106632]
+sprite_frames = SubResource("SpriteFrames_8haiu")
+animation = &"attack"
+autoplay = "idle"
+
+[node name="HealthBar" type="Node2D" parent="." unique_id=916496612]
+visible = false
+z_index = 5
+position = Vector2(-14, -34)
+
+[node name="Bg" type="Panel" parent="HealthBar" unique_id=652205417]
+offset_right = 28.0
+offset_bottom = 4.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_health_bg")
+
+[node name="Fill" type="Panel" parent="HealthBar/Bg" unique_id=40108148]
+layout_mode = 0
+offset_right = 28.0
+offset_bottom = 4.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_health_fill")
+
+[node name="PercentLabel" type="Label" parent="HealthBar" unique_id=1592567583]
+offset_left = -6.0
+offset_top = -13.0
+offset_right = 34.0
+offset_bottom = -2.0
+theme_override_colors/font_color = Color(1, 0.96, 0.88, 0.95)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.85)
+theme_override_constants/outline_size = 1
+theme_override_font_sizes/font_size = 8
+text = "100%"
+horizontal_alignment = 1
+vertical_alignment = 1

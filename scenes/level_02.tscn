@@ -4,16 +4,17 @@
 [ext_resource type="PackedScene" uid="uid://cclktgyx4fddx" path="res://scenes/player.tscn" id="2_player"]
 [ext_resource type="PackedScene" uid="uid://voer846bwjhl" path="res://scenes/hud.tscn" id="3_hud"]
 [ext_resource type="AudioStream" uid="uid://bk3bvwr67n3jv" path="res://sounds/There_In_Spirit.wav" id="4_ambient"]
+[ext_resource type="PackedScene" uid="uid://djnydnb820673" path="res://scenes/alienfly.tscn" id="5_edq1u"]
+[ext_resource type="PackedScene" uid="uid://c7qkil5pl0n8o" path="res://scenes/ogro.tscn" id="6_n5em7"]
 
 [node name="Level02" type="Node2D" unique_id=2115518694]
 
-[node name="Ambient" type="AudioStreamPlayer" parent="."]
+[node name="Ambient" type="AudioStreamPlayer" parent="." unique_id=1011084878]
 stream = ExtResource("4_ambient")
 volume_db = -8.0
 autoplay = true
-bus = &"Music"
 
-[node name="DarkModulate" type="CanvasModulate" parent="."]
+[node name="DarkModulate" type="CanvasModulate" parent="." unique_id=1292813145]
 color = Color(0.08, 0.09, 0.13, 1)
 
 [node name="Construction" parent="." unique_id=792502334 instance=ExtResource("1_830kt")]
@@ -25,5 +26,20 @@ player_light_enabled = true
 
 [node name="HUD" parent="." unique_id=1172209584 instance=ExtResource("3_hud")]
 player_path = NodePath("../Player")
+
+[node name="Alienfly" parent="." unique_id=309508310 instance=ExtResource("5_edq1u")]
+position = Vector2(341, 473)
+
+[node name="Alienfly2" parent="." unique_id=1729741192 instance=ExtResource("5_edq1u")]
+position = Vector2(480, 375)
+
+[node name="Alienfly3" parent="." unique_id=1142082231 instance=ExtResource("5_edq1u")]
+position = Vector2(809, 464)
+
+[node name="Ogro" parent="." unique_id=183918203 instance=ExtResource("6_n5em7")]
+position = Vector2(1004, 569)
+
+[node name="Ogro2" parent="." unique_id=839981301 instance=ExtResource("6_n5em7")]
+position = Vector2(1600, 569)
 
 [connection signal="finished" from="Ambient" to="Ambient" method="play"]

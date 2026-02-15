@@ -1,0 +1,104 @@
+[gd_scene format=3 uid="uid://djnydnb820673"]
+
+[ext_resource type="Texture2D" uid="uid://c4ybdhc6tbrhn" path="res://sprites/spritealienfly/alien-enemy-flying1.png" id="1_g55eg"]
+[ext_resource type="Texture2D" uid="uid://mb03t25e3kec" path="res://sprites/spritealienfly/alien-enemy-flying2.png" id="2_4rcm7"]
+[ext_resource type="Texture2D" uid="uid://dpxt1naihceo0" path="res://sprites/spritealienfly/alien-enemy-flying3.png" id="3_mrktn"]
+[ext_resource type="Texture2D" uid="uid://c5r6tpeptsp4v" path="res://sprites/spritealienfly/alien-enemy-flying4.png" id="4_1363u"]
+[ext_resource type="Texture2D" uid="uid://b23eiy7td3b4t" path="res://sprites/spritealienfly/alien-enemy-flying5.png" id="5_gna4d"]
+[ext_resource type="Texture2D" uid="uid://ck3fx82jaqhi0" path="res://sprites/spritealienfly/alien-enemy-flying6.png" id="6_4dg8e"]
+[ext_resource type="Texture2D" uid="uid://bufifs4mfx6tx" path="res://sprites/spritealienfly/alien-enemy-flying7.png" id="7_425te"]
+[ext_resource type="Texture2D" uid="uid://drg2jeao084vh" path="res://sprites/spritealienfly/alien-enemy-flying8.png" id="8_qlce5"]
+[ext_resource type="Script" uid="uid://bfuy4jrpf5x65" path="res://scripts/alienfly.gd" id="9_alien_script"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_47bxr"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("1_g55eg")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_4rcm7")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3_mrktn")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_1363u")
+}, {
+"duration": 1.0,
+"texture": ExtResource("5_gna4d")
+}, {
+"duration": 1.0,
+"texture": ExtResource("6_4dg8e")
+}, {
+"duration": 1.0,
+"texture": ExtResource("7_425te")
+}, {
+"duration": 1.0,
+"texture": ExtResource("8_qlce5")
+}],
+"loop": true,
+"name": &"flying",
+"speed": 10.0
+}]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_4samj"]
+size = Vector2(24, 18)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_health_bg"]
+bg_color = Color(0, 0, 0, 0.72)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_health_fill"]
+bg_color = Color(0.24, 0.86, 0.44, 0.95)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[node name="Alienfly" type="CharacterBody2D" unique_id=309508310 groups=["enemies"]]
+collision_layer = 2
+script = ExtResource("9_alien_script")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1546065366]
+sprite_frames = SubResource("SpriteFrames_47bxr")
+animation = &"flying"
+autoplay = "flying"
+frame_progress = 0.7180508
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=683029776]
+shape = SubResource("RectangleShape2D_4samj")
+
+[node name="HealthBar" type="Node2D" parent="." unique_id=1189748816]
+visible = false
+z_index = 5
+position = Vector2(-14, -22)
+
+[node name="Bg" type="Panel" parent="HealthBar" unique_id=1666191565]
+offset_right = 28.0
+offset_bottom = 4.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_health_bg")
+
+[node name="Fill" type="Panel" parent="HealthBar/Bg" unique_id=513289054]
+layout_mode = 0
+offset_right = 28.0
+offset_bottom = 4.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_health_fill")
+
+[node name="PercentLabel" type="Label" parent="HealthBar" unique_id=845462207]
+offset_left = -6.0
+offset_top = -13.0
+offset_right = 34.0
+offset_bottom = -2.0
+theme_override_colors/font_color = Color(1, 0.96, 0.88, 0.95)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.85)
+theme_override_constants/outline_size = 1
+theme_override_font_sizes/font_size = 8
+text = "100%"
+horizontal_alignment = 1
+vertical_alignment = 1
