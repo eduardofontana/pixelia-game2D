@@ -13,11 +13,15 @@ volume_db = -8.0
 autoplay = true
 bus = &"Music"
 
+[node name="DarkModulate" type="CanvasModulate" parent="."]
+color = Color(0.08, 0.09, 0.13, 1)
+
 [node name="Construction" parent="." unique_id=792502334 instance=ExtResource("1_830kt")]
 
 [node name="Player" parent="." unique_id=1980650489 instance=ExtResource("2_player")]
 position = Vector2(19, 597)
 enable_spawn_dialog = false
+player_light_enabled = true
 
 [node name="HUD" parent="." unique_id=1172209584 instance=ExtResource("3_hud")]
 player_path = NodePath("../Player")

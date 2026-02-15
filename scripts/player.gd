@@ -143,6 +143,7 @@ const DEATH_VFX = preload("res://scripts/death_vfx.gd")
 @onready var animated_sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var attack_sfx: AudioStreamPlayer = $AttackSfx
 @onready var player_camera: Camera2D = get_node_or_null("Camera2D") as Camera2D
+@onready var player_light: PointLight2D = get_node_or_null("PlayerLight") as PointLight2D
 @onready var health_bar: Node2D = get_node_or_null("HealthBar")
 @onready var health_fill: Control = get_node_or_null("HealthBar/Bg/Fill")
 @onready var health_percent_label: Label = get_node_or_null("HealthBar/PercentLabel")
@@ -156,6 +157,10 @@ const DEATH_VFX = preload("res://scripts/death_vfx.gd")
 @export var void_fall_kill_y: float = DEFAULT_VOID_FALL_KILL_Y
 @export var void_fov_margin_y: float = DEFAULT_VOID_FOV_MARGIN_Y
 @export var enable_spawn_dialog: bool = true
+@export var player_light_enabled: bool = false
+@export var player_light_base_energy: float = 1.38
+@export var player_light_flicker_strength: float = 0.02
+@export var player_light_flicker_speed: float = 1.2
 
 var is_attacking: bool = false
 var facing_direction: int = 1
@@ -220,6 +225,7 @@ var spawn_dialog_label: Label = null
 var spawn_dialog_timer: float = 0.0
 var spawn_dialog_tween: Tween = null
 var spawn_dialog_queue: Array[Dictionary] = []
+var player_light_flicker_time: float = 0.0
 
 
 func _ready() -> void:
@@ -240,6 +246,9 @@ func _ready() -> void:
 	base_sprite_modulate = animated_sprite.modulate
 	if player_camera != null:
 		base_camera_zoom = player_camera.zoom
+	if player_light != null:
+		player_light.visible = player_light_enabled
+		player_light_flicker_time = 0.0
 	hp = max_hp
 	stamina = max_stamina
 	hp_regen_delay_timer = 0.0
@@ -881,9 +890,22 @@ func get_last_death_source_tag() -> StringName:
 	return last_death_source_tag
 
 
-func _update_light_visuals(_delta: float, _direction: float) -> void:
-	# Iluminacao do player removida: usamos apenas iluminacao global da cena.
-	return
+func _update_light_visuals(delta: float, _direction: float) -> void:
+	if player_light == null:
+		return
+
+	if not player_light_enabled:
+		player_light.visible = false
+		return
+	if not player_light.visible:
+		player_light.visible = true
+
+	player_light_flicker_time += maxf(delta, 0.0) * maxf(player_light_flicker_speed, 0.0)
+	var flicker_wave: float = sin(player_light_flicker_time)
+	var flicker_strength: float = maxf(player_light_flicker_strength, 0.0)
+	var base_energy: float = maxf(player_light_base_energy, 0.05)
+	var target_energy: float = base_energy + (flicker_wave * flicker_strength)
+	player_light.energy = clampf(target_energy, base_energy - flicker_strength, base_energy + flicker_strength)
 
 
 func _setup_player_health_fill_style() -> void:
