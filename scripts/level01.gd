@@ -102,7 +102,7 @@ func _ready() -> void:
 	selected_character_id = CHARACTER_PLAYER_ID
 	_ensure_audio_buses()
 	_ensure_hud_layer()
-	_validate_main_root_nodes()
+	_validate_level01_root_nodes()
 	_setup_victory_overlay()
 	_setup_boss_hud()
 	_bind_level_portal()
@@ -128,14 +128,14 @@ func _ready() -> void:
 	_setup_character_select_overlay()
 
 
-func _validate_main_root_nodes() -> void:
+func _validate_level01_root_nodes() -> void:
 	if player_ref == null:
-		push_warning("Main: player nao encontrado no no raiz (Player/grupo 'player').")
+		push_warning("Level01: player nao encontrado no no raiz (Player/grupo 'player').")
 	_ensure_hud_layer()
 	if hud_layer == null:
-		push_warning("Main: node 'HUD' nao encontrado no no raiz.")
+		push_warning("Level01: node 'HUD' nao encontrado no no raiz.")
 	if bgm_player == null:
-		push_warning("Main: node 'BGM' nao encontrado no no raiz.")
+		push_warning("Level01: node 'BGM' nao encontrado no no raiz.")
 
 
 func _resolve_hud_layer() -> CanvasLayer:

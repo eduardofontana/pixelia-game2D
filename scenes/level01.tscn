@@ -4,7 +4,7 @@
 [ext_resource type="PackedScene" uid="uid://cclktgyx4fddx" path="res://scenes/player.tscn" id="2_sugp2"]
 [ext_resource type="PackedScene" uid="uid://dcs8a1xffle86" path="res://scenes/background.tscn" id="3_sugp2"]
 [ext_resource type="PackedScene" uid="uid://voer846bwjhl" path="res://scenes/hud.tscn" id="4_hud"]
-[ext_resource type="Script" uid="uid://gbofqewgh3ll" path="res://scripts/main.gd" id="5_main"]
+[ext_resource type="Script" uid="uid://gbofqewgh3ll" path="res://scripts/level01.gd" id="5_level01"]
 [ext_resource type="AudioStream" uid="uid://djl6cler1lm" path="res://sounds/Forest Night.wav" id="6_bgm"]
 [ext_resource type="PackedScene" uid="uid://ffoyfdqwje05" path="res://scenes/skeleton.tscn" id="7_o6xl0"]
 [ext_resource type="PackedScene" uid="uid://sxivpt7mo14i" path="res://scenes/bat.tscn" id="8_tipki"]
@@ -15,8 +15,8 @@
 [ext_resource type="PackedScene" uid="uid://db7djgbmewrgt" path="res://scenes/boss.tscn" id="14_a8y0u"]
 [ext_resource type="PackedScene" uid="uid://dkqkscac2v8ct" path="res://scenes/skeleton_boss.tscn" id="14_jkv2x"]
 
-[node name="Main" type="Node2D" unique_id=839302726]
-script = ExtResource("5_main")
+[node name="Level01" type="Node2D" unique_id=839302726]
+script = ExtResource("5_level01")
 
 [node name="BGM" type="AudioStreamPlayer" parent="." unique_id=81188254]
 stream = ExtResource("6_bgm")
