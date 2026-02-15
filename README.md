@@ -36,6 +36,14 @@ Consulte o arquivo `LICENSE` para os termos completos.
 
 Todas as imagens e efeitos sonoros utilizados no jogo sao de uso livre (free), conforme as permissoes de uso dos respectivos autores/fontes.
 
+## Uso de IA no desenvolvimento
+
+Este projeto utiliza IA como apoio ao desenvolvimento, revisao tecnica e organizacao de tarefas.
+
+- Assistente utilizado: **Codex (GPT-5)**.
+- Uso principal: suporte em scripts, cenas, ajustes de fluxo e manutencao do projeto.
+- Decisoes finais de design, gameplay e direcao do projeto continuam sob responsabilidade do autor.
+
 ## Observacoes
 
 - Arquivos locais de execucao/editor (`.appdata/`) sao ignorados no versionamento.
