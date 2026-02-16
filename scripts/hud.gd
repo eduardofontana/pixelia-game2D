@@ -24,8 +24,6 @@ const MENU_CLICK_SFX_STREAM: AudioStream = preload("res://sounds/click_double_of
 @onready var stamina_label: Label = get_node_or_null("MarginContainer/PanelContainer/VBox/StaminaRow/StaminaLabel")
 @onready var stamina_bar_bg: Control = get_node_or_null("MarginContainer/PanelContainer/VBox/StaminaRow/StaminaBar/Bg")
 @onready var stamina_bar_fill: Control = get_node_or_null("MarginContainer/PanelContainer/VBox/StaminaRow/StaminaBar/Bg/Fill")
-@onready var level_label: Label = get_node_or_null("MarginContainer/PanelContainer/VBox/InfoRow/LevelLabel")
-@onready var xp_label: Label = get_node_or_null("MarginContainer/PanelContainer/VBox/InfoRow/XpLabel")
 @onready var coins_label: Label = get_node_or_null("MarginContainer/PanelContainer/VBox/InfoRow/CoinsLabel")
 @onready var controls_hint_card: Control = get_node_or_null("ControlsHintCard")
 @onready var fps_counter_label: Label = get_node_or_null("FpsCounterLabel")
@@ -123,7 +121,6 @@ func _process(delta: float) -> void:
 	displayed_stamina_ratio = lerpf(displayed_stamina_ratio, target_stamina_ratio, clampf(delta * STAMINA_SMOOTH_SPEED, 0.0, 1.0))
 	_apply_stamina_visuals(false, delta)
 
-	_refresh_level_xp()
 	if show_fps_counter:
 		_update_fps_counter_text()
 
@@ -162,19 +159,6 @@ func _refresh_from_player() -> void:
 	var max_hp_value := int(player_ref.get("max_hp"))
 	var current_lives := int(player_ref.get("lives"))
 	_on_player_stats_changed(current_hp, max_hp_value, current_stamina, max_stamina_value, current_lives)
-	_refresh_level_xp()
-
-
-func _refresh_level_xp() -> void:
-	if player_ref == null:
-		return
-
-	var level_value := int(player_ref.get("level"))
-	var xp_value := int(player_ref.get("xp"))
-	var xp_to_next := int(player_ref.get("xp_to_next_level"))
-
-	level_label.text = "Level: %d" % level_value
-	xp_label.text = "XP: %d / %d" % [xp_value, maxi(xp_to_next, 1)]
 
 
 func _cache_heart_nodes() -> void:
@@ -312,8 +296,6 @@ func _has_required_nodes() -> bool:
 		and stamina_label != null \
 		and stamina_bar_bg != null \
 		and stamina_bar_fill != null \
-		and level_label != null \
-		and xp_label != null \
 		and hp_hearts.size() > 0 \
 		and life_hearts.size() > 0
 
@@ -328,8 +310,6 @@ func _apply_hud_font() -> void:
 	hp_label.add_theme_font_override("font", hud_font)
 	life_label.add_theme_font_override("font", hud_font)
 	stamina_label.add_theme_font_override("font", hud_font)
-	level_label.add_theme_font_override("font", hud_font)
-	xp_label.add_theme_font_override("font", hud_font)
 	if coins_label != null:
 		coins_label.add_theme_font_override("font", hud_font)
 	if fps_counter_label != null:

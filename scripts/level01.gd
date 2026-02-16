@@ -13,6 +13,7 @@ const PLAYER_VOID_FOV_MARGIN_Y: float = 120.0
 const REQUIRED_COIN_COUNT: int = 15
 const COIN_SCENE: PackedScene = preload("res://scenes/coin.tscn")
 const PLAYER_SCENE: PackedScene = preload("res://scenes/player.tscn")
+const KNIGHT_HIGHT_SCENE: PackedScene = preload("res://scenes/knight_hight.tscn")
 const PORTAL_LOCKED_ALPHA: float = 0.35
 const PORTAL_UNLOCKED_ALPHA: float = 1.0
 const BOSS_HUD_TEXTURE_PATH: String = "res://sprites/Dead/HUD_Boss.png"
@@ -33,9 +34,17 @@ const Z_PORTAL: int = 8
 const Z_PICKUP: int = 9
 const Z_ACTOR: int = 10
 const Z_ACTOR_HEALTHBAR: int = 12
+const Z_PLAYER_BEHIND_WATER: int = Z_TERRAIN_STRUCTURE
 const Z_HUD_LAYER: int = 120
 const ENEMY_FIRST_SEEN_DISTANCE: float = 260.0
 const ENEMY_FIRST_SEEN_SCREEN_MARGIN: float = 56.0
+const WATER_SURFACE_ENTER_MARGIN_Y: float = 6.0
+const WATER_FALL_SPEED_THRESHOLD: float = 8.0
+const WATER_DEPTH_EXTENSION_Y: float = 420.0
+const WATER_SPLASH_PARTICLE_COUNT: int = 12
+const WATER_SPLASH_LIFETIME: float = 0.34
+const WATER_SPLASH_Z_INDEX: int = Z_TERRAIN_DECORATION + 1
+const WATER_SPLASH_COOLDOWN: float = 0.18
 const PLAYER_DIALOG_DURATION: float = 2.9
 const PLAYER_DIALOG_LONG_DURATION: float = 3.3
 const DIALOG_SKELETON_FIRST_SEEN: String = "Preciso tomar cuidado com este monte de ossos."
@@ -52,6 +61,9 @@ const BUS_MASTER: StringName = &"Master"
 const BUS_MUSIC: StringName = &"Music"
 const BUS_SFX: StringName = &"SFX"
 const CHARACTER_PLAYER_ID: StringName = &"player"
+const CHARACTER_KNIGHT_HIGHT_ID: StringName = &"knight_hight"
+const SELECTED_CHARACTER_ID_META_KEY: StringName = &"selected_character_id"
+const SELECTED_CHARACTER_SCENE_META_KEY: StringName = &"selected_character_scene_path"
 const LEVEL02_SCENE_PATH: String = "res://scenes/level_02.tscn"
 const LEVEL_TRANSITION_FADE_SECONDS: float = 0.55
 const LEVEL_TRANSITION_LAYER: int = 260
@@ -98,8 +110,11 @@ var saw_boss_approach_once: bool = false
 var player_spawn_position: Vector2 = Vector2.ZERO
 var selected_character_id: StringName = CHARACTER_PLAYER_ID
 var character_select_overlay: CanvasLayer = null
-var character_select_confirm_button: Button = null
 var character_option_buttons: Dictionary = {}
+var character_selection_locked: bool = false
+var water_cover_zones: Array[Rect2] = []
+var player_is_behind_water: bool = false
+var water_splash_cooldown_timer: float = 0.0
 
 
 func _ready() -> void:
@@ -130,11 +145,13 @@ func _ready() -> void:
 			bgm_player.play()
 
 	_apply_scene_ordering()
+	_rebuild_water_cover_zones()
 	_bind_collectible_coins()
 	_cache_coin_spawn_snapshots()
 	_set_map_gold_active(false)
 	_update_portal_access_state()
 	_update_hud_coin_count()
+	_setup_character_select_overlay()
 
 
 func _validate_level01_root_nodes() -> void:
@@ -203,7 +220,9 @@ func _ensure_audio_bus_exists(bus_name: StringName, send_bus_index: int) -> void
 	AudioServer.set_bus_send(new_bus_index, send_bus_name)
 
 
-func _physics_process(_delta: float) -> void:
+func _physics_process(delta: float) -> void:
+	water_splash_cooldown_timer = maxf(0.0, water_splash_cooldown_timer - delta)
+	_update_player_water_ordering()
 	_process_enemy_first_seen_dialogs()
 	_process_boss_proximity_dialog()
 
@@ -363,6 +382,7 @@ func _change_to_level02_scene() -> void:
 	if not is_equal_approx(Engine.time_scale, 1.0):
 		Engine.time_scale = 1.0
 	get_tree().paused = false
+	_persist_selected_character_for_next_level()
 
 	var change_error: int = get_tree().change_scene_to_file(LEVEL02_SCENE_PATH)
 	if change_error == OK:
@@ -434,7 +454,110 @@ func _resolve_player_spawn_position() -> Vector2:
 
 
 func _setup_character_select_overlay() -> void:
-	return
+	if character_select_overlay != null:
+		return
+
+	var option_group := ButtonGroup.new()
+	character_option_buttons.clear()
+	character_selection_locked = false
+
+	character_select_overlay = CanvasLayer.new()
+	character_select_overlay.name = "CharacterSelectOverlay"
+	character_select_overlay.layer = 240
+	character_select_overlay.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(character_select_overlay)
+
+	var root := Control.new()
+	root.name = "Root"
+	root.anchor_left = 0.0
+	root.anchor_top = 0.0
+	root.anchor_right = 1.0
+	root.anchor_bottom = 1.0
+	root.offset_left = 0.0
+	root.offset_top = 0.0
+	root.offset_right = 0.0
+	root.offset_bottom = 0.0
+	root.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+	character_select_overlay.add_child(root)
+
+	var dim := ColorRect.new()
+	dim.name = "Dim"
+	dim.anchor_left = 0.0
+	dim.anchor_top = 0.0
+	dim.anchor_right = 1.0
+	dim.anchor_bottom = 1.0
+	dim.offset_left = 0.0
+	dim.offset_top = 0.0
+	dim.offset_right = 0.0
+	dim.offset_bottom = 0.0
+	dim.color = Color(0.0, 0.0, 0.0, 0.68)
+	dim.mouse_filter = Control.MOUSE_FILTER_STOP
+	dim.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+	root.add_child(dim)
+
+	var panel := PanelContainer.new()
+	panel.name = "Panel"
+	panel.anchor_left = 0.5
+	panel.anchor_top = 0.5
+	panel.anchor_right = 0.5
+	panel.anchor_bottom = 0.5
+	panel.offset_left = -250.0
+	panel.offset_top = -180.0
+	panel.offset_right = 250.0
+	panel.offset_bottom = 180.0
+	panel.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+	root.add_child(panel)
+
+	var panel_style := StyleBoxFlat.new()
+	panel_style.bg_color = Color(0.07, 0.08, 0.1, 0.96)
+	panel_style.border_width_left = 2
+	panel_style.border_width_top = 2
+	panel_style.border_width_right = 2
+	panel_style.border_width_bottom = 2
+	panel_style.border_color = Color(0.86, 0.74, 0.5, 0.9)
+	panel_style.corner_radius_top_left = 10
+	panel_style.corner_radius_top_right = 10
+	panel_style.corner_radius_bottom_right = 10
+	panel_style.corner_radius_bottom_left = 10
+	panel.add_theme_stylebox_override("panel", panel_style)
+
+	var layout := VBoxContainer.new()
+	layout.name = "Layout"
+	layout.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	layout.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	layout.alignment = BoxContainer.ALIGNMENT_CENTER
+	layout.add_theme_constant_override("separation", 14)
+	layout.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+	panel.add_child(layout)
+
+	var title := Label.new()
+	title.name = "Title"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.text = "Escolha o Personagem"
+	title.add_theme_font_size_override("font_size", 20)
+	title.add_theme_color_override("font_color", Color(0.96, 0.93, 0.87, 0.98))
+	title.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.9))
+	title.add_theme_constant_override("outline_size", 2)
+	title.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+	layout.add_child(title)
+
+	var options_row := HBoxContainer.new()
+	options_row.name = "Options"
+	options_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	options_row.add_theme_constant_override("separation", 14)
+	options_row.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+	layout.add_child(options_row)
+
+	var player_button: Button = _build_character_option_button(CHARACTER_PLAYER_ID, PLAYER_SCENE, option_group)
+	options_row.add_child(player_button)
+	character_option_buttons[CHARACTER_PLAYER_ID] = player_button
+
+	var knight_button: Button = _build_character_option_button(CHARACTER_KNIGHT_HIGHT_ID, KNIGHT_HIGHT_SCENE, option_group)
+	options_row.add_child(knight_button)
+	character_option_buttons[CHARACTER_KNIGHT_HIGHT_ID] = knight_button
+
+	_set_selected_character(selected_character_id)
+	get_tree().paused = true
 
 
 func _build_character_option_button(character_id: StringName, character_scene: PackedScene, option_group: ButtonGroup) -> Button:
@@ -483,6 +606,25 @@ func _build_character_option_button(character_id: StringName, character_scene: P
 	content.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	option_button.add_child(content)
 
+	var name_label := Label.new()
+	name_label.anchor_left = 0.0
+	name_label.anchor_top = 1.0
+	name_label.anchor_right = 1.0
+	name_label.anchor_bottom = 1.0
+	name_label.offset_left = 0.0
+	name_label.offset_top = -28.0
+	name_label.offset_right = 0.0
+	name_label.offset_bottom = -6.0
+	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	name_label.text = _get_character_display_name(character_id)
+	name_label.add_theme_font_size_override("font_size", 14)
+	name_label.add_theme_color_override("font_color", Color(0.95, 0.92, 0.85, 1.0))
+	name_label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.9))
+	name_label.add_theme_constant_override("outline_size", 2)
+	name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	content.add_child(name_label)
+
 	var preview := TextureRect.new()
 	preview.anchor_left = 0.5
 	preview.anchor_top = 0.5
@@ -526,7 +668,14 @@ func _resolve_character_preview_texture(character_scene: PackedScene) -> Texture
 
 
 func _on_character_option_pressed(character_id: StringName) -> void:
+	if character_selection_locked:
+		return
+	character_selection_locked = true
+
 	_set_selected_character(character_id)
+	var selected_button: Button = character_option_buttons.get(character_id) as Button
+	await _play_character_select_fx(selected_button)
+	_finalize_character_selection()
 
 
 func _set_selected_character(character_id: StringName) -> void:
@@ -540,41 +689,108 @@ func _set_selected_character(character_id: StringName) -> void:
 		option_button.button_pressed = is_selected
 		option_button.modulate = Color(1.0, 1.0, 1.0, 1.0) if is_selected else Color(0.86, 0.86, 0.86, 1.0)
 
-	if character_select_confirm_button != null:
-		character_select_confirm_button.text = "Confirmar"
-
-
-func _on_character_select_confirm_pressed() -> void:
+func _finalize_character_selection() -> void:
 	_apply_selected_character()
 
 	if character_select_overlay != null:
 		character_select_overlay.queue_free()
 		character_select_overlay = null
-	character_select_confirm_button = null
 	character_option_buttons.clear()
 	get_tree().paused = false
+
+
+func _play_character_select_fx(button: Button) -> void:
+	if button == null:
+		return
+
+	var base_scale: Vector2 = button.scale
+	var base_modulate: Color = button.modulate
+	var flash_color := Color(1.0, 0.96, 0.82, 1.0)
+
+	var pick_tween: Tween = button.create_tween()
+	pick_tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	pick_tween.set_trans(Tween.TRANS_SINE)
+	pick_tween.set_ease(Tween.EASE_OUT)
+	pick_tween.tween_property(button, "scale", base_scale * Vector2(1.04, 1.04), 0.06)
+	pick_tween.parallel().tween_property(button, "modulate", flash_color, 0.06)
+	pick_tween.tween_property(button, "scale", base_scale, 0.08)
+	pick_tween.parallel().tween_property(button, "modulate", base_modulate, 0.08)
+	await pick_tween.finished
 
 
 func _apply_selected_character() -> void:
 	if player_spawn_position == Vector2.ZERO and player_ref != null:
 		player_spawn_position = player_ref.global_position
 
+	var selected_scene: PackedScene = _get_character_scene(selected_character_id)
+	if selected_scene == null:
+		selected_scene = PLAYER_SCENE
+
 	var active_player: CharacterBody2D = _resolve_player_reference()
-	if active_player == null:
-		active_player = PLAYER_SCENE.instantiate() as CharacterBody2D
+	var selected_scene_path: String = selected_scene.resource_path
+	var should_replace_player: bool = true
+	if active_player != null and not selected_scene_path.is_empty():
+		should_replace_player = active_player.scene_file_path != selected_scene_path
+
+	if should_replace_player:
+		if active_player != null:
+			var parent_node: Node = active_player.get_parent()
+			if parent_node != null:
+				parent_node.remove_child(active_player)
+			active_player.free()
+		active_player = selected_scene.instantiate() as CharacterBody2D
 		if active_player != null:
 			active_player.name = "Player"
 			add_child(active_player)
+
 	if active_player != null:
 		_apply_player_spawn_anchor(active_player)
 
-	player_ref = _resolve_player_reference()
+	player_ref = active_player
+	if player_ref == null:
+		player_ref = _resolve_player_reference()
 	_bind_player_lifecycle()
 	_rebind_player_dependents()
 	_apply_scene_ordering()
+	_rebuild_water_cover_zones()
 	_rebuild_terrain_spawn_map()
 	_configure_player_void_fov()
 	_update_hud_coin_count()
+	_persist_selected_character_for_next_level()
+
+
+func _get_character_scene(character_id: StringName) -> PackedScene:
+	match character_id:
+		CHARACTER_KNIGHT_HIGHT_ID:
+			return KNIGHT_HIGHT_SCENE
+		_:
+			return PLAYER_SCENE
+
+
+func _get_character_display_name(character_id: StringName) -> String:
+	match character_id:
+		CHARACTER_KNIGHT_HIGHT_ID:
+			return "Knight Hight"
+		_:
+			return "Knight"
+
+
+func _persist_selected_character_for_next_level() -> void:
+	var tree_ref: SceneTree = get_tree()
+	if tree_ref == null or tree_ref.root == null:
+		return
+
+	var selected_scene: PackedScene = _get_character_scene(selected_character_id)
+	var selected_scene_path: String = ""
+	if selected_scene != null:
+		selected_scene_path = String(selected_scene.resource_path)
+
+	tree_ref.root.set_meta(SELECTED_CHARACTER_ID_META_KEY, selected_character_id)
+	if selected_scene_path.is_empty():
+		if tree_ref.root.has_meta(SELECTED_CHARACTER_SCENE_META_KEY):
+			tree_ref.root.remove_meta(SELECTED_CHARACTER_SCENE_META_KEY)
+	else:
+		tree_ref.root.set_meta(SELECTED_CHARACTER_SCENE_META_KEY, selected_scene_path)
 
 
 func _apply_player_spawn_anchor(player_node: CharacterBody2D) -> void:
@@ -758,6 +974,9 @@ func _apply_scene_ordering() -> void:
 	if map_gold_item != null:
 		_apply_pickup_ordering(map_gold_item)
 
+	if player_ref != null and player_is_behind_water:
+		_apply_player_behind_water_ordering(player_ref)
+
 
 func _apply_background_ordering() -> void:
 	var background_root: CanvasItem = get_node_or_null("Background") as CanvasItem
@@ -804,6 +1023,152 @@ func _apply_pickup_ordering(pickup: Area2D) -> void:
 		return
 	pickup.z_index = Z_PICKUP
 	pickup.z_as_relative = false
+
+
+func _rebuild_water_cover_zones() -> void:
+	water_cover_zones.clear()
+
+	var decoration_root: Node = get_node_or_null("Terrain/Decoration")
+	if decoration_root == null:
+		return
+
+	for child in decoration_root.get_children():
+		var water_sprite: AnimatedSprite2D = child as AnimatedSprite2D
+		if water_sprite == null:
+			continue
+		if not String(water_sprite.name).to_lower().begins_with("water"):
+			continue
+
+		var zone_rect: Rect2 = _build_water_cover_zone_rect(water_sprite)
+		if zone_rect.size.x <= 0.0 or zone_rect.size.y <= 0.0:
+			continue
+		water_cover_zones.append(zone_rect)
+
+
+func _build_water_cover_zone_rect(water_sprite: AnimatedSprite2D) -> Rect2:
+	if water_sprite == null or water_sprite.sprite_frames == null:
+		return Rect2()
+
+	var animation_name: StringName = water_sprite.animation
+	if not water_sprite.sprite_frames.has_animation(animation_name):
+		return Rect2()
+	if water_sprite.sprite_frames.get_frame_count(animation_name) <= 0:
+		return Rect2()
+
+	var frame_texture: Texture2D = water_sprite.sprite_frames.get_frame_texture(animation_name, 0)
+	if frame_texture == null:
+		return Rect2()
+
+	var texture_size: Vector2 = frame_texture.get_size()
+	if texture_size.x <= 0.0 or texture_size.y <= 0.0:
+		return Rect2()
+
+	var global_scale_abs: Vector2 = Vector2(absf(water_sprite.global_scale.x), absf(water_sprite.global_scale.y))
+	var world_size: Vector2 = Vector2(texture_size.x * global_scale_abs.x, texture_size.y * global_scale_abs.y)
+	if world_size.x <= 0.0 or world_size.y <= 0.0:
+		return Rect2()
+
+	var top_left: Vector2 = water_sprite.global_position
+	if water_sprite.centered:
+		top_left -= world_size * 0.5
+
+	return Rect2(top_left, Vector2(world_size.x, world_size.y + WATER_DEPTH_EXTENSION_Y))
+
+
+func _update_player_water_ordering() -> void:
+	if player_ref == null:
+		return
+
+	var player_water_zone: Rect2 = _find_player_water_zone(player_ref)
+	var should_be_behind_water: bool = player_water_zone.size.x > 0.0 and player_water_zone.size.y > 0.0
+	if should_be_behind_water == player_is_behind_water:
+		return
+
+	if should_be_behind_water:
+		_spawn_player_water_splash(player_ref.global_position.x, player_water_zone.position.y)
+
+	player_is_behind_water = should_be_behind_water
+	if player_is_behind_water:
+		_apply_player_behind_water_ordering(player_ref)
+	else:
+		_apply_actor_ordering(player_ref)
+
+
+func _find_player_water_zone(player_body: CharacterBody2D) -> Rect2:
+	if player_body == null:
+		return Rect2()
+	if water_cover_zones.is_empty():
+		return Rect2()
+	if player_body.velocity.y <= WATER_FALL_SPEED_THRESHOLD:
+		return Rect2()
+
+	var player_position: Vector2 = player_body.global_position
+	for water_zone in water_cover_zones:
+		if not water_zone.has_point(player_position):
+			continue
+		var enter_surface_y: float = water_zone.position.y - WATER_SURFACE_ENTER_MARGIN_Y
+		if player_position.y >= enter_surface_y:
+			return water_zone
+	return Rect2()
+
+
+func _apply_player_behind_water_ordering(player_body: CharacterBody2D) -> void:
+	if player_body == null:
+		return
+
+	player_body.z_index = Z_PLAYER_BEHIND_WATER
+	player_body.z_as_relative = false
+
+	var health_bar_node: CanvasItem = player_body.get_node_or_null("HealthBar") as CanvasItem
+	if health_bar_node != null:
+		health_bar_node.z_index = Z_PLAYER_BEHIND_WATER
+		health_bar_node.z_as_relative = false
+
+
+func _spawn_player_water_splash(world_x: float, water_surface_y: float) -> void:
+	if water_splash_cooldown_timer > 0.0:
+		return
+	water_splash_cooldown_timer = WATER_SPLASH_COOLDOWN
+
+	var scene_root: Node = get_tree().current_scene
+	if scene_root == null:
+		scene_root = self
+
+	var splash_root := Node2D.new()
+	splash_root.name = "WaterSplashFx"
+	splash_root.global_position = Vector2(world_x, water_surface_y + 2.0)
+	splash_root.z_as_relative = false
+	splash_root.z_index = WATER_SPLASH_Z_INDEX
+	scene_root.add_child(splash_root)
+
+	var splash_tween: Tween = splash_root.create_tween()
+	splash_tween.set_parallel(true)
+
+	for i in range(WATER_SPLASH_PARTICLE_COUNT):
+		var droplet := Polygon2D.new()
+		droplet.polygon = PackedVector2Array([
+			Vector2(-1.5, -1.5),
+			Vector2(1.5, -1.5),
+			Vector2(1.5, 1.5),
+			Vector2(-1.5, 1.5)
+		])
+		droplet.color = Color(0.72, 0.9, 1.0, 0.9).lerp(Color(0.92, 0.98, 1.0, 1.0), randf_range(0.0, 0.4))
+		droplet.scale = Vector2.ONE * randf_range(0.85, 1.35)
+		splash_root.add_child(droplet)
+
+		var launch_angle: float = randf_range(-2.7, -0.45)
+		var travel_distance: float = randf_range(18.0, 46.0)
+		var target_offset: Vector2 = Vector2(cos(launch_angle), sin(launch_angle)) * travel_distance
+		target_offset.y += randf_range(6.0, 22.0)
+		var life_time: float = randf_range(WATER_SPLASH_LIFETIME * 0.72, WATER_SPLASH_LIFETIME)
+
+		splash_tween.tween_property(droplet, "position", target_offset, life_time).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		splash_tween.tween_property(droplet, "modulate:a", 0.0, life_time).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+		splash_tween.tween_property(droplet, "scale", Vector2.ONE * randf_range(0.1, 0.25), life_time).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+
+	splash_tween.set_parallel(false)
+	splash_tween.tween_interval(0.03)
+	splash_tween.tween_callback(Callable(splash_root, "queue_free"))
 
 
 func _bind_collectible_coins() -> void:

@@ -7,8 +7,10 @@
 [ext_resource type="PackedScene" uid="uid://djnydnb820673" path="res://scenes/alienfly.tscn" id="5_edq1u"]
 [ext_resource type="PackedScene" uid="uid://c7qkil5pl0n8o" path="res://scenes/ogro.tscn" id="6_n5em7"]
 [ext_resource type="PackedScene" uid="uid://dnksk3eq247dm" path="res://scenes/alien_enemy.tscn" id="7_64aqs"]
+[ext_resource type="Script" path="res://scripts/level_02.gd" id="8_level02"]
 
 [node name="Level02" type="Node2D" unique_id=2115518694]
+script = ExtResource("8_level02")
 
 [node name="Ambient" type="AudioStreamPlayer" parent="." unique_id=1011084878]
 stream = ExtResource("4_ambient")

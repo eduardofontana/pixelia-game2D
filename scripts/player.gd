@@ -25,6 +25,14 @@ const ATTACK_HITBOX_ACTIVE_TIME: float = 0.12
 const ATTACK_HITBOX_WIDTH: float = 30.0
 const ATTACK_HITBOX_HEIGHT: float = 22.0
 const ATTACK_DAMAGE: int = 10
+const KNIGHT_HIGHT_SCENE_SUFFIX: String = "knight_hight.tscn"
+const KNIGHT_HIGHT_ATTACK_SPEED_SCALE: float = 2.45
+const KNIGHT_HIGHT_ATTACK_HITBOX_OFFSET_X: float = 26.0
+const KNIGHT_HIGHT_ATTACK_HITBOX_OFFSET_Y: float = -16.0
+const KNIGHT_HIGHT_ATTACK_HITBOX_START_DELAY: float = 0.055
+const KNIGHT_HIGHT_ATTACK_HITBOX_ACTIVE_TIME: float = 0.15
+const KNIGHT_HIGHT_ATTACK_HITBOX_WIDTH: float = 34.0
+const KNIGHT_HIGHT_ATTACK_HITBOX_HEIGHT: float = 24.0
 const HIT_KNOCKBACK_X: float = 96.0
 const HIT_KNOCKBACK_Y: float = -70.0
 const DAMAGE_KNOCKBACK_MULTIPLIER: float = 1.45
@@ -67,6 +75,7 @@ const DEATH_EMOJI_START_SCALE: Vector2 = Vector2(1.55, 1.55)
 const DEATH_EMOJI_END_SCALE: Vector2 = Vector2(1.15, 1.15)
 const DEATH_EMOJI_COLOR: Color = Color(0.92, 0.88, 0.88, 0.0)
 const DEATH_EMOJI_X_OFFSET: float = -30.0
+const KNIGHT_HIGHT_DEATH_EMOJI_X_ADJUST: float = 38.0
 const DEATH_EMOJI_Y_OFFSET: float = 78.0
 const DEATH_PLAYER_FRAME_ANIMATION: StringName = &"death"
 const DEATH_PLAYER_FRAME_INDEX: int = 10
@@ -152,9 +161,6 @@ const DEATH_VFX = preload("res://scripts/death_vfx.gd")
 @export var max_hp: int = 100
 @export var max_stamina: float = 100.0
 @export var lives: int = 5
-@export var level: int = 1
-@export var xp: int = 0
-@export var xp_to_next_level: int = 100
 @export var void_fall_kill_y: float = DEFAULT_VOID_FALL_KILL_Y
 @export var void_fov_margin_y: float = DEFAULT_VOID_FOV_MARGIN_Y
 @export var enable_spawn_dialog: bool = true
@@ -227,11 +233,18 @@ var spawn_dialog_timer: float = 0.0
 var spawn_dialog_tween: Tween = null
 var spawn_dialog_queue: Array[Dictionary] = []
 var player_light_flicker_time: float = 0.0
+var attack_speed_scale_runtime: float = ATTACK_SPEED_SCALE
+var attack_hitbox_offset_x_runtime: float = ATTACK_HITBOX_OFFSET_X
+var attack_hitbox_offset_y_runtime: float = ATTACK_HITBOX_OFFSET_Y
+var attack_hitbox_start_delay_runtime: float = ATTACK_HITBOX_START_DELAY
+var attack_hitbox_active_time_runtime: float = ATTACK_HITBOX_ACTIVE_TIME
+var attack_hitbox_size_runtime: Vector2 = Vector2(ATTACK_HITBOX_WIDTH, ATTACK_HITBOX_HEIGHT)
 
 
 func _ready() -> void:
 	add_to_group("player")
 	_configure_player_collision_filters()
+	_configure_character_attack_profile()
 	animated_sprite.animation_finished.connect(_on_animation_finished)
 	_setup_attack_hitbox()
 	_setup_cinematic_overlay()
@@ -648,8 +661,8 @@ func _start_attack() -> void:
 
 	is_attacking = true
 	attack_ground_stop_timer = ATTACK_GROUND_STOP_TIME
-	attack_hitbox_start_timer = ATTACK_HITBOX_START_DELAY
-	attack_hitbox_active_timer = ATTACK_HITBOX_ACTIVE_TIME
+	attack_hitbox_start_timer = attack_hitbox_start_delay_runtime
+	attack_hitbox_active_timer = attack_hitbox_active_time_runtime
 	hit_enemy_ids.clear()
 	_set_attack_hitbox_enabled(false)
 	_apply_sprite_offset(&"attack")
@@ -660,7 +673,7 @@ func _start_attack() -> void:
 		attack_sfx.play()
 	if _has_animation(&"attack"):
 		animated_sprite.play(&"attack")
-		animated_sprite.speed_scale = ATTACK_SPEED_SCALE
+		animated_sprite.speed_scale = attack_speed_scale_runtime
 	else:
 		is_attacking = false
 
@@ -688,7 +701,7 @@ func _update_animation(direction: float, is_sprinting: bool) -> void:
 		_apply_sprite_offset(&"attack")
 		if animated_sprite.animation != &"attack":
 			animated_sprite.play(&"attack")
-		animated_sprite.speed_scale = ATTACK_SPEED_SCALE
+		animated_sprite.speed_scale = attack_speed_scale_runtime
 		return
 
 	if is_defending and _has_animation(&"defend"):
@@ -708,13 +721,23 @@ func _update_animation(direction: float, is_sprinting: bool) -> void:
 
 	if absf(direction) > MOVE_THRESHOLD:
 		if is_sprinting:
-			var run_ratio := absf(velocity.x) / SPRINT_SPEED
-			var run_anim_speed := clampf(run_ratio * 1.25, 0.9, 1.7)
-			_play_animation(&"run", run_anim_speed)
+			if _has_animation(&"run"):
+				var run_ratio := absf(velocity.x) / SPRINT_SPEED
+				var run_anim_speed := clampf(run_ratio * 1.25, 0.9, 1.7)
+				_play_animation(&"run", run_anim_speed)
+			else:
+				var fallback_walk_ratio := absf(velocity.x) / SPRINT_SPEED
+				var fallback_walk_speed := clampf(fallback_walk_ratio * 1.2, 0.9, 1.6)
+				_play_animation(&"walk", fallback_walk_speed)
 		else:
-			var walk_ratio := absf(velocity.x) / WALK_SPEED
-			var walk_anim_speed := clampf(walk_ratio * 1.2, 0.9, 1.6)
-			_play_animation(&"walk", walk_anim_speed)
+			if _has_animation(&"walk"):
+				var walk_ratio := absf(velocity.x) / WALK_SPEED
+				var walk_anim_speed := clampf(walk_ratio * 1.2, 0.9, 1.6)
+				_play_animation(&"walk", walk_anim_speed)
+			else:
+				var fallback_run_ratio := absf(velocity.x) / WALK_SPEED
+				var fallback_run_speed := clampf(fallback_run_ratio * 1.05, 0.85, 1.35)
+				_play_animation(&"run", fallback_run_speed)
 	else:
 		_play_animation(&"idle", 1.0)
 
@@ -992,7 +1015,7 @@ func _setup_attack_hitbox() -> void:
 	attack_hitbox_shape = CollisionShape2D.new()
 	attack_hitbox_shape.name = "CollisionShape2D"
 	var attack_shape := RectangleShape2D.new()
-	attack_shape.size = Vector2(ATTACK_HITBOX_WIDTH, ATTACK_HITBOX_HEIGHT)
+	attack_shape.size = attack_hitbox_size_runtime
 	attack_hitbox_shape.shape = attack_shape
 	attack_hitbox_area.add_child(attack_hitbox_shape)
 	_set_attack_hitbox_enabled(false)
@@ -1007,7 +1030,35 @@ func _configure_player_collision_filters() -> void:
 func _update_attack_hitbox_transform() -> void:
 	if attack_hitbox_area == null:
 		return
-	attack_hitbox_area.position = Vector2(ATTACK_HITBOX_OFFSET_X * float(facing_direction), ATTACK_HITBOX_OFFSET_Y)
+	attack_hitbox_area.position = Vector2(attack_hitbox_offset_x_runtime * float(facing_direction), attack_hitbox_offset_y_runtime)
+
+
+func _configure_character_attack_profile() -> void:
+	attack_speed_scale_runtime = ATTACK_SPEED_SCALE
+	attack_hitbox_offset_x_runtime = ATTACK_HITBOX_OFFSET_X
+	attack_hitbox_offset_y_runtime = ATTACK_HITBOX_OFFSET_Y
+	attack_hitbox_start_delay_runtime = ATTACK_HITBOX_START_DELAY
+	attack_hitbox_active_time_runtime = ATTACK_HITBOX_ACTIVE_TIME
+	attack_hitbox_size_runtime = Vector2(ATTACK_HITBOX_WIDTH, ATTACK_HITBOX_HEIGHT)
+
+	if _is_knight_hight_character():
+		attack_speed_scale_runtime = KNIGHT_HIGHT_ATTACK_SPEED_SCALE
+		attack_hitbox_offset_x_runtime = KNIGHT_HIGHT_ATTACK_HITBOX_OFFSET_X
+		attack_hitbox_offset_y_runtime = KNIGHT_HIGHT_ATTACK_HITBOX_OFFSET_Y
+		attack_hitbox_start_delay_runtime = KNIGHT_HIGHT_ATTACK_HITBOX_START_DELAY
+		attack_hitbox_active_time_runtime = KNIGHT_HIGHT_ATTACK_HITBOX_ACTIVE_TIME
+		attack_hitbox_size_runtime = Vector2(KNIGHT_HIGHT_ATTACK_HITBOX_WIDTH, KNIGHT_HIGHT_ATTACK_HITBOX_HEIGHT)
+
+
+func _is_knight_hight_character() -> bool:
+	var scene_path: String = String(scene_file_path).to_lower()
+	return scene_path.ends_with(KNIGHT_HIGHT_SCENE_SUFFIX)
+
+
+func _get_death_emoji_x_offset() -> float:
+	if _is_knight_hight_character():
+		return DEATH_EMOJI_X_OFFSET + KNIGHT_HIGHT_DEATH_EMOJI_X_ADJUST
+	return DEATH_EMOJI_X_OFFSET
 
 
 func _update_attack_hitbox(delta: float) -> void:
@@ -1390,9 +1441,10 @@ func _setup_cinematic_overlay() -> void:
 	death_emoji_label.anchor_top = 0.5
 	death_emoji_label.anchor_right = 0.5
 	death_emoji_label.anchor_bottom = 0.5
-	death_emoji_label.offset_left = (-DEATH_PLAYER_FRAME_SIZE.x * 0.5) + DEATH_EMOJI_X_OFFSET
+	var death_emoji_x_offset: float = _get_death_emoji_x_offset()
+	death_emoji_label.offset_left = (-DEATH_PLAYER_FRAME_SIZE.x * 0.5) + death_emoji_x_offset
 	death_emoji_label.offset_top = DEATH_EMOJI_Y_OFFSET - (DEATH_PLAYER_FRAME_SIZE.y * 0.5)
-	death_emoji_label.offset_right = (DEATH_PLAYER_FRAME_SIZE.x * 0.5) + DEATH_EMOJI_X_OFFSET
+	death_emoji_label.offset_right = (DEATH_PLAYER_FRAME_SIZE.x * 0.5) + death_emoji_x_offset
 	death_emoji_label.offset_bottom = DEATH_EMOJI_Y_OFFSET + (DEATH_PLAYER_FRAME_SIZE.y * 0.5)
 	death_emoji_label.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	death_emoji_label.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED

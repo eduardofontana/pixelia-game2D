@@ -19,8 +19,9 @@
 [ext_resource type="Texture2D" uid="uid://dn2b5lg705hfw" path="res://sprites/SpritesOgro/walk/ogre-walk6.png" id="10_1dmmt"]
 [ext_resource type="Script" uid="uid://dv6jl2jgdhn32" path="res://scripts/ogro.gd" id="11_ogro_script"]
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_7sbec"]
-size = Vector2(41, 56)
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_i32pr"]
+radius = 16.5
+height = 54.0
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_8haiu"]
 animations = [{
@@ -110,10 +111,11 @@ collision_layer = 2
 script = ExtResource("11_ogro_script")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1452411058]
-position = Vector2(0.5, 11)
-shape = SubResource("RectangleShape2D_7sbec")
+position = Vector2(0, -27)
+shape = SubResource("CapsuleShape2D_i32pr")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1194106632]
+position = Vector2(0, -39)
 sprite_frames = SubResource("SpriteFrames_8haiu")
 animation = &"attack"
 autoplay = "idle"
