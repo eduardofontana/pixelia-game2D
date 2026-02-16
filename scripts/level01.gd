@@ -1,4 +1,4 @@
-extends Node2D
+extends "res://scripts/level_base.gd"
 
 const FALLBACK_SPAWN_MIN_X: float = 144.0
 const FALLBACK_SPAWN_MAX_X: float = 1320.0
@@ -112,9 +112,6 @@ var selected_character_id: StringName = CHARACTER_PLAYER_ID
 var character_select_overlay: CanvasLayer = null
 var character_option_buttons: Dictionary = {}
 var character_selection_locked: bool = false
-var water_cover_zones: Array[Rect2] = []
-var player_is_behind_water: bool = false
-var water_splash_cooldown_timer: float = 0.0
 
 
 func _ready() -> void:
@@ -140,7 +137,7 @@ func _ready() -> void:
 	if is_instance_valid(bgm_player):
 		bgm_player.bus = BUS_MUSIC
 		bgm_player.process_mode = Node.PROCESS_MODE_ALWAYS
-		_connect_signal_once(bgm_player, &"finished", Callable(self, "_on_bgm_finished"))
+		_connect_signal_once(bgm_player, &"finished", Callable(self , "_on_bgm_finished"))
 		if not bgm_player.playing:
 			bgm_player.play()
 
@@ -192,16 +189,6 @@ func _ensure_hud_layer() -> void:
 		hud_layer = _resolve_hud_layer()
 
 
-func _connect_signal_once(emitter: Object, signal_name: StringName, callback: Callable) -> void:
-	if emitter == null:
-		return
-	if not emitter.has_signal(signal_name):
-		return
-	if emitter.is_connected(signal_name, callback):
-		return
-	emitter.connect(signal_name, callback)
-
-
 func _ensure_audio_buses() -> void:
 	var master_index: int = AudioServer.get_bus_index(BUS_MASTER)
 	if master_index < 0:
@@ -236,7 +223,7 @@ func _bind_level_portal() -> void:
 	if level_portal == null:
 		return
 
-	_connect_signal_once(level_portal, &"body_entered", Callable(self, "_on_level_portal_body_entered"))
+	_connect_signal_once(level_portal, &"body_entered", Callable(self , "_on_level_portal_body_entered"))
 
 
 func _on_level_portal_body_entered(body: Node2D) -> void:
@@ -358,7 +345,7 @@ func _start_level_transition_to_level02() -> void:
 	level_transition_tween.set_trans(Tween.TRANS_SINE)
 	level_transition_tween.set_ease(Tween.EASE_IN_OUT)
 	level_transition_tween.tween_property(level_transition_dim_rect, "color:a", 1.0, LEVEL_TRANSITION_FADE_SECONDS)
-	level_transition_tween.tween_callback(Callable(self, "_start_level_loading_to_level02"))
+	level_transition_tween.tween_callback(Callable(self , "_start_level_loading_to_level02"))
 
 
 func _start_level_loading_to_level02() -> void:
@@ -569,7 +556,7 @@ func _build_character_option_button(character_id: StringName, character_scene: P
 	option_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	option_button.focus_mode = Control.FOCUS_ALL
 	option_button.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
-	option_button.pressed.connect(Callable(self, "_on_character_option_pressed").bind(character_id))
+	option_button.pressed.connect(Callable(self , "_on_character_option_pressed").bind(character_id))
 
 	var normal_style := StyleBoxFlat.new()
 	normal_style.bg_color = Color(0.13, 0.13, 0.17, 0.96)
@@ -825,15 +812,6 @@ func _rebind_player_dependents() -> void:
 			node.call("_refresh_from_player")
 
 
-func _node_has_property(target_node: Object, property_name: StringName) -> bool:
-	if target_node == null:
-		return false
-	for property_data in target_node.get_property_list():
-		if StringName(property_data.get("name", "")) == property_name:
-			return true
-	return false
-
-
 func _on_bgm_finished() -> void:
 	if is_instance_valid(bgm_player):
 		bgm_player.play()
@@ -869,7 +847,7 @@ func _setup_boss_hud() -> void:
 	frame.anchor_top = 0.0
 	frame.anchor_right = 0.5
 	frame.anchor_bottom = 0.0
-	frame.offset_left = -BOSS_HUD_WIDTH * 0.5
+	frame.offset_left = - BOSS_HUD_WIDTH * 0.5
 	frame.offset_top = BOSS_HUD_TOP_Y
 	frame.offset_right = BOSS_HUD_WIDTH * 0.5
 	frame.offset_bottom = BOSS_HUD_TOP_Y + BOSS_HUD_HEIGHT
@@ -1006,18 +984,6 @@ func _apply_terrain_ordering() -> void:
 		decoration_layer.z_as_relative = false
 
 
-func _apply_actor_ordering(actor: CharacterBody2D) -> void:
-	if actor == null:
-		return
-	actor.z_index = Z_ACTOR
-	actor.z_as_relative = false
-
-	var health_bar_node: CanvasItem = actor.get_node_or_null("HealthBar") as CanvasItem
-	if health_bar_node != null:
-		health_bar_node.z_index = Z_ACTOR_HEALTHBAR
-		health_bar_node.z_as_relative = false
-
-
 func _apply_pickup_ordering(pickup: Area2D) -> void:
 	if pickup == null:
 		return
@@ -1025,155 +991,9 @@ func _apply_pickup_ordering(pickup: Area2D) -> void:
 	pickup.z_as_relative = false
 
 
-func _rebuild_water_cover_zones() -> void:
-	water_cover_zones.clear()
-
-	var decoration_root: Node = get_node_or_null("Terrain/Decoration")
-	if decoration_root == null:
-		return
-
-	for child in decoration_root.get_children():
-		var water_sprite: AnimatedSprite2D = child as AnimatedSprite2D
-		if water_sprite == null:
-			continue
-		if not String(water_sprite.name).to_lower().begins_with("water"):
-			continue
-
-		var zone_rect: Rect2 = _build_water_cover_zone_rect(water_sprite)
-		if zone_rect.size.x <= 0.0 or zone_rect.size.y <= 0.0:
-			continue
-		water_cover_zones.append(zone_rect)
-
-
-func _build_water_cover_zone_rect(water_sprite: AnimatedSprite2D) -> Rect2:
-	if water_sprite == null or water_sprite.sprite_frames == null:
-		return Rect2()
-
-	var animation_name: StringName = water_sprite.animation
-	if not water_sprite.sprite_frames.has_animation(animation_name):
-		return Rect2()
-	if water_sprite.sprite_frames.get_frame_count(animation_name) <= 0:
-		return Rect2()
-
-	var frame_texture: Texture2D = water_sprite.sprite_frames.get_frame_texture(animation_name, 0)
-	if frame_texture == null:
-		return Rect2()
-
-	var texture_size: Vector2 = frame_texture.get_size()
-	if texture_size.x <= 0.0 or texture_size.y <= 0.0:
-		return Rect2()
-
-	var global_scale_abs: Vector2 = Vector2(absf(water_sprite.global_scale.x), absf(water_sprite.global_scale.y))
-	var world_size: Vector2 = Vector2(texture_size.x * global_scale_abs.x, texture_size.y * global_scale_abs.y)
-	if world_size.x <= 0.0 or world_size.y <= 0.0:
-		return Rect2()
-
-	var top_left: Vector2 = water_sprite.global_position
-	if water_sprite.centered:
-		top_left -= world_size * 0.5
-
-	return Rect2(top_left, Vector2(world_size.x, world_size.y + WATER_DEPTH_EXTENSION_Y))
-
-
-func _update_player_water_ordering() -> void:
-	if player_ref == null:
-		return
-
-	var player_water_zone: Rect2 = _find_player_water_zone(player_ref)
-	var should_be_behind_water: bool = player_water_zone.size.x > 0.0 and player_water_zone.size.y > 0.0
-	if should_be_behind_water == player_is_behind_water:
-		return
-
-	if should_be_behind_water:
-		_spawn_player_water_splash(player_ref.global_position.x, player_water_zone.position.y)
-
-	player_is_behind_water = should_be_behind_water
-	if player_is_behind_water:
-		_apply_player_behind_water_ordering(player_ref)
-	else:
-		_apply_actor_ordering(player_ref)
-
-
-func _find_player_water_zone(player_body: CharacterBody2D) -> Rect2:
-	if player_body == null:
-		return Rect2()
-	if water_cover_zones.is_empty():
-		return Rect2()
-	if player_body.velocity.y <= WATER_FALL_SPEED_THRESHOLD:
-		return Rect2()
-
-	var player_position: Vector2 = player_body.global_position
-	for water_zone in water_cover_zones:
-		if not water_zone.has_point(player_position):
-			continue
-		var enter_surface_y: float = water_zone.position.y - WATER_SURFACE_ENTER_MARGIN_Y
-		if player_position.y >= enter_surface_y:
-			return water_zone
-	return Rect2()
-
-
-func _apply_player_behind_water_ordering(player_body: CharacterBody2D) -> void:
-	if player_body == null:
-		return
-
-	player_body.z_index = Z_PLAYER_BEHIND_WATER
-	player_body.z_as_relative = false
-
-	var health_bar_node: CanvasItem = player_body.get_node_or_null("HealthBar") as CanvasItem
-	if health_bar_node != null:
-		health_bar_node.z_index = Z_PLAYER_BEHIND_WATER
-		health_bar_node.z_as_relative = false
-
-
-func _spawn_player_water_splash(world_x: float, water_surface_y: float) -> void:
-	if water_splash_cooldown_timer > 0.0:
-		return
-	water_splash_cooldown_timer = WATER_SPLASH_COOLDOWN
-
-	var scene_root: Node = get_tree().current_scene
-	if scene_root == null:
-		scene_root = self
-
-	var splash_root := Node2D.new()
-	splash_root.name = "WaterSplashFx"
-	splash_root.global_position = Vector2(world_x, water_surface_y + 2.0)
-	splash_root.z_as_relative = false
-	splash_root.z_index = WATER_SPLASH_Z_INDEX
-	scene_root.add_child(splash_root)
-
-	var splash_tween: Tween = splash_root.create_tween()
-	splash_tween.set_parallel(true)
-
-	for i in range(WATER_SPLASH_PARTICLE_COUNT):
-		var droplet := Polygon2D.new()
-		droplet.polygon = PackedVector2Array([
-			Vector2(-1.5, -1.5),
-			Vector2(1.5, -1.5),
-			Vector2(1.5, 1.5),
-			Vector2(-1.5, 1.5)
-		])
-		droplet.color = Color(0.72, 0.9, 1.0, 0.9).lerp(Color(0.92, 0.98, 1.0, 1.0), randf_range(0.0, 0.4))
-		droplet.scale = Vector2.ONE * randf_range(0.85, 1.35)
-		splash_root.add_child(droplet)
-
-		var launch_angle: float = randf_range(-2.7, -0.45)
-		var travel_distance: float = randf_range(18.0, 46.0)
-		var target_offset: Vector2 = Vector2(cos(launch_angle), sin(launch_angle)) * travel_distance
-		target_offset.y += randf_range(6.0, 22.0)
-		var life_time: float = randf_range(WATER_SPLASH_LIFETIME * 0.72, WATER_SPLASH_LIFETIME)
-
-		splash_tween.tween_property(droplet, "position", target_offset, life_time).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-		splash_tween.tween_property(droplet, "modulate:a", 0.0, life_time).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
-		splash_tween.tween_property(droplet, "scale", Vector2.ONE * randf_range(0.1, 0.25), life_time).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
-
-	splash_tween.set_parallel(false)
-	splash_tween.tween_interval(0.03)
-	splash_tween.tween_callback(Callable(splash_root, "queue_free"))
-
-
 func _bind_collectible_coins() -> void:
 	var coin_nodes: Array[Node] = get_tree().get_nodes_in_group("collectible_coin")
-	var callback: Callable = Callable(self, "_on_coin_collected")
+	var callback: Callable = Callable(self , "_on_coin_collected")
 	for coin_node in coin_nodes:
 		_connect_signal_once(coin_node, &"collected", callback)
 
@@ -1264,7 +1084,7 @@ func _update_hud_coin_count() -> void:
 func _bind_map_gold_item() -> void:
 	if map_gold_item == null:
 		return
-	_connect_signal_once(map_gold_item, &"body_entered", Callable(self, "_on_map_gold_body_entered"))
+	_connect_signal_once(map_gold_item, &"body_entered", Callable(self , "_on_map_gold_body_entered"))
 
 
 func _on_map_gold_body_entered(body: Node2D) -> void:
@@ -1288,8 +1108,8 @@ func _bind_boss() -> void:
 	if boss_ref == null:
 		_set_boss_hud_visible(false)
 		return
-	_connect_signal_once(boss_ref, &"defeated", Callable(self, "_on_boss_defeated"))
-	_connect_signal_once(boss_ref, &"health_changed", Callable(self, "_on_boss_health_changed"))
+	_connect_signal_once(boss_ref, &"defeated", Callable(self , "_on_boss_defeated"))
+	_connect_signal_once(boss_ref, &"health_changed", Callable(self , "_on_boss_health_changed"))
 	if boss_ref.has_method("set_boss_active"):
 		boss_ref.call("set_boss_active", false)
 	else:
@@ -1304,7 +1124,7 @@ func _bind_player_lifecycle() -> void:
 	if player_ref == null:
 		return
 
-	_connect_signal_once(player_ref, &"died", Callable(self, "_on_player_died"))
+	_connect_signal_once(player_ref, &"died", Callable(self , "_on_player_died"))
 
 
 func _resolve_player_reference() -> CharacterBody2D:
@@ -1319,6 +1139,54 @@ func _resolve_player_reference() -> CharacterBody2D:
 			return body
 
 	return null
+
+
+func _get_level_player_ref() -> CharacterBody2D:
+	return player_ref
+
+
+func _get_water_decoration_root_path() -> NodePath:
+	return NodePath("Terrain/Decoration")
+
+
+func _get_actor_z_index() -> int:
+	return Z_ACTOR
+
+
+func _get_actor_health_bar_z_index() -> int:
+	return Z_ACTOR_HEALTHBAR
+
+
+func _get_player_behind_water_z_index() -> int:
+	return Z_PLAYER_BEHIND_WATER
+
+
+func _get_water_surface_enter_margin_y() -> float:
+	return WATER_SURFACE_ENTER_MARGIN_Y
+
+
+func _get_water_fall_speed_threshold() -> float:
+	return WATER_FALL_SPEED_THRESHOLD
+
+
+func _get_water_depth_extension_y() -> float:
+	return WATER_DEPTH_EXTENSION_Y
+
+
+func _get_water_splash_particle_count() -> int:
+	return WATER_SPLASH_PARTICLE_COUNT
+
+
+func _get_water_splash_lifetime() -> float:
+	return WATER_SPLASH_LIFETIME
+
+
+func _get_water_splash_z_index() -> int:
+	return WATER_SPLASH_Z_INDEX
+
+
+func _get_water_splash_cooldown() -> float:
+	return WATER_SPLASH_COOLDOWN
 
 
 func _spawn_boss_for_battle() -> void:
@@ -1545,7 +1413,7 @@ func _rebuild_terrain_spawn_map() -> void:
 
 	var excludes: Array[RID] = _build_ground_query_excludes()
 	var sample_x: float = terrain_spawn_min_x
-	var last_kept_x: float = -INF
+	var last_kept_x: float = - INF
 
 	while sample_x <= terrain_spawn_max_x:
 		var hit_point: Vector2 = _raycast_ground(sample_x, excludes)
@@ -1585,7 +1453,7 @@ func _resolve_terrain_scan_bounds() -> Vector2:
 						return Vector2(min_x, max_x)
 
 	var dynamic_min_x: float = INF
-	var dynamic_max_x: float = -INF
+	var dynamic_max_x: float = - INF
 	var scene_nodes: Array[Node] = []
 	scene_nodes.append_array(get_tree().get_nodes_in_group("player"))
 	scene_nodes.append_array(get_tree().get_nodes_in_group("enemies"))

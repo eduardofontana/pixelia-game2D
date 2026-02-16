@@ -495,7 +495,7 @@ func _setup_audio_players() -> void:
 		alive_loop_sfx_player.process_mode = Node.PROCESS_MODE_ALWAYS
 		add_child(alive_loop_sfx_player)
 		alive_loop_sfx_player.stream = ALIVE_LOOP_SFX_STREAM
-		var loop_callback: Callable = Callable(self, "_on_alive_loop_sfx_finished")
+		var loop_callback: Callable = Callable(self , "_on_alive_loop_sfx_finished")
 		if not alive_loop_sfx_player.is_connected("finished", loop_callback):
 			alive_loop_sfx_player.finished.connect(_on_alive_loop_sfx_finished)
 
@@ -583,7 +583,7 @@ func _configure_animations() -> void:
 		frames.set_animation_loop(&"boss_hit", false)
 	if frames.has_animation(&"boos_hit"):
 		frames.set_animation_loop(&"boos_hit", false)
-	if not animated_sprite.is_connected("animation_finished", Callable(self, "_on_animation_finished")):
+	if not animated_sprite.is_connected("animation_finished", Callable(self , "_on_animation_finished")):
 		animated_sprite.animation_finished.connect(_on_animation_finished)
 
 

@@ -25,6 +25,8 @@ const ATTACK_HITBOX_ACTIVE_TIME: float = 0.12
 const ATTACK_HITBOX_WIDTH: float = 30.0
 const ATTACK_HITBOX_HEIGHT: float = 22.0
 const ATTACK_DAMAGE: int = 10
+const PROFILE_PLAYER: StringName = &"player"
+const PROFILE_KNIGHT_HIGHT: StringName = &"knight_hight"
 const KNIGHT_HIGHT_SCENE_SUFFIX: String = "knight_hight.tscn"
 const KNIGHT_HIGHT_ATTACK_SPEED_SCALE: float = 2.45
 const KNIGHT_HIGHT_ATTACK_HITBOX_OFFSET_X: float = 26.0
@@ -148,6 +150,14 @@ const SPAWN_DIALOG_CONTENT_PADDING_X: float = 16.0
 const SPAWN_DIALOG_CONTENT_PADDING_Y: float = 10.0
 const SPAWN_DIALOG_FONT_SIZE: int = 15
 const SPAWN_DIALOG_SCREEN_CENTER_OFFSET_Y: float = 0.0
+const PLAYER_LIGHT_TEXTURE: Texture2D = preload("res://sprites/lights/player_light_mask.png")
+const PLAYER_LIGHT_POSITION: Vector2 = Vector2(0.0, -6.0)
+const PLAYER_LIGHT_COLOR: Color = Color(0.64, 0.73, 0.95, 1.0)
+const PLAYER_LIGHT_CORE_COLOR: Color = Color(1.0, 0.95, 0.86, 1.0)
+const PLAYER_LIGHT_CORE_SHADOW_COLOR: Color = Color(0.0, 0.0, 0.0, 0.003921569)
+const PLAYER_LIGHT_TEXTURE_SCALE: float = 0.5
+const PLAYER_LIGHT_CORE_TEXTURE_SCALE: float = 1.2
+const PLAYER_LIGHT_CORE_ENERGY: float = 0.52
 const DEATH_VFX = preload("res://scripts/death_vfx.gd")
 @onready var animated_sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var attack_sfx: AudioStreamPlayer = $AttackSfx
@@ -164,6 +174,7 @@ const DEATH_VFX = preload("res://scripts/death_vfx.gd")
 @export var void_fall_kill_y: float = DEFAULT_VOID_FALL_KILL_Y
 @export var void_fov_margin_y: float = DEFAULT_VOID_FOV_MARGIN_Y
 @export var enable_spawn_dialog: bool = true
+@export var character_profile_id: StringName = PROFILE_PLAYER
 @export var player_light_enabled: bool = false
 @export var player_light_base_energy: float = 1.38
 @export var player_light_flicker_strength: float = 0.02
@@ -243,6 +254,8 @@ var attack_hitbox_size_runtime: Vector2 = Vector2(ATTACK_HITBOX_WIDTH, ATTACK_HI
 
 func _ready() -> void:
 	add_to_group("player")
+	_normalize_character_profile_id()
+	_ensure_player_light_nodes()
 	_configure_player_collision_filters()
 	_configure_character_attack_profile()
 	animated_sprite.animation_finished.connect(_on_animation_finished)
@@ -279,6 +292,41 @@ func _ready() -> void:
 		_setup_spawn_dialog()
 		_show_spawn_dialog_once()
 	_emit_stats_changed()
+
+
+func _normalize_character_profile_id() -> void:
+	if character_profile_id != StringName():
+		if character_profile_id == PROFILE_PLAYER or character_profile_id == PROFILE_KNIGHT_HIGHT:
+			return
+
+	var scene_path: String = String(scene_file_path).to_lower()
+	if scene_path.ends_with(KNIGHT_HIGHT_SCENE_SUFFIX):
+		character_profile_id = PROFILE_KNIGHT_HIGHT
+	else:
+		character_profile_id = PROFILE_PLAYER
+
+
+func _ensure_player_light_nodes() -> void:
+	if player_light == null:
+		player_light = PointLight2D.new()
+		player_light.name = "PlayerLight"
+		player_light.position = PLAYER_LIGHT_POSITION
+		player_light.color = PLAYER_LIGHT_COLOR
+		player_light.energy = player_light_base_energy
+		player_light.texture_scale = PLAYER_LIGHT_TEXTURE_SCALE
+		player_light.texture = PLAYER_LIGHT_TEXTURE
+		add_child(player_light)
+
+	if player_light_core == null:
+		player_light_core = PointLight2D.new()
+		player_light_core.name = "PlayerLightCore"
+		player_light_core.position = PLAYER_LIGHT_POSITION
+		player_light_core.color = PLAYER_LIGHT_CORE_COLOR
+		player_light_core.energy = PLAYER_LIGHT_CORE_ENERGY
+		player_light_core.shadow_color = PLAYER_LIGHT_CORE_SHADOW_COLOR
+		player_light_core.texture_scale = PLAYER_LIGHT_CORE_TEXTURE_SCALE
+		player_light_core.texture = PLAYER_LIGHT_TEXTURE
+		add_child(player_light_core)
 
 
 func _physics_process(delta: float) -> void:
@@ -1051,6 +1099,10 @@ func _configure_character_attack_profile() -> void:
 
 
 func _is_knight_hight_character() -> bool:
+	if character_profile_id == PROFILE_KNIGHT_HIGHT:
+		return true
+	if character_profile_id == PROFILE_PLAYER:
+		return false
 	var scene_path: String = String(scene_file_path).to_lower()
 	return scene_path.ends_with(KNIGHT_HIGHT_SCENE_SUFFIX)
 

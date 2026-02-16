@@ -244,6 +244,8 @@ animations = [{
 
 [node name="Boss" type="CharacterBody2D" unique_id=1440023123]
 script = ExtResource("2_boss_script")
+allow_contact_damage = true
+dash_cooldown_max = 2.5
 
 [node name="DamageArea" type="Area2D" parent="." unique_id=1567342704]
 

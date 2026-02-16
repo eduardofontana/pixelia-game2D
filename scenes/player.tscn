@@ -469,6 +469,7 @@ z_index = 10
 floor_constant_speed = true
 floor_snap_length = 3.0
 script = ExtResource("1_6e8lb")
+character_profile_id = &"player"
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1155286953]
 position = Vector2(2, -9)

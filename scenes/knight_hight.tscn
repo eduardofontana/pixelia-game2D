@@ -346,6 +346,7 @@ z_index = 10
 floor_constant_speed = true
 floor_snap_length = 3.0
 script = ExtResource("8_player")
+character_profile_id = &"knight_hight"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1304019662]
 position = Vector2(2, -6.5)

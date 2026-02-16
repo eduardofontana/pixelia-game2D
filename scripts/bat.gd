@@ -1,4 +1,4 @@
-extends CharacterBody2D
+extends "res://scripts/enemy_base.gd"
 
 enum EnemyState {
 	PATROL,
@@ -30,7 +30,6 @@ const DEATH_PARTICLE_COLOR: Color = Color(0.7, 0.85, 1.0, 1.0)
 const DEATH_FADE_DURATION: float = 0.22
 const DEATH_VFX = preload("res://scripts/death_vfx.gd")
 
-@export var player_path: NodePath
 @export var max_hp: int = 85
 @export var patrol_distance_x: float = 96.0
 @export var patrol_distance_y: float = 92.0
@@ -45,7 +44,6 @@ const DEATH_VFX = preload("res://scripts/death_vfx.gd")
 @export var attack_cooldown: float = 1.15
 @export var contact_damage: int = 5
 @export var contact_damage_cooldown: float = 0.85
-@export var health_bar_visible_time: float = 3.2
 @export var sprite_faces_left: bool = true
 
 @onready var body_collision: CollisionShape2D = $CollisionShape2D
@@ -54,28 +52,19 @@ const DEATH_VFX = preload("res://scripts/death_vfx.gd")
 @onready var contact_collision: CollisionShape2D = $ContactArea/CollisionShape2D
 @onready var attack_area: Area2D = $AttackArea
 @onready var attack_collision: CollisionShape2D = $AttackArea/CollisionShape2D
-@onready var health_bar: Node2D = $HealthBar
-@onready var health_fill: Control = $HealthBar/Bg/Fill
-@onready var health_percent_label: Label = $HealthBar/PercentLabel
 
-var player_ref: CharacterBody2D = null
 var enemy_state: int = EnemyState.PATROL
 var spawn_position: Vector2 = Vector2.ZERO
 var facing_direction: int = 1
-var current_hp: int = 1
 var attack_cooldown_timer: float = 0.0
 var attack_windup_timer: float = 0.0
-var health_bar_timer: float = 0.0
 var attack_did_hit: bool = false
 var contact_damage_timer: float = 0.0
 var hover_time: float = 0.0
 var base_modulate_color: Color = Color(1, 1, 1, 1)
-var health_fill_style: StyleBoxFlat = null
 var patrol_target: Vector2 = Vector2.ZERO
 var patrol_retarget_timer: float = 0.0
-var hurt_sfx_player: AudioStreamPlayer = null
 var non_player_reverse_timer: float = 0.0
-var is_dying: bool = false
 
 
 func _ready() -> void:
@@ -98,6 +87,34 @@ func _ready() -> void:
 	if health_bar != null:
 		health_bar.visible = false
 	_play_animation(&"idle")
+
+
+func _get_health_bar_width() -> float:
+	return HEALTH_BAR_WIDTH
+
+
+func _get_health_percent_font_size() -> int:
+	return HEALTH_PERCENT_FONT_SIZE
+
+
+func _get_health_percent_outline_size() -> int:
+	return HEALTH_PERCENT_OUTLINE_SIZE
+
+
+func _get_vampire_font_path() -> String:
+	return VAMPIRE_FONT_PATH
+
+
+func _get_hurt_sfx_path() -> String:
+	return HURT_SFX_PATH
+
+
+func _get_hurt_sfx_volume_db() -> float:
+	return HURT_SFX_VOLUME_DB
+
+
+func _get_max_hp_value() -> int:
+	return max_hp
 
 
 func _physics_process(delta: float) -> void:
@@ -306,71 +323,6 @@ func _update_attack_area_transform() -> void:
 	attack_collision.position = Vector2(ATTACK_AREA_OFFSET_X * float(facing_direction), ATTACK_AREA_OFFSET_Y)
 
 
-func _update_health_bar() -> void:
-	if health_fill == null:
-		return
-
-	var ratio: float = 0.0
-	if max_hp > 0:
-		ratio = clampf(float(current_hp) / float(max_hp), 0.0, 1.0)
-
-	health_fill.size.x = HEALTH_BAR_WIDTH * ratio
-	if health_fill_style != null:
-		if ratio > 0.55:
-			health_fill_style.bg_color = Color(0.24, 0.86, 0.44, 0.95)
-		elif ratio > 0.3:
-			health_fill_style.bg_color = Color(0.94, 0.74, 0.23, 0.95)
-		else:
-			health_fill_style.bg_color = Color(0.9, 0.2, 0.22, 0.95)
-
-	if health_percent_label != null:
-		var percent_value: int = int(round(ratio * 100.0))
-		health_percent_label.text = "%d%%" % percent_value
-
-
-func _show_health_bar() -> void:
-	health_bar_timer = health_bar_visible_time
-	if health_bar != null:
-		health_bar.visible = true
-
-
-func _update_health_bar_timer(delta: float) -> void:
-	if health_bar == null or not health_bar.visible:
-		return
-	health_bar_timer = maxf(0.0, health_bar_timer - delta)
-	if health_bar_timer <= 0.0:
-		health_bar.visible = false
-
-
-func _bind_player() -> void:
-	if not player_path.is_empty():
-		player_ref = get_node_or_null(player_path) as CharacterBody2D
-	else:
-		var parent_node: Node = get_parent()
-		if parent_node != null:
-			player_ref = parent_node.get_node_or_null("Player") as CharacterBody2D
-	if player_ref == null:
-		var players: Array[Node] = get_tree().get_nodes_in_group("player")
-		if players.size() > 0:
-			player_ref = players[0] as CharacterBody2D
-
-	if player_ref == null:
-		call_deferred("_retry_bind_player")
-
-
-func _retry_bind_player() -> void:
-	if player_ref != null:
-		return
-
-	var parent_node: Node = get_parent()
-	if parent_node != null:
-		player_ref = parent_node.get_node_or_null("Player") as CharacterBody2D
-	if player_ref == null:
-		var players: Array[Node] = get_tree().get_nodes_in_group("player")
-		if players.size() > 0:
-			player_ref = players[0] as CharacterBody2D
-
-
 func _apply_hit_knockback(from_position: Vector2) -> void:
 	if from_position == Vector2.INF:
 		return
@@ -419,56 +371,6 @@ func _configure_collision_filters() -> void:
 		attack_area.collision_mask = PLAYER_STRUCTURE_LAYER_MASK
 
 
-func _setup_hurt_sfx() -> void:
-	if hurt_sfx_player != null:
-		return
-
-	hurt_sfx_player = AudioStreamPlayer.new()
-	hurt_sfx_player.name = "HurtSfx"
-	hurt_sfx_player.bus = "SFX"
-	hurt_sfx_player.volume_db = HURT_SFX_VOLUME_DB
-	add_child(hurt_sfx_player)
-
-	if ResourceLoader.exists(HURT_SFX_PATH):
-		var loaded_stream: Resource = load(HURT_SFX_PATH)
-		if loaded_stream is AudioStream:
-			hurt_sfx_player.stream = loaded_stream
-
-
-func _play_hurt_sfx() -> void:
-	if hurt_sfx_player == null or hurt_sfx_player.stream == null:
-		return
-	hurt_sfx_player.stop()
-	hurt_sfx_player.play()
-
-
-func _setup_health_fill_style() -> void:
-	if health_fill == null:
-		return
-
-	var panel_style: StyleBox = health_fill.get_theme_stylebox("panel")
-	if not (panel_style is StyleBoxFlat):
-		return
-
-	health_fill_style = (panel_style as StyleBoxFlat).duplicate() as StyleBoxFlat
-	health_fill.add_theme_stylebox_override("panel", health_fill_style)
-
-
-func _apply_vampire_percent_font() -> void:
-	if health_percent_label == null:
-		return
-
-	if ResourceLoader.exists(VAMPIRE_FONT_PATH):
-		var loaded_font: Resource = load(VAMPIRE_FONT_PATH)
-		if loaded_font is Font:
-			health_percent_label.add_theme_font_override("font", loaded_font as Font)
-
-	health_percent_label.add_theme_font_size_override("font_size", HEALTH_PERCENT_FONT_SIZE)
-	health_percent_label.add_theme_constant_override("outline_size", HEALTH_PERCENT_OUTLINE_SIZE)
-	health_percent_label.add_theme_color_override("font_color", Color(1.0, 0.95, 0.88, 0.98))
-	health_percent_label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.92))
-
-
 func _reset_patrol_target(immediate: bool) -> void:
 	patrol_target = spawn_position + Vector2(
 		randf_range(-patrol_distance_x, patrol_distance_x),
@@ -506,10 +408,4 @@ func _resolve_non_player_collisions() -> void:
 		velocity.x *= -0.45
 
 
-func _is_player_target(node: Node) -> bool:
-	if node == null:
-		return false
-	if player_ref != null and node == player_ref:
-		return true
-	return node.is_in_group("player")
 
