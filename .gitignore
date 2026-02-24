@@ -4,3 +4,13 @@
 
 # Local runtime/editor data
 .appdata/
+
+# Local IDE/editor settings
+.vscode/
+.idea/
+*.code-workspace
+
+# Local secrets/config
+.env
+.env.*
+!.env.example
